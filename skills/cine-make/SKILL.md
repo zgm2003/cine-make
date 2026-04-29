@@ -1,6 +1,12 @@
 ---
 name: cine-make
-description: Use when a developer wants to turn novels, rough scripts, ad briefs, or story material into director-grade video pre-production assets: director script, shotlist, storyboard/keyframe image prompts, Codex-generated still images, and Seedance/Jimeng/general video-model prompt packs. Use for AI video workflows where Codex prepares images and prompts but does not render MP4 video.
+description: >-
+  Use when a developer wants to turn novels, rough scripts, ad briefs, or story
+  material into director-grade video pre-production assets including director
+  script, shotlist, storyboard/keyframe image prompts, Codex-generated still
+  images, and Seedance/Jimeng/general video-model prompt packs. Use for AI video
+  workflows where Codex prepares images and prompts but does not render MP4
+  video.
 ---
 
 # Cine Make
