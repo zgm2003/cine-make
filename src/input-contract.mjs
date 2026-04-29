@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['seedance', 'jimeng', 'generic'])
+const VALID_MODES = new Set(['draft', 'visual'])
 
 function stableHash(value) {
   let hash = 2166136261
@@ -42,6 +43,7 @@ export function parseArgs(argv) {
   const command = ['ready', 'task', 'validate'].includes(argv[0]) ? argv[0] : 'make'
   const options = {
     command,
+    mode: 'draft',
     out: null,
     run: null,
     done: [],
@@ -53,10 +55,15 @@ export function parseArgs(argv) {
     style: 'cinematic',
     platform: 'generic',
     stage: 'skeleton',
-    draft: false,
+    draft: true,
     shots: null,
     storyboards: null,
     references: [],
+    visualReferences: {
+      characterImages: [],
+      sceneImages: [],
+      styleImages: []
+    },
     sourceParts: []
   }
 
@@ -133,6 +140,13 @@ export function parseArgs(argv) {
       continue
     }
 
+    if (arg === '--mode') {
+      index += 1
+      if (!argv[index]) throw new Error('--mode requires draft or visual')
+      options.mode = argv[index].toLowerCase()
+      continue
+    }
+
     if (arg === '--stage') {
       index += 1
       if (!argv[index]) throw new Error('--stage requires skeleton or production')
@@ -141,6 +155,13 @@ export function parseArgs(argv) {
     }
 
     if (arg === '--draft') {
+      options.mode = 'draft'
+      options.draft = true
+      continue
+    }
+
+    if (arg === '--visual') {
+      options.mode = 'visual'
       options.draft = true
       continue
     }
@@ -163,6 +184,27 @@ export function parseArgs(argv) {
       index += 1
       if (!argv[index]) throw new Error('--reference requires a path or note')
       options.references.push(argv[index])
+      continue
+    }
+
+    if (arg === '--character-image') {
+      index += 1
+      if (!argv[index]) throw new Error('--character-image requires a path')
+      options.visualReferences.characterImages.push(argv[index])
+      continue
+    }
+
+    if (arg === '--scene-image') {
+      index += 1
+      if (!argv[index]) throw new Error('--scene-image requires a path')
+      options.visualReferences.sceneImages.push(argv[index])
+      continue
+    }
+
+    if (arg === '--style-image') {
+      index += 1
+      if (!argv[index]) throw new Error('--style-image requires a path')
+      options.visualReferences.styleImages.push(argv[index])
       continue
     }
 
@@ -207,12 +249,21 @@ export async function createInputContract(options) {
   const targetPlatform = (options.platform || 'generic').toLowerCase()
   if (!VALID_PLATFORMS.has(targetPlatform)) throw new Error(`Unsupported platform: ${targetPlatform}`)
 
+  const mode = (options.mode || 'draft').toLowerCase()
+  if (!VALID_MODES.has(mode)) throw new Error(`Unsupported mode: ${mode}`)
+
   const shotCount = clampInteger(options.shots, defaultShotCount(seconds), 4, 30, 'shots')
   const storyboardCount = clampInteger(options.storyboards, Math.min(15, Math.max(shotCount, 8)), 4, 30, 'storyboards')
   const title = options.title || `${inferContentType(sourceText)}-${slugify(sourceText)}`
+  const visualReferences = {
+    characterImages: [...(options.visualReferences?.characterImages ?? [])],
+    sceneImages: [...(options.visualReferences?.sceneImages ?? [])],
+    styleImages: [...(options.visualReferences?.styleImages ?? [])]
+  }
 
   return {
     schemaVersion: 1,
+    mode,
     title,
     slug: slugify(title),
     sourceText,
@@ -226,6 +277,7 @@ export async function createInputContract(options) {
       storyboardCount
     },
     references: options.references,
+    visualReferences,
     boundaries: {
       codexCanGenerate: ['text production assets', 'storyboard/keyframe images through image generation tools', 'review reports'],
       codexCannotGenerate: ['mp4 video', 'guaranteed external model motion fidelity'],

@@ -15,17 +15,19 @@ import { writeAgentPlanArtifacts } from './task-writer.mjs'
 import { getReadyTasks, writeTaskPrompt } from './task-runner.mjs'
 import { formatValidationResult, validateRunDirectory } from './run-validator.mjs'
 import { composeDraftAssets } from './draft-writer.mjs'
+import { composeDeliverable, composeStoryboardImagesReadme } from './deliverable-writer.mjs'
 
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs [--draft] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] "<story material>"',
+    '  node src/cli.mjs [--mode <draft|visual>] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
     '',
     'Example:',
-    '  node src/cli.mjs --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"'
+    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
+    '  node src/cli.mjs --mode visual --out .cine-make-runs/demo-visual --character-image refs/hero.png "小说片段..."'
   ].join('\n')
 }
 
@@ -99,7 +101,12 @@ async function writeDraftProductionAssets({ outDir, contract }) {
   return draft
 }
 
-async function writeRunArtifacts({ outDir, contract, draft = false }) {
+async function writeUserFacingArtifacts({ outDir, contract, draft }) {
+  await writeFile(join(outDir, 'deliverable.md'), `${composeDeliverable({ contract, draft })}\n`, 'utf8')
+  await writeFile(join(outDir, 'storyboard-images', 'README.md'), `${composeStoryboardImagesReadme({ contract, draft })}\n`, 'utf8')
+}
+
+async function writeRunArtifacts({ outDir, contract }) {
   await mkdir(outDir, { recursive: true })
 
   const plan = createAgentPlan({ contract, outDir })
@@ -118,7 +125,8 @@ async function writeRunArtifacts({ outDir, contract, draft = false }) {
   }
 
   const planArtifacts = await writeAgentPlanArtifacts({ outDir, plan })
-  const draftAssets = draft ? await writeDraftProductionAssets({ outDir, contract }) : null
+  const draftAssets = await writeDraftProductionAssets({ outDir, contract })
+  await writeUserFacingArtifacts({ outDir, contract, draft: draftAssets })
   return { plan, planArtifacts, draftAssets }
 }
 
@@ -149,24 +157,13 @@ async function main() {
 
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
-  const { planArtifacts, draftAssets } = await writeRunArtifacts({ outDir, contract, draft: options.draft })
+  const { draftAssets } = await writeRunArtifacts({ outDir, contract })
 
-  console.log(`Cine Make wrote artifacts to: ${outDir}`)
-  console.log('- input-contract.json')
-  console.log('- source-package.md')
-  console.log('- production-brief.md')
-  console.log('- prompt-pack.md')
-  console.log('- imagegen-brief.md')
-  console.log('- video-model-pack.md')
-  console.log('- agent-handoff.md')
-  console.log('- agent-plan.json')
-  console.log(`- tasks/*.md (${planArtifacts.taskFiles.length})`)
-  console.log(`- reviews/*.md (${planArtifacts.reviewFiles.length})`)
-  console.log('- storyboard-images/README.md')
-  console.log('- exports/')
-  if (draftAssets) {
-    console.log(`- draft production assets (${draftAssets.shotlist.length} shots)`)
-  }
+  console.log(`Cine Make ready (${contract.mode}):`)
+  console.log(`- deliverable: ${join(outDir, 'deliverable.md')}`)
+  console.log(`- storyboard images: ${join(outDir, 'storyboard-images')}`)
+  console.log(`- shots: ${draftAssets.shotlist.length}`)
+  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then send the video prompt segments to the external video tool' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
 }
 
 main().catch((error) => {

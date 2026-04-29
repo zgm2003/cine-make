@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "mode": "draft",
   "title": "Rain Alley",
   "slug": "rain-alley",
   "sourceText": "雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。",
@@ -13,6 +14,11 @@
     "storyboardCount": 8
   },
   "references": [],
+  "visualReferences": {
+    "characterImages": [],
+    "sceneImages": [],
+    "styleImages": []
+  },
   "boundaries": {
     "codexCanGenerate": [
       "text production assets",
@@ -26,4 +32,3 @@
     "finalVideoOwner": "external video model such as Seedance, Jimeng, or another video synthesis tool"
   }
 }
-

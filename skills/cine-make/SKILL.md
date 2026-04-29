@@ -2,23 +2,23 @@
 name: cine-make
 description: >-
   Use when a developer wants to turn novels, rough scripts, ad briefs, or story
-  material into director-grade video pre-production assets including director
-  script, shotlist, storyboard/keyframe image prompts, Codex-generated still
-  images, and Seedance/Jimeng/general video-model prompt packs. Use for AI video
-  workflows where Codex prepares images and prompts but does not render MP4
-  video.
+  material into a compact AI short-drama pre-production deliverable, with a
+  fast draft mode, an optional visual package mode, optional character/scene
+  reference images, and Seedance/Jimeng/general video-model prompts. Use for AI
+  video workflows where Codex prepares still images and prompts but does not
+  render MP4 video.
 ---
 
 # Cine Make
 
-Cine Make turns raw story material into a video pre-production package. The skill is the human entrypoint; the local repo is the compiler kernel.
+Cine Make turns raw story material into a compact AI short-drama pre-production package. The skill is the human entrypoint; the local repo is the compiler kernel.
 
 Cine Make does **not** generate final video. Codex can write text assets and generate still images; external video tools synthesize video.
 
 ## Product intent
 
-- turn novel/script/ad material into filmable director assets;
-- generate storyboard/keyframe image prompts and, when available, still images;
+- turn novel/script/ad material into one readable `deliverable.md`;
+- generate storyboard/keyframe image prompts and, in visual mode, still images;
 - package assets for Seedance, Jimeng, or generic video models;
 - preserve continuity instead of relying on random video generation.
 
@@ -29,6 +29,19 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Do not require a server or web IDE.
 - Do not expose the full run tree unless the user asks.
 - Use image generation only for still images: references, keyframes, storyboards.
+- User-facing output is only `deliverable.md` plus `storyboard-images/`.
+- Character, scene, and style images are optional; never make them required.
+
+## Two product modes
+
+Use only these two user-facing modes:
+
+| Mode | When | Image generation | User output |
+| --- | --- | --- | --- |
+| `draft` | default first pass; user is still changing story, rhythm, shots | no images | `deliverable.md` + `storyboard-images/README.md` |
+| `visual` | draft is approved; user wants references/keyframes for video tools | yes, still images only when imagegen is available | `deliverable.md` + generated/fillable `storyboard-images/` |
+
+Do not invent extra user modes. Keep internal/debug artifacts internal.
 
 ## Locate the compiler
 
@@ -46,23 +59,25 @@ The compiler root is the directory containing `src/cli.mjs`.
 When triggered by a story-to-video-preproduction request:
 
 1. Identify the source material: novel excerpt, rough script, ad brief, shotlist, or voiceover script.
-2. Run the compiler:
+2. Run the compiler in draft mode first:
    ```bash
-   node src/cli.mjs --draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
+   node src/cli.mjs --mode draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
    ```
-3. Read `production-brief.md` first. Treat it as the production north star.
+   Optional references:
+   ```bash
+   --character-image <path> --scene-image <path> --style-image <path>
+   ```
+3. Read `deliverable.md` first. Treat it as the user-facing north star.
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
-4. Produce or fill the key assets in this order:
-   - `director-script.md`
-   - `characters.json`
-   - `shotlist.json`
-   - `storyboard-board.md`
-   - `storyboard-prompts.md`
-   - still images or `reference-pack.md`
-   - `seedance-pack.md` / `jimeng-pack.md`
-   - `continuity-review.md`
-5. Use Codex image generation only after `storyboard-prompts.md` is stable.
-6. Summarize only the next useful action, not every generated file.
+4. If the user approves the draft and wants images, run visual mode:
+   ```bash
+   node src/cli.mjs --mode visual --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> [--character-image <path>] "<source material>"
+   ```
+5. In visual mode, generate still images in this order when imagegen is available:
+   - `storyboard-images/character-reference.png` only if no character image was provided;
+   - `storyboard-images/scene-reference.png` only if no scene image was provided;
+   - `storyboard-images/S01.png`, `S02.png`, etc.
+6. Summarize only the deliverable path, storyboard folder, mode, and next action.
 
 ## Output rules
 
@@ -71,11 +86,13 @@ When triggered by a story-to-video-preproduction request:
 - A good video-model prompt references keyframes and describes motion, camera movement, and transition logic.
 - If platform limits are unknown, segment the video pack instead of stuffing every storyboard into one prompt.
 - If character identity is under-specified, generate or request character references before final storyboards.
+- In draft mode, do not spend time generating images.
+- In visual mode, use provided character images to lock face/hair/clothing instead of inventing a new identity.
 
 ## Built-in references
 
 - `references/director-prompts.md`: director rewrite, performance, shot planning, storyboard image prompt, and continuity prompt patterns.
-- `references/output-contract.md`: required production-run artifact names.
+- `references/output-contract.md`: user-facing and internal artifact names.
 - `references/platform-limits.md`: safe behavior for unknown or changing video-model limits.
 
 ## Completion evidence
@@ -84,7 +101,9 @@ Before saying a Cine Make run is ready, report:
 
 - compiler command run;
 - generated run directory;
-- ready task ids or generated assets;
+- mode: `draft` or `visual`;
+- `deliverable.md` path;
+- `storyboard-images/` path;
 - whether still images were generated or only prompts were prepared;
 - video pack target platform;
 - continuity review result;

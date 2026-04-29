@@ -141,7 +141,7 @@ export function composeDraftAssets(contract) {
     shotlist,
     storyboardBoard: composeStoryboardBoard(shotlist),
     storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist }),
-    referencePack: composeReferencePack(shotlist),
+    referencePack: composeReferencePack({ contract, shotlist }),
     seedancePack: composeExternalPack({ platform: 'Seedance', contract, anchors, shotlist }),
     jimengPack: composeExternalPack({ platform: 'Jimeng', contract, anchors, shotlist }),
     continuityReview: composeContinuityReview({ anchors, shotlist })
@@ -231,11 +231,22 @@ function composeStoryboardPrompts({ anchors, shotlist }) {
   ].join('\n')
 }
 
-function composeReferencePack(shotlist) {
+function composeReferencePack({ contract, shotlist }) {
+  const visual = contract.visualReferences ?? {}
+  const userReferences = [
+    ...(visual.characterImages ?? []).map((path) => `- 人物参考图: ${path}`),
+    ...(visual.sceneImages ?? []).map((path) => `- 场景参考图: ${path}`),
+    ...(visual.styleImages ?? []).map((path) => `- 风格参考图: ${path}`)
+  ]
+
   return [
     '# Reference pack',
     '',
     'No raster images are committed by the draft writer.',
+    '',
+    'User-provided visual references:',
+    '',
+    ...(userReferences.length ? userReferences : ['- none']),
     '',
     'Recommended generation order:',
     '',

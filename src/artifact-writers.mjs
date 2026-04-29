@@ -2,11 +2,24 @@ function frontMatter(title) {
   return [`# ${title}`, ''].join('\n')
 }
 
+function referenceLines(contract) {
+  const visual = contract.visualReferences ?? {}
+  const lines = []
+
+  for (const item of contract.references ?? []) lines.push(`- general: ${item}`)
+  for (const item of visual.characterImages ?? []) lines.push(`- 人物参考图: ${item}`)
+  for (const item of visual.sceneImages ?? []) lines.push(`- 场景参考图: ${item}`)
+  for (const item of visual.styleImages ?? []) lines.push(`- 风格参考图: ${item}`)
+
+  return lines.length ? lines : ['- none provided']
+}
+
 export function composeSourcePackage(contract) {
   return [
     frontMatter('Source package'),
     '## Normalized input',
     '',
+    `- mode: ${contract.mode ?? 'draft'}`,
     `- title: ${contract.title}`,
     `- content_type: ${contract.contentType}`,
     `- duration: ${contract.target.durationSeconds}s`,
@@ -18,7 +31,7 @@ export function composeSourcePackage(contract) {
     '',
     '## References',
     '',
-    ...(contract.references.length ? contract.references.map((item) => `- ${item}`) : ['- none provided']),
+    ...referenceLines(contract),
     '',
     '## Source text',
     '',
@@ -34,6 +47,7 @@ export function composeProductionBrief(contract) {
     '## North star',
     '',
     `Turn the ${contract.contentType.replace(/_/g, ' ')} into a ${contract.target.durationSeconds}s ${contract.target.aspectRatio} ${contract.target.style} short film package.`,
+    `Mode: ${contract.mode === 'visual' ? 'visual package mode; image generation may run after the text plan is stable.' : 'draft mode; do not generate images yet.'}`,
     '',
     '## Director constraints',
     '',
@@ -88,14 +102,27 @@ export function composePromptPack(contract) {
 }
 
 export function composeImagegenBrief(contract) {
+  const hasCharacterReferences = (contract.visualReferences?.characterImages ?? []).length > 0
+  const hasSceneReferences = (contract.visualReferences?.sceneImages ?? []).length > 0
+  const hasStyleReferences = (contract.visualReferences?.styleImages ?? []).length > 0
+
   return [
     frontMatter('Image generation brief'),
     'This file defines how Codex should use image generation for this run.',
     '',
+    `Mode: ${contract.mode === 'visual' ? 'visual package mode' : 'draft mode'}. In draft mode, prepare prompts only and do not spend time generating images.`,
+    '',
     '## What to generate',
     '',
-    '- Character reference image(s) when identity is under-specified.',
-    '- Scene reference image(s) when the location needs a stable visual anchor.',
+    hasCharacterReferences
+      ? `- Use provided character reference image(s): ${(contract.visualReferences.characterImages).join(', ')}.`
+      : '- Character reference image(s) when identity is under-specified.',
+    hasSceneReferences
+      ? `- Use provided scene reference image(s): ${(contract.visualReferences.sceneImages).join(', ')}.`
+      : '- Scene reference image(s) when the location needs a stable visual anchor.',
+    hasStyleReferences
+      ? `- Match provided style reference image(s): ${(contract.visualReferences.styleImages).join(', ')}.`
+      : '- Style reference image(s) only when the requested look is ambiguous.',
     `- ${contract.target.storyboardCount} storyboard/keyframe images or fewer if the user wants a text-only pack first.`,
     '',
     '## Rules',
@@ -175,4 +202,3 @@ export function composeAgentHandoff({ contract, outDir }) {
     '- verification performed'
   ].join('\n')
 }
-

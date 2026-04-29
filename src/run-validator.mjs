@@ -14,6 +14,7 @@ const SKELETON_FILES = [
 ]
 
 const PRODUCTION_FILES = [
+  'deliverable.md',
   'director-script.md',
   'characters.json',
   'shotlist.json',
@@ -143,6 +144,8 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
   const contractPath = join(runDir, 'input-contract.json')
   const contract = existsSync(contractPath) ? await readJson(contractPath, errors, 'input-contract.json') : null
   if (contract) {
+    const mode = contract.mode ?? 'draft'
+    if (!['draft', 'visual'].includes(mode)) errors.push('input-contract.mode must be draft or visual')
     if (!contract.target || typeof contract.target !== 'object') errors.push('input-contract.target is required')
     if (!contract.boundaries || typeof contract.boundaries !== 'object') errors.push('input-contract.boundaries is required')
     if (contract.boundaries && !Array.isArray(contract.boundaries.codexCannotGenerate)) {

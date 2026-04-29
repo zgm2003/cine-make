@@ -1,11 +1,19 @@
 # Output contract
 
-Required run artifacts:
+User-facing output:
+
+- `deliverable.md`
+- `storyboard-images/`
+
+The user should not need to read the rest of the run tree.
+
+Internal production-run artifacts:
 
 - `input-contract.json`
 - `source-package.md`
 - `production-brief.md`
 - `prompt-pack.md`
+- `deliverable.md`
 - `director-script.md`
 - `characters.json`
 - `shotlist.json`
@@ -16,7 +24,17 @@ Required run artifacts:
 - `jimeng-pack.md`
 - `continuity-review.md`
 
-Codex may also produce still images under `storyboard-images/`.
+Modes:
+
+- `draft`: no image generation; use `storyboard-images/README.md` as the later image queue.
+- `visual`: generate or fill still images under `storyboard-images/` when imagegen is available.
+
+Optional visual inputs:
+
+- `--character-image <path>`
+- `--scene-image <path>`
+- `--style-image <path>`
+
+Character images are optional. If absent, visual mode may generate `storyboard-images/character-reference.png`.
 
 No artifact may claim final MP4 generation.
-

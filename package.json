@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": false,
   "type": "module",
-  "description": "Local AI video pre-production factory for Codex-style agents: director script, shotlist, storyboard images, and video-model prompt packs.",
+  "description": "Local AI short-drama pre-production factory: compact deliverable, optional storyboard images, and video-model prompt packs.",
   "license": "MIT",
   "keywords": [
     "codex",

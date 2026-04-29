@@ -92,6 +92,7 @@ async function writeValidProductionRun(runDir) {
   await writeFile(join(runDir, 'video-model-pack.md'), '# Video model pack\n\nExternal synthesis pack.', 'utf8')
   await writeFile(join(runDir, 'agent-handoff.md'), '# Agent handoff\n\nNo final video claim.', 'utf8')
   await writeFile(join(runDir, 'agent-plan.json'), JSON.stringify({ mode: 'video-preproduction-factory', tasks: [{ id: '01' }] }, null, 2), 'utf8')
+  await writeFile(join(runDir, 'deliverable.md'), '# Cine Make Deliverable\n\nCodex 不生成最终视频。', 'utf8')
   await writeFile(join(runDir, 'director-script.md'), '# Director script\n\nA filmable two-shot scene.', 'utf8')
   await writeFile(join(runDir, 'characters.json'), JSON.stringify([{ id: 'A', anchor: 'young woman in black raincoat' }], null, 2), 'utf8')
   await writeFile(join(runDir, 'shotlist.json'), JSON.stringify(validShotlist(), null, 2), 'utf8')
