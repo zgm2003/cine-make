@@ -13,6 +13,7 @@ import {
 import { createAgentPlan } from './agent-plan-writer.mjs'
 import { writeAgentPlanArtifacts } from './task-writer.mjs'
 import { getReadyTasks, writeTaskPrompt } from './task-runner.mjs'
+import { formatValidationResult, validateRunDirectory } from './run-validator.mjs'
 
 function usage() {
   return [
@@ -20,6 +21,7 @@ function usage() {
     '  node src/cli.mjs --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] "<story material>"',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
+    '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
     '',
     'Example:',
     '  node src/cli.mjs --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"'
@@ -60,6 +62,18 @@ async function writeOneTaskPrompt(options) {
   const plan = await readAgentPlan(runDir)
   const promptPath = await writeTaskPrompt({ outDir: runDir, plan, taskId: options.id })
   console.log(`Cine Make wrote task prompt: ${promptPath}`)
+}
+
+async function validateOneRun(options) {
+  if (!options.run) throw new Error('validate requires --run <output-dir>')
+  if (!['skeleton', 'production'].includes(options.stage)) {
+    throw new Error('validate --stage must be skeleton or production')
+  }
+
+  const runDir = resolve(options.run)
+  const result = await validateRunDirectory({ runDir, stage: options.stage })
+  console.log(formatValidationResult(result))
+  if (!result.ok) process.exitCode = 1
 }
 
 async function writeRunArtifacts({ outDir, contract }) {
@@ -104,6 +118,11 @@ async function main() {
     return
   }
 
+  if (options.command === 'validate') {
+    await validateOneRun(options)
+    return
+  }
+
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
   const { planArtifacts } = await writeRunArtifacts({ outDir, contract })
@@ -127,4 +146,3 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error))
   process.exitCode = 1
 })
-

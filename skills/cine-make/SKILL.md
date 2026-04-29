@@ -45,6 +45,7 @@ When triggered by a story-to-video-preproduction request:
    node src/cli.mjs --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
    ```
 3. Read `production-brief.md` first. Treat it as the production north star.
+   - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
 4. Produce or fill the key assets in this order:
    - `director-script.md`
    - `characters.json`
@@ -65,6 +66,12 @@ When triggered by a story-to-video-preproduction request:
 - If platform limits are unknown, segment the video pack instead of stuffing every storyboard into one prompt.
 - If character identity is under-specified, generate or request character references before final storyboards.
 
+## Built-in references
+
+- `references/director-prompts.md`: director rewrite, performance, shot planning, storyboard image prompt, and continuity prompt patterns.
+- `references/output-contract.md`: required production-run artifact names.
+- `references/platform-limits.md`: safe behavior for unknown or changing video-model limits.
+
 ## Completion evidence
 
 Before saying a Cine Make run is ready, report:
@@ -76,4 +83,3 @@ Before saying a Cine Make run is ready, report:
 - video pack target platform;
 - continuity review result;
 - clear reminder that final video synthesis belongs to the external video tool.
-

@@ -39,7 +39,7 @@ function clampInteger(value, fallback, min, max, label) {
 }
 
 export function parseArgs(argv) {
-  const command = argv[0] === 'ready' || argv[0] === 'task' ? argv[0] : 'make'
+  const command = ['ready', 'task', 'validate'].includes(argv[0]) ? argv[0] : 'make'
   const options = {
     command,
     out: null,
@@ -52,6 +52,7 @@ export function parseArgs(argv) {
     aspect: '9:16',
     style: 'cinematic',
     platform: 'generic',
+    stage: 'skeleton',
     shots: null,
     storyboards: null,
     references: [],
@@ -128,6 +129,13 @@ export function parseArgs(argv) {
       index += 1
       if (!argv[index]) throw new Error('--platform requires a value')
       options.platform = argv[index]
+      continue
+    }
+
+    if (arg === '--stage') {
+      index += 1
+      if (!argv[index]) throw new Error('--stage requires skeleton or production')
+      options.stage = argv[index]
       continue
     }
 
@@ -219,4 +227,3 @@ export async function createInputContract(options) {
     }
   }
 }
-

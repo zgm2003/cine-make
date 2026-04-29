@@ -29,6 +29,13 @@ Install the Codex skill locally:
 node scripts/install-codex-skill.mjs
 ```
 
+Validate a generated run:
+
+```bash
+node src/cli.mjs validate --run .cine-make-runs/demo --stage skeleton
+node src/cli.mjs validate --run examples/rain-alley --stage production
+```
+
 ## Boundary
 
 Cine Make owns the pre-production pipeline. External video tools own final synthesis.
@@ -39,3 +46,6 @@ story material -> director script -> shotlist -> storyboard/keyframe images -> v
 
 Codex may generate images through its image generation tool, but Cine Make must never pretend it can render video.
 
+## Golden example
+
+See `examples/rain-alley/` for a complete production-run shape: input contract, director script, characters, shotlist, storyboard prompts, video-model packs, and continuity review.

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "title": "Rain Alley",
+  "slug": "rain-alley",
+  "sourceText": "雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。",
+  "contentType": "novel_excerpt",
+  "target": {
+    "durationSeconds": 30,
+    "aspectRatio": "9:16",
+    "style": "cinematic noir",
+    "platform": "seedance",
+    "shotCount": 8,
+    "storyboardCount": 8
+  },
+  "references": [],
+  "boundaries": {
+    "codexCanGenerate": [
+      "text production assets",
+      "storyboard/keyframe images through image generation tools",
+      "review reports"
+    ],
+    "codexCannotGenerate": [
+      "mp4 video",
+      "guaranteed external model motion fidelity"
+    ],
+    "finalVideoOwner": "external video model such as Seedance, Jimeng, or another video synthesis tool"
+  }
+}
+

@@ -1,0 +1,19 @@
+[
+  {
+    "id": "girl",
+    "role": "main subject",
+    "identity_anchor": "young woman with wet short black hair, pale face, black raincoat",
+    "costume_anchor": "black raincoat, dark inner shirt, rain-wet sleeve",
+    "performance_anchor": "controlled fear, tight fingers, still chin, slow breath",
+    "continuity_notes": "Keep the same face, short wet hair, black raincoat, and tense right hand across all shots."
+  },
+  {
+    "id": "umbrella_figure",
+    "role": "distant suspense subject",
+    "identity_anchor": "faceless silhouette under a black umbrella",
+    "costume_anchor": "dark coat, black umbrella, one dark glove",
+    "performance_anchor": "motionless, patient, unreadable",
+    "continuity_notes": "Never reveal the face in this sample; preserve the black umbrella silhouette."
+  }
+]
+

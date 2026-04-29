@@ -11,6 +11,7 @@ function usage() {
     '  cine-make --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] "<story material>"',
     '  cine-make ready --run <output-dir> [--done <task-id>]',
     '  cine-make task --run <output-dir> --id <task-id>',
+    '  cine-make validate --run <output-dir> [--stage <skeleton|production>]',
     '',
     'Install examples:',
     '  npx cine-make install-skill',
@@ -63,4 +64,3 @@ main().catch((error) => {
   console.error(error instanceof Error ? error.message : String(error))
   process.exitCode = 1
 })
-
