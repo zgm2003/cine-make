@@ -1,0 +1,39 @@
+{
+  "name": "cine-make",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "description": "Local AI video pre-production factory for Codex-style agents: director script, shotlist, storyboard images, and video-model prompt packs.",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "skill",
+    "storyboard",
+    "video-preproduction",
+    "image-generation",
+    "seedance",
+    "jimeng",
+    "director-workflow"
+  ],
+  "bin": {
+    "cine-make": "bin/cine-make.mjs"
+  },
+  "files": [
+    "bin/",
+    "product/",
+    "prompts/",
+    "scripts/",
+    "skills/",
+    "src/",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "make": "node src/cli.mjs",
+    "install:skill": "node scripts/install-codex-skill.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
