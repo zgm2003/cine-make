@@ -29,6 +29,17 @@ test('composeDraftAssets creates production assets from a story contract', async
   assert.match(draft.continuityReview, /Codex does not render the final video/)
 })
 
+test('composeDraftAssets extracts common short-drama anchors', async () => {
+  const hospitalSource = '小说片段：凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。'
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', hospitalSource]))
+  const draft = composeDraftAssets(contract)
+
+  assert.match(draft.directorScript, /外卖员陈默/)
+  assert.match(draft.directorScript, /废弃医院/)
+  assert.match(JSON.stringify(draft.characters), /红色弹珠/)
+  assert.match(draft.storyboardPrompts, /妹妹/)
+})
+
 test('cli --draft writes a production-valid run', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-draft-'))
   try {

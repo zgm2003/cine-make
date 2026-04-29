@@ -29,6 +29,10 @@ test('skill keeps user prompts natural and internal output rules implicit', asyn
   assert.match(skill, /generic adapter unless the user explicitly asks/)
   assert.match(skill, /That rule belongs to this skill, not to the user/)
   assert.match(skill, /Do not pass `--emit-internal` in normal user runs/)
+  assert.match(skill, /视频工具投喂包/)
+  assert.match(skill, /上传哪些图片，复制哪段提示词/)
+  assert.match(skill, /成片预览/)
+  assert.match(skill, /故事全流程/)
 })
 
 test('golden rain-alley example is a valid production run', async () => {

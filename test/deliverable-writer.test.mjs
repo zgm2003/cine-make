@@ -38,8 +38,20 @@ test('draft mode writes one user-facing deliverable without exposing internal fi
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
     assert.match(deliverable, /# Cine Make Deliverable/)
     assert.match(deliverable, /草稿模式/)
-    assert.match(deliverable, /Seedance/)
+    assert.match(deliverable, /## 成片预览/)
+    assert.match(deliverable, /## 故事全流程/)
+    assert.match(deliverable, /## 精简分镜/)
+    assert.match(deliverable, /视频工具投喂包/)
+    assert.match(deliverable, /上传图片/)
+    assert.match(deliverable, /复制提示词/)
+    assert.match(deliverable, /请根据已上传的关键帧图片/)
+    assert.match(deliverable, /storyboard-images\/S01\.png/)
     assert.match(deliverable, /Codex 不生成最终视频/)
+
+    assert.ok(deliverable.indexOf('## 成片预览') < deliverable.indexOf('## 故事全流程'))
+    assert.ok(deliverable.indexOf('## 故事全流程') < deliverable.indexOf('## 精简分镜'))
+    assert.ok(deliverable.indexOf('## 精简分镜') < deliverable.indexOf('## 故事板图片清单'))
+    assert.ok(deliverable.indexOf('## 故事板图片清单') < deliverable.indexOf('## 视频工具投喂包'))
   } finally {
     await rm(out, { recursive: true, force: true })
   }

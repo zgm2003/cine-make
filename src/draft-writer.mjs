@@ -40,26 +40,26 @@ function firstMatch(text, patterns, fallback) {
 function inferAnchors(contract) {
   const text = stripSourcePrefix(contract.sourceText)
   const protagonist = firstMatch(text, [
-    /((?:退役|前)?(?:潜水员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{2})(?=回|走|来到|收到|发现|站|进入|沿|看|听|推|把|在|，|。|$)/u,
+    /((?:退役|前)?(?:潜水员|外卖员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{2})(?=送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|在|，|。|$)/u,
     /(女孩|男孩|女人|男人|母亲|父亲|老人|孩子)/u
   ], 'main subject')
 
   const lostFigure = firstMatch(text, [
-    /(女儿|儿子|母亲|父亲|恋人|妻子|丈夫|朋友)/u,
+    /(妹妹|哥哥|姐姐|弟弟|女儿|儿子|母亲|父亲|恋人|妻子|丈夫|朋友)/u,
     /(女孩影子|男孩影子|人影|影子)/u
   ], 'lost figure')
 
   const keyObject = firstMatch(text, [
-    /(纸质车票|车票|蓝鲸|画纸|红围巾|信号灯|黑伞|照片|录音带|钥匙|戒指)/u,
+    /(红色弹珠|弹珠|纸质车票|车票|蓝鲸|画纸|红围巾|信号灯|黑伞|照片|录音带|钥匙|戒指)/u,
     /(一张[\u4e00-\u9fa5]{1,8}|一盏[\u4e00-\u9fa5]{1,8}|一条[\u4e00-\u9fa5]{1,8})/u
   ], 'key object')
 
   const location = firstMatch(text, [
-    /(废弃海洋馆|旧地铁站|废弃地铁站|站台|巷口|医院走廊|旧影院|灯塔|车站|海边|隧道|水箱)/u
+    /(废弃医院|护士站|废弃海洋馆|旧地铁站|废弃地铁站|站台|巷口|医院走廊|医院|旧影院|灯塔|车站|海边|隧道|水箱)/u
   ], 'liminal location')
 
   const impossibleSign = firstMatch(text, [
-    /(绿色信号灯|鲸鱼的低鸣|报站声|深海光|没有司机的银色列车|黑伞|广播)/u
+    /(不存在的13楼|13楼|电梯|绿色信号灯|鲸鱼的低鸣|报站声|深海光|没有司机的银色列车|黑伞|广播)/u
   ], 'impossible signal')
 
   return {

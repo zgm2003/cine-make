@@ -46,6 +46,37 @@ function compactAction(value) {
   return String(value).replace(/\s+/g, ' ').replace(/\|/g, '｜')
 }
 
+function shotPurpose(shot) {
+  return compactAction(shot.action).split('；源剧情：')[0]
+}
+
+function pickStoryFlowShots(shotlist) {
+  const last = shotlist.length - 1
+  const indices = [0, Math.floor(last * 0.25), Math.floor(last * 0.5), Math.floor(last * 0.75), last]
+  return [...new Set(indices)].map((index) => shotlist[index]).filter(Boolean)
+}
+
+function composeFilmPreview({ contract, draft, mainCharacter }) {
+  const firstShot = draft.shotlist[0]
+  const lastShot = draft.shotlist[draft.shotlist.length - 1]
+  const subject = mainCharacter?.identity_anchor ?? '主角'
+
+  return [
+    `我们在做什么：把原始故事压成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案。`,
+    '',
+    `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
+    '',
+    '你先看这个部分判断故事方向；认可后再看分镜和图片提示词。'
+  ]
+}
+
+function composeStoryFlow(shotlist) {
+  const labels = ['开场', '异常出现', '真相靠近', '情绪推进', '悬念收束']
+  return pickStoryFlowShots(shotlist).map((shot, index) => {
+    return `${index + 1}. ${labels[index] ?? '剧情节点'}：${shotPurpose(shot)}`
+  })
+}
+
 function composeShotTable(shotlist) {
   return [
     '| 镜头 | 时长 | 画面动作 | 故事板图 |',
@@ -65,17 +96,36 @@ function composeImagePromptList(shotlist) {
   ])
 }
 
-function composeVideoSegments({ contract, shotlist }) {
-  const platform = platformName(contract.target.platform)
+function composeVideoPrompt({ contract, segment }) {
+  return [
+    `请根据已上传的关键帧图片（${segment.map((shot) => shot.shot_id).join('、')}）生成一段 ${contract.target.aspectRatio} ${contract.target.style} 视频。`,
+    '保持同一人物脸、发型、服装、道具、场景光线、情绪曲线和画面方向，不要新增无关角色，不要加字幕，不要加水印。',
+    `这一段的剧情运动：${segment.map((shot) => `${shot.shot_id}：${compactAction(shot.action)}`).join('；')}。`,
+    '镜头运动只做缓慢推进、轻微跟随、环境氛围和自然转场，不要恐怖片式乱跳剪辑。'
+  ].join('')
+}
+
+function composeVideoFeedPack({ contract, shotlist }) {
+  const mode = contract.mode ?? 'draft'
   return segmentShots(shotlist).flatMap((segment, index) => {
     const first = segment[0].shot_id
     const last = segment[segment.length - 1].shot_id
     return [
-      `### ${platform} segment ${index + 1}: ${first}-${last}`,
+      `### 第 ${index + 1} 段：${first}-${last}`,
+      '',
+      '上传图片：',
+      '',
+      ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
+      '',
+      '复制提示词：',
       '',
       '```text',
-      `Using storyboard images ${segment.map((shot) => storyboardImageName(shot)).join(', ')} as visual references, create a ${contract.target.aspectRatio} ${contract.target.style} cinematic sequence. Preserve the same character identity, costume, prop, scene lighting, emotional curve, and screen direction. Motion plan: ${segment.map((shot) => `${shot.shot_id}: ${shot.video_prompt_note}`).join(' ')}`,
+      composeVideoPrompt({ contract, segment }),
       '```',
+      '',
+      mode === 'draft'
+        ? '状态：草稿模式先不要上传；等视觉包生成这些图片后再用这一段。'
+        : '状态：视觉包模式；如果这些图片已在 `storyboard-images/` 里，就可以上传到视频工具。',
       ''
     ]
   })
@@ -83,7 +133,6 @@ function composeVideoSegments({ contract, shotlist }) {
 
 export function composeDeliverable({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
-  const platform = platformName(contract.target.platform)
   const mainCharacter = draft.characters?.[0]
 
   return [
@@ -100,21 +149,24 @@ export function composeDeliverable({ contract, draft }) {
     '',
     'Codex 不生成最终视频；最终 MP4 由 Seedance / 即梦 / 其他视频工具合成。',
     '',
+    '## 成片预览',
+    '',
+    ...composeFilmPreview({ contract, draft, mainCharacter }),
+    '',
+    '## 故事全流程',
+    '',
+    ...composeStoryFlow(draft.shotlist),
+    '',
     '## 短片方案',
     '',
     `- 标题：${contract.title}`,
     `- 时长：${contract.target.durationSeconds}s`,
     `- 画幅：${contract.target.aspectRatio}`,
     `- 风格：${contract.target.style}`,
-    `- 视频工具：${platform}`,
     '',
     mainCharacter
       ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
       : '主角锚点：按源故事和分镜设定保持一致。',
-    '',
-    '## 视觉参考',
-    '',
-    ...visualReferenceLines(contract),
     '',
     '## 精简分镜',
     '',
@@ -127,9 +179,22 @@ export function composeDeliverable({ contract, draft }) {
       : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑视觉包模式。',
     '',
     ...composeImagePromptList(draft.shotlist),
-    '## 视频合成提示词',
+    '## 视频工具投喂包',
     '',
-    ...composeVideoSegments({ contract, shotlist: draft.shotlist }),
+    '到 AI 视频工具里，每一段只做两件事：',
+    '',
+    '1. 上传这一段列出的图片；',
+    '2. 复制这一段的提示词。',
+    '',
+    mode === 'draft'
+      ? '当前是草稿模式：这里只告诉你之后该怎么投喂；先不要生成图片、不要投喂视频工具。'
+      : '当前是视觉包模式：按下面分段上传图片并复制提示词。',
+    '',
+    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist }),
+    '## 视觉参考',
+    '',
+    ...visualReferenceLines(contract),
+    '',
     '## 连续性注意事项',
     '',
     '- 人物脸、发型、服装、道具不要漂移。',

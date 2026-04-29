@@ -34,6 +34,8 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Use the generic adapter unless the user explicitly asks for Seedance, Jimeng, or another target.
 - Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
+- `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`.
+- `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly 上传哪些图片，复制哪段提示词.
 
 ## Two product modes
 
@@ -100,6 +102,9 @@ When triggered by a story-to-video-preproduction request:
    --character-image <path> --scene-image <path> --style-image <path>
    ```
 3. Read `deliverable.md` first. Treat it as the user-facing north star.
+   - In draft mode, the first understanding sections should be `成片预览`, `故事全流程`, and `精简分镜`.
+   - `视频工具投喂包` should come after the user understands the story and storyboard.
+   - Each video segment must say: `上传图片` and `复制提示词`.
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
 4. If the user approves the draft and wants images, run visual mode:
    ```bash
@@ -121,6 +126,7 @@ When triggered by a story-to-video-preproduction request:
 - If character identity is under-specified, generate or request character references before final storyboards.
 - In draft mode, do not spend time generating images.
 - In visual mode, use provided character images to lock face/hair/clothing instead of inventing a new identity.
+- Never make users infer how to use Seedance/Jimeng/other tools from raw shotlists. Spell out the feed package in user language.
 
 ## Built-in references
 

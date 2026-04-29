@@ -22,6 +22,8 @@ storyboard-images/
 
 Use `--emit-internal` only when debugging the compiler itself.
 
+`deliverable.md` starts with a `视频工具投喂包`: each segment says which images to upload and which prompt to copy.
+
 ## Two modes
 
 - `draft`: fast default. Writes `deliverable.md` and image prompts, but does not generate images.
