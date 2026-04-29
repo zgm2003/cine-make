@@ -18,23 +18,14 @@ test('cli writes a draft run with the compact user deliverable', async () => {
     })
 
     assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'input-contract.json')))
-    assert.ok(existsSync(join(out, 'production-brief.md')))
-    assert.ok(existsSync(join(out, 'agent-plan.json')))
     assert.ok(existsSync(join(out, 'deliverable.md')))
-    assert.ok(existsSync(join(out, 'tasks', '01-director-script.md')))
-    assert.ok(existsSync(join(out, 'reviews', 'contract-compliance-review.md')))
     assert.ok(existsSync(join(out, 'storyboard-images', 'README.md')))
-
-    const brief = await readFile(join(out, 'production-brief.md'), 'utf8')
-    assert.match(brief, /does not render MP4/)
-
-    const plan = JSON.parse(await readFile(join(out, 'agent-plan.json'), 'utf8'))
-    assert.equal(plan.tasks.length, 6)
-    assert.equal(plan.contract.target.platform, 'jimeng')
+    assert.equal(existsSync(join(out, 'input-contract.json')), false)
+    assert.equal(existsSync(join(out, 'agent-plan.json')), false)
 
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
     assert.match(deliverable, /草稿模式/)
+    assert.match(deliverable, /Codex 不生成最终视频/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

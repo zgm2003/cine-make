@@ -21,6 +21,16 @@ test('skill points agents to built-in director prompt references', async () => {
   assert.match(promptText, /screen direction/)
 })
 
+test('skill keeps user prompts natural and internal output rules implicit', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+
+  assert.match(skill, /Natural-language UX/)
+  assert.match(skill, /The user should not have to say/)
+  assert.match(skill, /generic adapter unless the user explicitly asks/)
+  assert.match(skill, /That rule belongs to this skill, not to the user/)
+  assert.match(skill, /Do not pass `--emit-internal` in normal user runs/)
+})
+
 test('golden rain-alley example is a valid production run', async () => {
   const exampleRun = join(root, 'examples', 'rain-alley')
   const result = await validateRunDirectory({ runDir: exampleRun, stage: 'production' })
@@ -28,4 +38,3 @@ test('golden rain-alley example is a valid production run', async () => {
   assert.equal(result.ok, true, result.errors.join('\n'))
   assert.deepEqual(result.errors, [])
 })
-

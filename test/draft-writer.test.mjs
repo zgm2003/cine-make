@@ -38,15 +38,17 @@ test('cli --draft writes a production-valid run', async () => {
     })
 
     assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'director-script.md')))
-    assert.ok(existsSync(join(out, 'shotlist.json')))
-    assert.ok(existsSync(join(out, 'seedance-pack.md')))
+    assert.ok(existsSync(join(out, 'deliverable.md')))
+    assert.ok(existsSync(join(out, 'storyboard-images', 'README.md')))
+    assert.equal(existsSync(join(out, 'director-script.md')), false)
+    assert.equal(existsSync(join(out, 'shotlist.json')), false)
+    assert.equal(existsSync(join(out, 'seedance-pack.md')), false)
 
     const validation = await validateRunDirectory({ runDir: out, stage: 'production' })
     assert.equal(validation.ok, true, validation.errors.join('\n'))
 
-    const shotlist = JSON.parse(await readFile(join(out, 'shotlist.json'), 'utf8'))
-    assert.equal(shotlist.length, 12)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    assert.match(deliverable, /S12/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

@@ -56,6 +56,7 @@ export function parseArgs(argv) {
     platform: 'generic',
     stage: 'skeleton',
     draft: true,
+    emitInternal: false,
     shots: null,
     storyboards: null,
     references: [],
@@ -163,6 +164,11 @@ export function parseArgs(argv) {
     if (arg === '--visual') {
       options.mode = 'visual'
       options.draft = true
+      continue
+    }
+
+    if (arg === '--emit-internal' || arg === '--debug-artifacts') {
+      options.emitInternal = true
       continue
     }
 

@@ -14,7 +14,6 @@ const SKELETON_FILES = [
 ]
 
 const PRODUCTION_FILES = [
-  'deliverable.md',
   'director-script.md',
   'characters.json',
   'shotlist.json',
@@ -24,6 +23,11 @@ const PRODUCTION_FILES = [
   'seedance-pack.md',
   'jimeng-pack.md',
   'continuity-review.md'
+]
+
+const USER_FACING_FILES = [
+  'deliverable.md',
+  join('storyboard-images', 'README.md')
 ]
 
 const SHOT_REQUIRED_FIELDS = [
@@ -121,6 +125,13 @@ async function scanForbiddenClaims(runDir, errors) {
   }
 }
 
+function internalRunDir(runDir) {
+  const isolated = join(runDir, '.cine-make-internal')
+  if (existsSync(join(isolated, 'input-contract.json'))) return isolated
+  if (existsSync(join(runDir, 'input-contract.json'))) return runDir
+  return null
+}
+
 async function directoryExists(path) {
   try {
     const entries = await readdir(path)
@@ -133,15 +144,31 @@ async function directoryExists(path) {
 export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
   const errors = []
   const warnings = []
-  const requiredFiles = stage === 'production' ? [...SKELETON_FILES, ...PRODUCTION_FILES] : SKELETON_FILES
+  const artifactDir = internalRunDir(runDir)
 
-  for (const file of requiredFiles) {
+  for (const file of USER_FACING_FILES) {
     if (!existsSync(join(runDir, file))) {
       errors.push(`missing required file: ${file}`)
     }
   }
 
-  const contractPath = join(runDir, 'input-contract.json')
+  if (!artifactDir) {
+    if (stage === 'production') {
+      await scanForbiddenClaims(runDir, errors)
+    }
+    warnings.push('internal debug artifacts are not present; validated the user-facing package only')
+    return ok(errors, warnings)
+  }
+
+  const requiredFiles = stage === 'production' ? [...SKELETON_FILES, ...PRODUCTION_FILES] : SKELETON_FILES
+
+  for (const file of requiredFiles) {
+    if (!existsSync(join(artifactDir, file))) {
+      errors.push(`missing required file: ${file}`)
+    }
+  }
+
+  const contractPath = join(artifactDir, 'input-contract.json')
   const contract = existsSync(contractPath) ? await readJson(contractPath, errors, 'input-contract.json') : null
   if (contract) {
     const mode = contract.mode ?? 'draft'
@@ -153,14 +180,14 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
     }
   }
 
-  const planPath = join(runDir, 'agent-plan.json')
+  const planPath = join(artifactDir, 'agent-plan.json')
   const plan = existsSync(planPath) ? await readJson(planPath, errors, 'agent-plan.json') : null
   if (plan) {
     if (plan.mode !== 'video-preproduction-factory') errors.push('agent-plan.mode must be video-preproduction-factory')
     if (!Array.isArray(plan.tasks) || plan.tasks.length === 0) errors.push('agent-plan.tasks must be a non-empty array')
   }
 
-  const shotlistPath = join(runDir, 'shotlist.json')
+  const shotlistPath = join(artifactDir, 'shotlist.json')
   if (stage === 'production' && existsSync(shotlistPath)) {
     const shotlist = await readJson(shotlistPath, errors, 'shotlist.json')
     if (shotlist) {
@@ -177,6 +204,7 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
       warnings.push('storyboard-images directory is missing or empty; image generation may not have run yet')
     }
     await scanForbiddenClaims(runDir, errors)
+    if (artifactDir !== runDir) await scanForbiddenClaims(artifactDir, errors)
   }
 
   return ok(errors, warnings)

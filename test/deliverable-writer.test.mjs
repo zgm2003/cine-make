@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, rm } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -21,6 +21,13 @@ test('draft mode writes one user-facing deliverable without exposing internal fi
     assert.equal(result.status, 0, result.stderr)
     assert.ok(existsSync(join(out, 'deliverable.md')))
     assert.ok(existsSync(join(out, 'storyboard-images', 'README.md')))
+    assert.equal(existsSync(join(out, 'input-contract.json')), false)
+    assert.equal(existsSync(join(out, 'agent-plan.json')), false)
+    assert.equal(existsSync(join(out, 'tasks')), false)
+    assert.equal(existsSync(join(out, 'reviews')), false)
+
+    const rootEntries = (await readdir(out)).sort()
+    assert.deepEqual(rootEntries, ['deliverable.md', 'storyboard-images'])
 
     assert.match(result.stdout, /Cine Make ready \(draft\)/)
     assert.match(result.stdout, /deliverable:/)
@@ -33,6 +40,23 @@ test('draft mode writes one user-facing deliverable without exposing internal fi
     assert.match(deliverable, /草稿模式/)
     assert.match(deliverable, /Seedance/)
     assert.match(deliverable, /Codex 不生成最终视频/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('debug artifacts are opt-in and isolated from the user-facing root', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-debug-'))
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--emit-internal', '--out', out, source], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.deepEqual((await readdir(out)).sort(), ['.cine-make-internal', 'deliverable.md', 'storyboard-images'])
+    assert.ok(existsSync(join(out, '.cine-make-internal', 'input-contract.json')))
+    assert.ok(existsSync(join(out, '.cine-make-internal', 'agent-plan.json')))
   } finally {
     await rm(out, { recursive: true, force: true })
   }

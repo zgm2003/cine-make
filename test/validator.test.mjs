@@ -84,6 +84,7 @@ function baseContract() {
 async function writeValidProductionRun(runDir) {
   await mkdir(join(runDir, 'storyboard-images'), { recursive: true })
   await mkdir(join(runDir, 'exports'), { recursive: true })
+  await writeFile(join(runDir, 'storyboard-images', 'README.md'), '# Storyboard images\n\nNo images yet.', 'utf8')
   await writeFile(join(runDir, 'input-contract.json'), JSON.stringify(baseContract(), null, 2), 'utf8')
   await writeFile(join(runDir, 'source-package.md'), '# Source package\n\n雨夜里，女孩在巷口停下脚步。', 'utf8')
   await writeFile(join(runDir, 'production-brief.md'), '# Production brief\n\nPre-production only.', 'utf8')

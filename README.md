@@ -11,6 +11,17 @@ storyboard-images/
 
 Internal files still exist for debugging, but the user should not need to read them.
 
+Users do not need to say this output rule. The skill enforces it.
+
+By default the run directory contains only:
+
+```text
+deliverable.md
+storyboard-images/
+```
+
+Use `--emit-internal` only when debugging the compiler itself.
+
 ## Two modes
 
 - `draft`: fast default. Writes `deliverable.md` and image prompts, but does not generate images.
@@ -26,8 +37,20 @@ Reference images are optional:
 
 ## Quick start
 
+Natural skill usage:
+
+```text
+$cine-make 把这段小说做成30秒竖屏AI漫剧草稿：雨夜里，女孩在巷口停下脚步。
+```
+
+```text
+$cine-make 这个草稿可以，继续出视觉包和故事板关键帧。
+```
+
+CLI equivalent:
+
 ```bash
-node src/cli.mjs --mode draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成竖屏电影感短片：雨夜里，女孩在巷口停下脚步。"
+node src/cli.mjs --mode draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic "把这段小说片段改成竖屏电影感短片：雨夜里，女孩在巷口停下脚步。"
 ```
 
 Or through the package bin:

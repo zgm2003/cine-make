@@ -20,7 +20,7 @@ import { composeDeliverable, composeStoryboardImagesReadme } from './deliverable
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs [--mode <draft|visual>] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
+    '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -106,7 +106,7 @@ async function writeUserFacingArtifacts({ outDir, contract, draft }) {
   await writeFile(join(outDir, 'storyboard-images', 'README.md'), `${composeStoryboardImagesReadme({ contract, draft })}\n`, 'utf8')
 }
 
-async function writeRunArtifacts({ outDir, contract }) {
+async function writeInternalArtifacts({ outDir, contract }) {
   await mkdir(outDir, { recursive: true })
 
   const plan = createAgentPlan({ contract, outDir })
@@ -126,8 +126,21 @@ async function writeRunArtifacts({ outDir, contract }) {
 
   const planArtifacts = await writeAgentPlanArtifacts({ outDir, plan })
   const draftAssets = await writeDraftProductionAssets({ outDir, contract })
-  await writeUserFacingArtifacts({ outDir, contract, draft: draftAssets })
   return { plan, planArtifacts, draftAssets }
+}
+
+async function writeRunArtifacts({ outDir, contract, emitInternal = false }) {
+  await mkdir(join(outDir, 'storyboard-images'), { recursive: true })
+
+  const draftAssets = composeDraftAssets(contract)
+  await writeUserFacingArtifacts({ outDir, contract, draft: draftAssets })
+
+  let internal = null
+  if (emitInternal) {
+    internal = await writeInternalArtifacts({ outDir: join(outDir, '.cine-make-internal'), contract })
+  }
+
+  return { draftAssets, internal }
 }
 
 async function main() {
@@ -157,12 +170,13 @@ async function main() {
 
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
-  const { draftAssets } = await writeRunArtifacts({ outDir, contract })
+  const { draftAssets } = await writeRunArtifacts({ outDir, contract, emitInternal: options.emitInternal })
 
   console.log(`Cine Make ready (${contract.mode}):`)
   console.log(`- deliverable: ${join(outDir, 'deliverable.md')}`)
   console.log(`- storyboard images: ${join(outDir, 'storyboard-images')}`)
   console.log(`- shots: ${draftAssets.shotlist.length}`)
+  if (options.emitInternal) console.log(`- internal debug artifacts: ${join(outDir, '.cine-make-internal')}`)
   console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then send the video prompt segments to the external video tool' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
 }
 

@@ -19,7 +19,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 
 - turn novel/script/ad material into one readable `deliverable.md`;
 - generate storyboard/keyframe image prompts and, in visual mode, still images;
-- package assets for Seedance, Jimeng, or generic video models;
+- package assets for generic AI video generation, with optional internal adapters when a user explicitly names a platform;
 - preserve continuity instead of relying on random video generation.
 
 ## Product boundary
@@ -31,6 +31,9 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Use image generation only for still images: references, keyframes, storyboards.
 - User-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
+- The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
+- The user should not have to name a video platform. Use the generic adapter unless the user explicitly asks for Seedance, Jimeng, or another target.
+- Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
 
 ## Two product modes
 
@@ -42,6 +45,32 @@ Use only these two user-facing modes:
 | `visual` | draft is approved; user wants references/keyframes for video tools | yes, still images only when imagegen is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
 Do not invent extra user modes. Keep internal/debug artifacts internal.
+
+## Natural-language UX
+
+Users should speak naturally. Do not make them repeat internal product rules.
+
+Good user prompts:
+
+```text
+$cine-make 把这段小说做成30秒竖屏AI漫剧草稿：……
+```
+
+```text
+$cine-make 这个草稿可以，继续出视觉包和故事板关键帧。
+```
+
+```text
+$cine-make 用这张人物图锁定女主，把下面剧情做成30秒竖屏AI漫剧视觉包：……
+```
+
+Do not require prompts like:
+
+```text
+最终只交付 deliverable.md 和 storyboard-images/，不要甩内部文件。
+```
+
+That rule belongs to this skill, not to the user.
 
 ## Locate the compiler
 
@@ -61,8 +90,11 @@ When triggered by a story-to-video-preproduction request:
 1. Identify the source material: novel excerpt, rough script, ad brief, shotlist, or voiceover script.
 2. Run the compiler in draft mode first:
    ```bash
-   node src/cli.mjs --mode draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
+   node src/cli.mjs --mode draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> "<source material>"
    ```
+   Normal runs must leave the run root with only `deliverable.md` and `storyboard-images/`.
+   Use `--emit-internal` only when debugging the compiler itself.
+   Only pass `--platform <seedance|jimeng|generic>` if the user explicitly names a target platform. Otherwise omit it and let the compiler use the generic adapter.
    Optional references:
    ```bash
    --character-image <path> --scene-image <path> --style-image <path>
@@ -71,7 +103,7 @@ When triggered by a story-to-video-preproduction request:
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
 4. If the user approves the draft and wants images, run visual mode:
    ```bash
-   node src/cli.mjs --mode visual --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> [--character-image <path>] "<source material>"
+   node src/cli.mjs --mode visual --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> [--character-image <path>] "<source material>"
    ```
 5. In visual mode, generate still images in this order when imagegen is available:
    - `storyboard-images/character-reference.png` only if no character image was provided;
@@ -85,6 +117,7 @@ When triggered by a story-to-video-preproduction request:
 - A good image prompt asks for a still frame, not motion.
 - A good video-model prompt references keyframes and describes motion, camera movement, and transition logic.
 - If platform limits are unknown, segment the video pack instead of stuffing every storyboard into one prompt.
+- Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
 - If character identity is under-specified, generate or request character references before final storyboards.
 - In draft mode, do not spend time generating images.
 - In visual mode, use provided character images to lock face/hair/clothing instead of inventing a new identity.
@@ -105,6 +138,6 @@ Before saying a Cine Make run is ready, report:
 - `deliverable.md` path;
 - `storyboard-images/` path;
 - whether still images were generated or only prompts were prepared;
-- video pack target platform;
+- video prompt pack status; mention a platform only if the user explicitly named one;
 - continuity review result;
 - clear reminder that final video synthesis belongs to the external video tool.
