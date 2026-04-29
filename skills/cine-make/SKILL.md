@@ -42,7 +42,7 @@ When triggered by a story-to-video-preproduction request:
 1. Identify the source material: novel excerpt, rough script, ad brief, shotlist, or voiceover script.
 2. Run the compiler:
    ```bash
-   node src/cli.mjs --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
+   node src/cli.mjs --draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> --platform <seedance|jimeng|generic> "<source material>"
    ```
 3. Read `production-brief.md` first. Treat it as the production north star.
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.

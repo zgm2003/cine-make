@@ -14,11 +14,12 @@ import { createAgentPlan } from './agent-plan-writer.mjs'
 import { writeAgentPlanArtifacts } from './task-writer.mjs'
 import { getReadyTasks, writeTaskPrompt } from './task-runner.mjs'
 import { formatValidationResult, validateRunDirectory } from './run-validator.mjs'
+import { composeDraftAssets } from './draft-writer.mjs'
 
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] "<story material>"',
+    '  node src/cli.mjs [--draft] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] "<story material>"',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -76,7 +77,29 @@ async function validateOneRun(options) {
   if (!result.ok) process.exitCode = 1
 }
 
-async function writeRunArtifacts({ outDir, contract }) {
+async function writeDraftProductionAssets({ outDir, contract }) {
+  const draft = composeDraftAssets(contract)
+  const files = [
+    ['director-script.md', `${draft.directorScript}\n`],
+    ['characters.json', `${JSON.stringify(draft.characters, null, 2)}\n`],
+    ['shotlist.json', `${JSON.stringify(draft.shotlist, null, 2)}\n`],
+    ['storyboard-board.md', `${draft.storyboardBoard}\n`],
+    ['storyboard-prompts.md', `${draft.storyboardPrompts}\n`],
+    ['reference-pack.md', `${draft.referencePack}\n`],
+    ['seedance-pack.md', `${draft.seedancePack}\n`],
+    ['jimeng-pack.md', `${draft.jimengPack}\n`],
+    ['exports/video-model-pack.md', `${draft.seedancePack}\n---\n\n${draft.jimengPack}\n`],
+    ['continuity-review.md', `${draft.continuityReview}\n`]
+  ]
+
+  for (const [name, content] of files) {
+    await writeFile(join(outDir, name), content, 'utf8')
+  }
+
+  return draft
+}
+
+async function writeRunArtifacts({ outDir, contract, draft = false }) {
   await mkdir(outDir, { recursive: true })
 
   const plan = createAgentPlan({ contract, outDir })
@@ -95,7 +118,8 @@ async function writeRunArtifacts({ outDir, contract }) {
   }
 
   const planArtifacts = await writeAgentPlanArtifacts({ outDir, plan })
-  return { plan, planArtifacts }
+  const draftAssets = draft ? await writeDraftProductionAssets({ outDir, contract }) : null
+  return { plan, planArtifacts, draftAssets }
 }
 
 async function main() {
@@ -125,7 +149,7 @@ async function main() {
 
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
-  const { planArtifacts } = await writeRunArtifacts({ outDir, contract })
+  const { planArtifacts, draftAssets } = await writeRunArtifacts({ outDir, contract, draft: options.draft })
 
   console.log(`Cine Make wrote artifacts to: ${outDir}`)
   console.log('- input-contract.json')
@@ -140,6 +164,9 @@ async function main() {
   console.log(`- reviews/*.md (${planArtifacts.reviewFiles.length})`)
   console.log('- storyboard-images/README.md')
   console.log('- exports/')
+  if (draftAssets) {
+    console.log(`- draft production assets (${draftAssets.shotlist.length} shots)`)
+  }
 }
 
 main().catch((error) => {

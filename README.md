@@ -14,13 +14,13 @@ It does **not** generate MP4 files. It turns story material into production asse
 ## Quick start
 
 ```bash
-node src/cli.mjs --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成竖屏电影感短片：雨夜里，女孩在巷口停下脚步。"
+node src/cli.mjs --draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成竖屏电影感短片：雨夜里，女孩在巷口停下脚步。"
 ```
 
 Or through the package bin:
 
 ```bash
-cine-make --out .cine-make-runs/demo "粗剧本或小说片段"
+cine-make --draft --out .cine-make-runs/demo "粗剧本或小说片段"
 ```
 
 Install the Codex skill locally:

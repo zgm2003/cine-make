@@ -53,6 +53,7 @@ export function parseArgs(argv) {
     style: 'cinematic',
     platform: 'generic',
     stage: 'skeleton',
+    draft: false,
     shots: null,
     storyboards: null,
     references: [],
@@ -136,6 +137,11 @@ export function parseArgs(argv) {
       index += 1
       if (!argv[index]) throw new Error('--stage requires skeleton or production')
       options.stage = argv[index]
+      continue
+    }
+
+    if (arg === '--draft') {
+      options.draft = true
       continue
     }
 
