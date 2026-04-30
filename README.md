@@ -1,5 +1,9 @@
 # Cine Make
 
+**中文优先**：简体中文说明在这里，不应该埋在文档底部：[`README.zh-CN.md`](./README.zh-CN.md)
+
+English version: this file.
+
 **Cine Make** is a local AI short-drama pre-production factory for Codex-style agents.
 
 It turns novels, rough scripts, ad briefs, and story fragments into a compact, user-facing package for AI video workflows.
@@ -308,8 +312,4 @@ video-tool feed pack -> generated video segments -> final edit/export
 ```
 
 Cine Make must never claim that Codex rendered the final MP4.
-
-## Translations
-
-- [简体中文](./README.zh-CN.md)
 

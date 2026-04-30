@@ -1,5 +1,9 @@
 # Cine Make 中文说明
 
+**中文主文档**：这是给中文用户直接阅读的说明。
+
+English: [`README.md`](./README.md)
+
 **Cine Make** 是一个给 Codex 风格 agent 使用的本地 AI 漫剧前期制片工厂。
 
 它把小说片段、粗剧本、广告 brief、故事梗概转换成一个紧凑、用户能看懂的 AI 视频前期交付包。
@@ -250,4 +254,3 @@ Cine Make 负责前期制片：
 ```
 
 Cine Make 不能声称 Codex 生成了最终 MP4。
-
