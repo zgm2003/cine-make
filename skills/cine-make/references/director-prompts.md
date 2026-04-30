@@ -83,12 +83,18 @@ Include:
 
 ```text
 Using the generated keyframe image(s) as visual reference, write an external video-model prompt.
+Write it as a feed card for one generated clip, capped at 15 seconds unless a verified platform limit says otherwise.
+Keep one card to about 5 shots; split denser sequences into more cards.
 Describe:
+- uploaded reference images;
+- exact duration, aspect ratio, and visual style;
+- subject lock: face, body, costume, props, location, lighting;
+- timeline with time ranges;
+- shot size and camera movement for each beat;
 - subject motion;
-- camera motion;
-- timing;
+- camera motion and transition logic;
 - transition bridge from previous shot;
-- identity, costume, prop, lighting, and location preservation.
+- negative constraints: no subtitles, no watermark, no face drift, no random characters, no jump cuts, no story outside this segment.
 Do not ask Codex to render video. This prompt is for the external video tool.
 ```
 
@@ -110,4 +116,3 @@ Check:
 - whether video prompts depend on unstated story context.
 Return blockers, warnings, and clean handoff notes.
 ```
-

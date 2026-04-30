@@ -36,6 +36,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
 - `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly 上传哪些图片，复制哪段提示词.
+- Treat external AI video generation as a short-clip workflow. Default to **15 seconds max and about 5 shots max per generation card**; split longer stories into multiple feed cards for later editing/stitching.
 
 ## Two product modes
 
@@ -105,6 +106,8 @@ When triggered by a story-to-video-preproduction request:
    - In draft mode, the first understanding sections should be `成片预览`, `故事全流程`, and `精简分镜`.
    - `视频工具投喂包` should come after the user understands the story and storyboard.
    - Each video segment must say: `上传图片` and `复制提示词`.
+   - Each video segment must be a model-facing feed card, not a prose summary: include duration, aspect ratio, uploaded references, subject lock, timeline, shot size, camera movement, art/lighting, continuity, and negative constraints.
+   - No feed card should exceed 15 seconds or about 5 shots unless the user explicitly gives a verified platform limit.
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
 4. If the user approves the draft and wants images, run visual mode:
    ```bash
@@ -121,6 +124,7 @@ When triggered by a story-to-video-preproduction request:
 - A good shot is concrete: subject, action, performance, shot size, camera, composition, lighting, and continuity bridge.
 - A good image prompt asks for a still frame, not motion.
 - A good video-model prompt references keyframes and describes motion, camera movement, and transition logic.
+- A good video-model feed card is operational: `上传图片` + a copyable prompt with `FORMAT`, `主体锁定`, `时间线`, `镜头语言`, `光影/美术`, `连续性`, and `禁止`.
 - If platform limits are unknown, segment the video pack instead of stuffing every storyboard into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
 - If character identity is under-specified, generate or request character references before final storyboards.

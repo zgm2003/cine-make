@@ -184,7 +184,7 @@ function composeCharacters(anchors) {
       id: 'main_subject',
       role: 'main subject',
       identity_anchor: anchors.protagonist,
-      costume_anchor: `consistent costume fitting ${anchors.visualStyle}`,
+      costume_anchor: `固定服装与外观，符合${anchors.visualStyle}`,
       prop_anchor: anchors.keyObject,
       performance_anchor: 'controlled grief or fear, expressed through breath, eye line, hand tension, and restrained posture',
       continuity_notes: `Keep ${anchors.protagonist}, ${anchors.keyObject}, and the same physical silhouette stable across all shots.`
@@ -250,20 +250,88 @@ function composeReferencePack({ contract, shotlist }) {
     '',
     'Recommended generation order:',
     '',
-    '- `storyboard-images/ref-main-subject.png`',
-    '- `storyboard-images/ref-location.png`',
+    '- `storyboard-images/character-reference.png`',
+    '- `storyboard-images/scene-reference.png`',
     ...shotlist.map((shot) => `- \`storyboard-images/${shot.shot_id}.png\``),
     '',
     'After Codex image generation, record actual image filenames here.'
   ].join('\n')
 }
 
-function segmentShots(shotlist, size = 5) {
-  const segments = []
-  for (let index = 0; index < shotlist.length; index += size) {
-    segments.push(shotlist.slice(index, index + size))
+const MAX_VIDEO_SEGMENT_SECONDS = 15
+const MAX_VIDEO_SEGMENT_SHOTS = 5
+const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
+
+function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
+  if (segments.length < 2) return segments
+
+  const last = segments[segments.length - 1]
+  const previous = segments[segments.length - 2]
+
+  while (segmentDuration(last) < minSeconds && previous.length > 1) {
+    const candidate = previous[previous.length - 1]
+    const candidateSeconds = Number(candidate.duration_seconds) || 1
+    if (segmentDuration(last) + candidateSeconds > maxSeconds) break
+    if (last.length + 1 > maxShots) break
+    last.unshift(previous.pop())
   }
-  return segments
+
+  return segments.filter((segment) => segment.length)
+}
+
+function segmentShots(shotlist, { maxSeconds = MAX_VIDEO_SEGMENT_SECONDS, maxShots = MAX_VIDEO_SEGMENT_SHOTS } = {}) {
+  const segments = []
+  let current = []
+  let currentSeconds = 0
+
+  for (const shot of shotlist) {
+    const seconds = Number(shot.duration_seconds) || 1
+
+    if (current.length && (currentSeconds + seconds > maxSeconds || current.length >= maxShots)) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+
+    current.push(shot)
+    currentSeconds += seconds
+
+    if (currentSeconds >= maxSeconds) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+  }
+
+  if (current.length) segments.push(current)
+  return balanceTailSegment(segments, { maxSeconds, maxShots })
+}
+
+function segmentDuration(segment) {
+  return segment.reduce((total, shot) => total + (Number(shot.duration_seconds) || 1), 0)
+}
+
+function segmentLabel(segment) {
+  const first = segment[0].shot_id
+  const last = segment[segment.length - 1].shot_id
+  return first === last ? first : `${first}-${last}`
+}
+
+function formatTimecode(seconds) {
+  const minutes = Math.floor(seconds / 60)
+  const rest = String(seconds % 60).padStart(2, '0')
+  return `${minutes}:${rest}`
+}
+
+function composeVideoTimeline(segment) {
+  let cursor = 0
+  return segment.map((shot) => {
+    const seconds = Number(shot.duration_seconds) || 1
+    const start = cursor
+    const end = cursor + seconds
+    cursor = end
+    return `- ${formatTimecode(start)}-${formatTimecode(end)} | ${shot.shot_id} | shot size: ${shot.shot_size} | camera: ${shot.camera_movement} | action: ${shot.action} | performance: ${shot.performance_detail}`
+  })
 }
 
 function composeExternalPack({ platform, contract, anchors, shotlist }) {
@@ -274,14 +342,31 @@ function composeExternalPack({ platform, contract, anchors, shotlist }) {
     'This pack is for external video synthesis. Cine Make does not render the final video.',
     '',
     `Target: ${contract.target.durationSeconds}s ${contract.target.aspectRatio} ${contract.target.style}.`,
+    `Segment rule: each generation card is capped at ${MAX_VIDEO_SEGMENT_SECONDS}s and ${MAX_VIDEO_SEGMENT_SHOTS} shots; stitch generated clips in editing.`,
     '',
     ...segments.flatMap((segment, index) => {
-      const first = segment[0].shot_id
-      const last = segment[segment.length - 1].shot_id
+      const duration = segmentDuration(segment)
+      const camera = [...new Set(segment.map((shot) => shot.camera_movement))].join('; ')
+      const lighting = [...new Set(segment.map((shot) => shot.lighting))].join('; ')
       return [
-        `## Segment ${index + 1}: ${first}-${last}`,
+        `## Segment ${index + 1}: ${segmentLabel(segment)} (${duration}s)`,
         '',
-        `Reference images: ${segment.map((shot) => shot.shot_id).join(', ')} plus main subject and location references. Create a restrained cinematic sequence in ${anchors.location}. Preserve ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.impossibleSign}, lighting, costume, and screen direction. Motion should follow the shot notes: ${segment.map((shot) => `${shot.shot_id}: ${shot.video_prompt_note}`).join(' ')}`,
+        `Upload references: main subject reference, location reference, and storyboard keyframes ${segment.map((shot) => shot.shot_id).join(', ')}.`,
+        '',
+        'Prompt:',
+        '',
+        '```text',
+        `FORMAT: ${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
+        '',
+        `Subject lock: preserve ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.impossibleSign}, costume, lighting, location, and screen direction. Do not invent unrelated characters.`,
+        '',
+        'Timeline:',
+        ...composeVideoTimeline(segment),
+        '',
+        `Camera language: ${camera}. Keep motion restrained and continuous.`,
+        `Lighting/art direction: ${lighting}.`,
+        'Negative constraints: no subtitles, no watermark, no face drift, no costume change, no random props, no jump cuts, no story outside this segment.',
+        '```',
         ''
       ]
     })

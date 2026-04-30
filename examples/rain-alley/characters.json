@@ -1,19 +1,20 @@
 [
   {
-    "id": "girl",
+    "id": "main_subject",
     "role": "main subject",
-    "identity_anchor": "young woman with wet short black hair, pale face, black raincoat",
-    "costume_anchor": "black raincoat, dark inner shirt, rain-wet sleeve",
-    "performance_anchor": "controlled fear, tight fingers, still chin, slow breath",
-    "continuity_notes": "Keep the same face, short wet hair, black raincoat, and tense right hand across all shots."
+    "identity_anchor": "女孩",
+    "costume_anchor": "固定服装与外观，符合cinematic noir",
+    "prop_anchor": "黑伞",
+    "performance_anchor": "controlled grief or fear, expressed through breath, eye line, hand tension, and restrained posture",
+    "continuity_notes": "Keep 女孩, 黑伞, and the same physical silhouette stable across all shots."
   },
   {
-    "id": "umbrella_figure",
-    "role": "distant suspense subject",
-    "identity_anchor": "faceless silhouette under a black umbrella",
-    "costume_anchor": "dark coat, black umbrella, one dark glove",
-    "performance_anchor": "motionless, patient, unreadable",
-    "continuity_notes": "Never reveal the face in this sample; preserve the black umbrella silhouette."
+    "id": "lost_or_impossible_figure",
+    "role": "memory, signal, or impossible invitation",
+    "identity_anchor": "lost figure",
+    "costume_anchor": "keep partially hidden unless the source explicitly demands a reveal",
+    "prop_anchor": "黑伞",
+    "performance_anchor": "patient and quiet; never turns into random horror spectacle",
+    "continuity_notes": "Represent lost figure through voice, reflection, silhouette, object, or distant gesture before any full reveal."
   }
 ]
-

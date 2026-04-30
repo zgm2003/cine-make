@@ -34,12 +34,69 @@ function storyboardImageName(shot) {
   return `storyboard-images/${shot.shot_id}.png`
 }
 
-function segmentShots(shotlist, size = 5) {
-  const segments = []
-  for (let index = 0; index < shotlist.length; index += size) {
-    segments.push(shotlist.slice(index, index + size))
+const MAX_VIDEO_SEGMENT_SECONDS = 15
+const MAX_VIDEO_SEGMENT_SHOTS = 5
+const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
+
+function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
+  if (segments.length < 2) return segments
+
+  const last = segments[segments.length - 1]
+  const previous = segments[segments.length - 2]
+
+  while (segmentDuration(last) < minSeconds && previous.length > 1) {
+    const candidate = previous[previous.length - 1]
+    const candidateSeconds = Number(candidate.duration_seconds) || 1
+    if (segmentDuration(last) + candidateSeconds > maxSeconds) break
+    if (last.length + 1 > maxShots) break
+    last.unshift(previous.pop())
   }
-  return segments
+
+  return segments.filter((segment) => segment.length)
+}
+
+function segmentShots(shotlist, { maxSeconds = MAX_VIDEO_SEGMENT_SECONDS, maxShots = MAX_VIDEO_SEGMENT_SHOTS } = {}) {
+  const segments = []
+  let current = []
+  let currentSeconds = 0
+
+  for (const shot of shotlist) {
+    const seconds = Number(shot.duration_seconds) || 1
+
+    if (current.length && (currentSeconds + seconds > maxSeconds || current.length >= maxShots)) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+
+    current.push(shot)
+    currentSeconds += seconds
+
+    if (currentSeconds >= maxSeconds) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+  }
+
+  if (current.length) segments.push(current)
+  return balanceTailSegment(segments, { maxSeconds, maxShots })
+}
+
+function segmentDuration(segment) {
+  return segment.reduce((total, shot) => total + (Number(shot.duration_seconds) || 1), 0)
+}
+
+function segmentLabel(segment) {
+  const first = segment[0].shot_id
+  const last = segment[segment.length - 1].shot_id
+  return first === last ? first : `${first}-${last}`
+}
+
+function formatTimecode(seconds) {
+  const minutes = Math.floor(seconds / 60)
+  const rest = String(seconds % 60).padStart(2, '0')
+  return `${minutes}:${rest}`
 }
 
 function compactAction(value) {
@@ -96,31 +153,77 @@ function composeImagePromptList(shotlist) {
   ])
 }
 
-function composeVideoPrompt({ contract, segment }) {
-  return [
-    `请根据已上传的关键帧图片（${segment.map((shot) => shot.shot_id).join('、')}）生成一段 ${contract.target.aspectRatio} ${contract.target.style} 视频。`,
-    '保持同一人物脸、发型、服装、道具、场景光线、情绪曲线和画面方向，不要新增无关角色，不要加字幕，不要加水印。',
-    `这一段的剧情运动：${segment.map((shot) => `${shot.shot_id}：${compactAction(shot.action)}`).join('；')}。`,
-    '镜头运动只做缓慢推进、轻微跟随、环境氛围和自然转场，不要恐怖片式乱跳剪辑。'
-  ].join('')
+function visualUploadLines(contract) {
+  const visual = contract.visualReferences ?? {}
+  const lines = []
+
+  for (const path of visual.characterImages ?? []) lines.push(`- 人物参考图：\`${path}\``)
+  for (const path of visual.sceneImages ?? []) lines.push(`- 场景参考图：\`${path}\``)
+  for (const path of visual.styleImages ?? []) lines.push(`- 风格参考图：\`${path}\``)
+
+  if (!(visual.characterImages ?? []).length) {
+    lines.push('- 人物参考图：`storyboard-images/character-reference.png`（没有用户人物图时，视觉包阶段先生成/补齐）')
+  }
+
+  if (!(visual.sceneImages ?? []).length) {
+    lines.push('- 场景参考图：`storyboard-images/scene-reference.png`（没有用户场景图时可选生成）')
+  }
+
+  return lines
 }
 
-function composeVideoFeedPack({ contract, shotlist }) {
+function composeTimeline(segment) {
+  let cursor = 0
+  return segment.map((shot) => {
+    const seconds = Number(shot.duration_seconds) || 1
+    const start = cursor
+    const end = cursor + seconds
+    cursor = end
+    return `${formatTimecode(start)}-${formatTimecode(end)}｜${shot.shot_id}｜景别：${shot.shot_size}｜运镜：${shot.camera_movement}｜画面：${compactAction(shot.action)}｜表演：${compactAction(shot.performance_detail)}`
+  })
+}
+
+function composeVideoPrompt({ contract, segment, mainCharacter }) {
+  const subject = mainCharacter?.identity_anchor ?? segment[0]?.subject ?? '主角'
+  const costume = mainCharacter?.costume_anchor ?? '同一套服装'
+  const prop = mainCharacter?.prop_anchor ?? '关键道具'
+  const duration = segmentDuration(segment)
+  const cameraLanguage = [...new Set(segment.map((shot) => shot.camera_movement))].join('；')
+  const lighting = [...new Set(segment.map((shot) => shot.lighting))].join('；')
+  const continuity = segment.map((shot) => `${shot.shot_id}：${shot.continuity_from_previous}`).join('；')
+
+  return [
+    `FORMAT：${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
+    '',
+    `主体锁定：保持${subject}同一张脸、发型和体型；服装锚点：${costume}；道具锚点：${prop}；不要重新设计人物，不要新增无关角色。`,
+    '',
+    '时间线：',
+    ...composeTimeline(segment),
+    '',
+    `镜头语言：${cameraLanguage}。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。`,
+    `光影/美术：${lighting}。保持同一场景方向、冷暖关系、阴影位置和画面质感。`,
+    `连续性：${continuity}。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。`,
+    '',
+    '禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。'
+  ].join('\n')
+}
+
+function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
   const mode = contract.mode ?? 'draft'
   return segmentShots(shotlist).flatMap((segment, index) => {
-    const first = segment[0].shot_id
-    const last = segment[segment.length - 1].shot_id
+    const duration = segmentDuration(segment)
     return [
-      `### 第 ${index + 1} 段：${first}-${last}`,
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，单次生成不超过 ${MAX_VIDEO_SEGMENT_SECONDS}s / ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头）`,
       '',
       '上传图片：',
       '',
+      ...visualUploadLines(contract),
       ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
       '',
       '复制提示词：',
       '',
       '```text',
-      composeVideoPrompt({ contract, segment }),
+      composeVideoPrompt({ contract, segment, mainCharacter }),
       '```',
       '',
       mode === 'draft'
@@ -181,6 +284,8 @@ export function composeDeliverable({ contract, draft }) {
     ...composeImagePromptList(draft.shotlist),
     '## 视频工具投喂包',
     '',
+    `按外部 AI 视频工具单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，且默认不超过 ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
+    '',
     '到 AI 视频工具里，每一段只做两件事：',
     '',
     '1. 上传这一段列出的图片；',
@@ -190,7 +295,7 @@ export function composeDeliverable({ contract, draft }) {
       ? '当前是草稿模式：这里只告诉你之后该怎么投喂；先不要生成图片、不要投喂视频工具。'
       : '当前是视觉包模式：按下面分段上传图片并复制提示词。',
     '',
-    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist }),
+    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist, mainCharacter }),
     '## 视觉参考',
     '',
     ...visualReferenceLines(contract),

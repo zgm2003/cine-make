@@ -2,15 +2,17 @@
 
 ## Clean
 
-- Girl identity anchor is stable: wet short black hair, black raincoat, tense right hand.
-- Umbrella figure remains faceless and distant.
-- Rain direction, alley geometry, and red-blue neon palette stay consistent.
-- Image prompts describe still keyframes, not video.
-- Video packs are segmented and assigned to external synthesis.
+- Main subject anchor: 女孩.
+- Key object anchor: 黑伞.
+- Location anchor: 巷口.
+- Impossible sign anchor: 黑伞.
+- Still-image prompts ask for keyframes only.
+- External video motion is isolated to Seedance/Jimeng packs.
+- 8 storyboard images are treated as pre-production/keyframe references.
 
 ## Watch
 
-- Do not let the umbrella figure's face appear in generated images.
-- Do not let the girl's raincoat change color between S01 and S08.
-- Segment B must preserve the same alley vanishing point established in Segment A.
-
+- Do not let generated images invent extra characters, readable fake text, or unrelated props.
+- Keep lost figure visually restrained unless the user explicitly asks for a full reveal.
+- Keep 女孩 identity stable across all shots.
+- Codex does not render the final video; final synthesis belongs to the external video tool.

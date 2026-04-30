@@ -1,18 +1,19 @@
 # Director script
 
+## Logline
+
+女孩因黑伞进入巷口，一段与lost figure有关的旧伤被重新打开。
+
+## Director intent
+
+目标：30s，9:16，cinematic noir。整体要克制：异常现象是真实的，但表演必须落在人身上，不靠解释和大喊大叫。
+
 ## Beat 1
 
-The girl reaches the mouth of the alley and stops before stepping into the darker passage. Rain runs from her hair onto the collar of her black raincoat. Her right hand tightens around the wet sleeve instead of reaching for her phone.
+雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞
 
-## Beat 2
+导演处理：让女孩始终具体地站在巷口里。围绕黑伞和黑伞把抽象信息变成可见动作。情绪转折必须通过呼吸、视线、手部紧张和走位读出来，不靠旁白解释。
 
-She listens. The city noise drops behind the sound of rain hitting metal awnings. Her eyes do not move first; her shoulders stiffen, then her chin turns slightly toward the neon reflection behind her.
+## Ending principle
 
-## Beat 3
-
-At the far end of the alley, a black umbrella rises into the red-blue neon. The figure under it stays still. The umbrella blocks the face, leaving only a dark silhouette and one gloved hand.
-
-## Beat 4
-
-The girl takes one slow breath. She turns back toward the alley, not away from it. Her fear becomes decision: one step forward, into the rain glow.
-
+结束在“门槛选择”上。不要过度解释lost figure，给外部视频合成保留悬念。

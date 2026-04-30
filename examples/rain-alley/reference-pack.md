@@ -1,13 +1,22 @@
 # Reference pack
 
-No raster images are committed in this golden example.
+No raster images are committed by the draft writer.
 
-When generated, record:
+User-provided visual references:
 
-- `storyboard-images/character-girl.png`
-- `storyboard-images/scene-alley.png`
-- `storyboard-images/umbrella-figure.png`
-- `storyboard-images/S01.png` through `S08.png`
+- none
 
-Use the same girl and umbrella anchors from `characters.json` across all generated images.
+Recommended generation order:
 
+- `storyboard-images/character-reference.png`
+- `storyboard-images/scene-reference.png`
+- `storyboard-images/S01.png`
+- `storyboard-images/S02.png`
+- `storyboard-images/S03.png`
+- `storyboard-images/S04.png`
+- `storyboard-images/S05.png`
+- `storyboard-images/S06.png`
+- `storyboard-images/S07.png`
+- `storyboard-images/S08.png`
+
+After Codex image generation, record actual image filenames here.

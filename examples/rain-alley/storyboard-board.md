@@ -1,13 +1,12 @@
 # Storyboard board
 
-| Shot | Image slot | Purpose |
-| --- | --- | --- |
-| S01 | `storyboard-images/S01.png` | Establish girl at alley mouth |
-| S02 | `storyboard-images/S02.png` | Micro-performance: she senses something |
-| S03 | `storyboard-images/S03.png` | Reflection insert |
-| S04 | `storyboard-images/S04.png` | Umbrella reveal |
-| S05 | `storyboard-images/S05.png` | Girl sees the figure |
-| S06 | `storyboard-images/S06.png` | Figure continuity anchor |
-| S07 | `storyboard-images/S07.png` | Decision step |
-| S08 | `storyboard-images/S08.png` | Final movement into alley |
-
+| Shot | Image slot | Purpose | Continuity anchor |
+| --- | --- | --- | --- |
+| S01 | `storyboard-images/S01.png` | 注意到不该出现的信号，在越过边界前停住；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | opening shot |
+| S02 | `storyboard-images/S02.png` | 查看把当下和旧伤连接起来的关键物；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S01 的 巷口、女孩、黑伞 和 黑伞 |
+| S03 | `storyboard-images/S03.png` | 进入主体空间，意识到它重新活了过来；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S02 的 巷口、女孩、黑伞 和 黑伞 |
+| S04 | `storyboard-images/S04.png` | 听见不该存在的声音、信号或记忆；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S03 的 巷口、女孩、黑伞 和 黑伞 |
+| S05 | `storyboard-images/S05.png` | 环境开始向主体逼近或开启；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S04 的 巷口、女孩、黑伞 和 黑伞 |
+| S06 | `storyboard-images/S06.png` | 只通过倒影或剪影看到失去的人或真相；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S05 的 巷口、女孩、黑伞 和 黑伞 |
+| S07 | `storyboard-images/S07.png` | 发现证明旧连接真实存在的小物件；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S06 的 巷口、女孩、黑伞 和 黑伞 |
+| S08 | `storyboard-images/S08.png` | 失去的人或最终信号伸出邀请，但不强迫；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞 | 延续 S07 的 巷口、女孩、黑伞 和 黑伞 |

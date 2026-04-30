@@ -34,7 +34,7 @@ Codex 不生成最终视频；最终 MP4 由 Seedance / 即梦 / 其他视频工
 - 画幅：9:16
 - 风格：cinematic noir
 
-主角锚点：女孩；服装/道具保持：consistent costume fitting cinematic noir / 黑伞。
+主角锚点：女孩；服装/道具保持：固定服装与外观，符合cinematic noir / 黑伞。
 
 ## 精简分镜
 
@@ -103,6 +103,8 @@ cinematic noir still keyframe, 女孩 in 巷口, visible action: 失去的人或
 
 ## 视频工具投喂包
 
+按外部 AI 视频工具单次生成上限处理：每段最多 15s，且默认不超过 5 个镜头。30 秒成片会自动拆成多个片段，最后再剪到一起。
+
 到 AI 视频工具里，每一段只做两件事：
 
 1. 上传这一段列出的图片；
@@ -110,36 +112,93 @@ cinematic noir still keyframe, 女孩 in 巷口, visible action: 失去的人或
 
 当前是草稿模式：这里只告诉你之后该怎么投喂；先不要生成图片、不要投喂视频工具。
 
-### 第 1 段：S01-S05
+### 第 1 段：S01-S03（12s，单次生成不超过 15s / 5 个镜头）
 
 上传图片：
 
+- 人物参考图：`storyboard-images/character-reference.png`（没有用户人物图时，视觉包阶段先生成/补齐）
+- 场景参考图：`storyboard-images/scene-reference.png`（没有用户场景图时可选生成）
 - `storyboard-images/S01.png`
 - `storyboard-images/S02.png`
 - `storyboard-images/S03.png`
-- `storyboard-images/S04.png`
-- `storyboard-images/S05.png`
 
 复制提示词：
 
 ```text
-请根据已上传的关键帧图片（S01、S02、S03、S04、S05）生成一段 9:16 cinematic noir 视频。保持同一人物脸、发型、服装、道具、场景光线、情绪曲线和画面方向，不要新增无关角色，不要加字幕，不要加水印。这一段的剧情运动：S01：注意到不该出现的信号，在越过边界前停住；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S02：查看把当下和旧伤连接起来的关键物；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S03：进入主体空间，意识到它重新活了过来；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S04：听见不该存在的声音、信号或记忆；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S05：环境开始向主体逼近或开启；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。镜头运动只做缓慢推进、轻微跟随、环境氛围和自然转场，不要恐怖片式乱跳剪辑。
+FORMAT：12s / 9:16 / cinematic noir / multi-shot cinematic sequence
+
+主体锁定：保持女孩同一张脸、发型和体型；服装锚点：固定服装与外观，符合cinematic noir；道具锚点：黑伞；不要重新设计人物，不要新增无关角色。
+
+时间线：
+0:00-0:04｜S01｜景别：wide establishing shot｜运镜：slow push toward the threshold｜画面：注意到不该出现的信号，在越过边界前停住；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：克制的迟疑；握住关键物的手指收紧
+0:04-0:08｜S02｜景别：macro insert｜运镜：locked macro frame｜画面：查看把当下和旧伤连接起来的关键物；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：手指压得过紧；呼吸变短但表情仍然收住
+0:08-0:12｜S03｜景别：wide environmental shot｜运镜：slow lateral slide｜画面：进入主体空间，意识到它重新活了过来；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：肩膀微沉，旧记忆变成可触摸的现实
+
+镜头语言：slow push toward the threshold；locked macro frame；slow lateral slide。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。
+光影/美术：cinematic noir; motivated by the impossible sign and practical location light。保持同一场景方向、冷暖关系、阴影位置和画面质感。
+连续性：S01：opening shot；S02：延续 S01 的 巷口、女孩、黑伞 和 黑伞；S03：延续 S02 的 巷口、女孩、黑伞 和 黑伞。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。
+
+禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。
 ```
 
 状态：草稿模式先不要上传；等视觉包生成这些图片后再用这一段。
 
-### 第 2 段：S06-S08
+### 第 2 段：S04-S06（12s，单次生成不超过 15s / 5 个镜头）
 
 上传图片：
 
+- 人物参考图：`storyboard-images/character-reference.png`（没有用户人物图时，视觉包阶段先生成/补齐）
+- 场景参考图：`storyboard-images/scene-reference.png`（没有用户场景图时可选生成）
+- `storyboard-images/S04.png`
+- `storyboard-images/S05.png`
 - `storyboard-images/S06.png`
+
+复制提示词：
+
+```text
+FORMAT：12s / 9:16 / cinematic noir / multi-shot cinematic sequence
+
+主体锁定：保持女孩同一张脸、发型和体型；服装锚点：固定服装与外观，符合cinematic noir；道具锚点：黑伞；不要重新设计人物，不要新增无关角色。
+
+时间线：
+0:00-0:04｜S04｜景别：insert shot｜运镜：locked frame with subtle vibration｜画面：听见不该存在的声音、信号或记忆；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：身体先僵住，脸部反应随后才出现
+0:04-0:08｜S05｜景别：low angle shot｜运镜：push along the floor line｜画面：环境开始向主体逼近或开启；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：脚没有后退，反而停在边界线上
+0:08-0:12｜S06｜景别：reflection close-up｜运镜：parallel slide｜画面：只通过倒影或剪影看到失去的人或真相；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：朝影像转头，却说不出话
+
+镜头语言：locked frame with subtle vibration；push along the floor line；parallel slide。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。
+光影/美术：cinematic noir; motivated by the impossible sign and practical location light。保持同一场景方向、冷暖关系、阴影位置和画面质感。
+连续性：S04：延续 S03 的 巷口、女孩、黑伞 和 黑伞；S05：延续 S04 的 巷口、女孩、黑伞 和 黑伞；S06：延续 S05 的 巷口、女孩、黑伞 和 黑伞。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。
+
+禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。
+```
+
+状态：草稿模式先不要上传；等视觉包生成这些图片后再用这一段。
+
+### 第 3 段：S07-S08（6s，单次生成不超过 15s / 5 个镜头）
+
+上传图片：
+
+- 人物参考图：`storyboard-images/character-reference.png`（没有用户人物图时，视觉包阶段先生成/补齐）
+- 场景参考图：`storyboard-images/scene-reference.png`（没有用户场景图时可选生成）
 - `storyboard-images/S07.png`
 - `storyboard-images/S08.png`
 
 复制提示词：
 
 ```text
-请根据已上传的关键帧图片（S06、S07、S08）生成一段 9:16 cinematic noir 视频。保持同一人物脸、发型、服装、道具、场景光线、情绪曲线和画面方向，不要新增无关角色，不要加字幕，不要加水印。这一段的剧情运动：S06：只通过倒影或剪影看到失去的人或真相；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S07：发现证明旧连接真实存在的小物件；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞；S08：失去的人或最终信号伸出邀请，但不强迫；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。镜头运动只做缓慢推进、轻微跟随、环境氛围和自然转场，不要恐怖片式乱跳剪辑。
+FORMAT：6s / 9:16 / cinematic noir / multi-shot cinematic sequence
+
+主体锁定：保持女孩同一张脸、发型和体型；服装锚点：固定服装与外观，符合cinematic noir；道具锚点：黑伞；不要重新设计人物，不要新增无关角色。
+
+时间线：
+0:00-0:03｜S07｜景别：insert-medium hybrid｜运镜：slow push toward the object｜画面：发现证明旧连接真实存在的小物件；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：手伸出去，却停在触碰之前
+0:03-0:06｜S08｜景别：long lens interior shot｜运镜：slow rack focus｜画面：失去的人或最终信号伸出邀请，但不强迫；源剧情：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞｜表演：邀请停在光里等待，不抓取主体
+
+镜头语言：slow push toward the object；slow rack focus。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。
+光影/美术：cinematic noir; motivated by the impossible sign and practical location light。保持同一场景方向、冷暖关系、阴影位置和画面质感。
+连续性：S07：延续 S06 的 巷口、女孩、黑伞 和 黑伞；S08：延续 S07 的 巷口、女孩、黑伞 和 黑伞。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。
+
+禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。
 ```
 
 状态：草稿模式先不要上传；等视觉包生成这些图片后再用这一段。

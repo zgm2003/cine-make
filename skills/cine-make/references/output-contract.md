@@ -38,3 +38,11 @@ Optional visual inputs:
 Character images are optional. If absent, visual mode may generate `storyboard-images/character-reference.png`.
 
 No artifact may claim final MP4 generation.
+
+Video-tool feed pack:
+
+- split generated clips into cards of at most 15 seconds and about 5 shots by default;
+- every card must tell the user which reference/keyframe images to upload;
+- every card must include a copyable model-facing prompt, not only a human story summary;
+- each prompt should specify subject lock, timeline, shot size, camera movement, lighting/art direction, continuity, and negative constraints;
+- longer videos are stitched from generated clips outside Cine Make.

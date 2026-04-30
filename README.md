@@ -37,6 +37,8 @@ Upload these images
 Copy this prompt
 ```
 
+The feed pack is model-facing, not just human-facing. It splits longer films into short generation cards, with a safe default of **15 seconds or less and about 5 shots or less per card**. Each card includes subject lock, timeline, shot size, camera movement, lighting/art direction, continuity, and negative constraints.
+
 ## Two modes
 
 Cine Make deliberately has only two user-facing modes.
@@ -246,11 +248,13 @@ These are still images, not videos. They are used as keyframe/reference images f
 
 Users should not feed the whole project folder into Seedance, Jimeng, or any other video tool.
 
+Treat external video generation as a short-clip workflow. Cine Make defaults to cards of **15 seconds or less and about 5 shots or less**; a 30-second short is generated as multiple clips and stitched afterwards.
+
 For each segment in `deliverable.md`:
 
 ```text
-1. Upload the listed storyboard images.
-2. Copy the listed prompt.
+1. Upload the listed reference/storyboard images.
+2. Copy the model-facing feed-card prompt.
 3. Generate that segment in the external video tool.
 4. Repeat for the next segment.
 ```

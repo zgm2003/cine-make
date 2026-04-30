@@ -194,23 +194,27 @@ C:\Users\you\Desktop\refs\style.png
 所以 Cine Make 会在 `deliverable.md` 里生成一个很直白的区域：
 
 ```text
-第 1 段：S01-S05
+第 1 段：S01-S04（15s以内，约5个镜头以内）
 
 上传图片：
+- 人物参考图 / 场景参考图
 - storyboard-images/S01.png
 - storyboard-images/S02.png
 - storyboard-images/S03.png
 - storyboard-images/S04.png
-- storyboard-images/S05.png
 
 复制提示词：
-请根据已上传的关键帧图片（S01、S02、S03、S04、S05）生成一段 9:16 电影感悬疑视频……
+FORMAT：15s / 9:16 / 电影感悬疑 / multi-shot
+主体锁定：保持同一人物脸、服装、道具和场景光线……
+时间线：0:00-0:03 镜头01…… 0:03-0:07 镜头02……
+镜头语言：慢推、轻微跟随、低照度冷色调……
+禁止：不要字幕、不要水印、不要新增人物、不要跳剪……
 ```
 
 用户最终给视频工具的不是一整个项目文件夹，而是：
 
 ```text
-每一段 = 对应图片 + 对应提示词
+每一段 = 参考图/关键帧 + 15秒以内、约5镜头以内的模型投喂卡
 ```
 
 这比单纯输出一堆分镜、prompt、JSON 更接近真实使用场景。
