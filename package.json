@@ -26,7 +26,8 @@
     "scripts/",
     "skills/",
     "src/",
-    "README.md"
+    "README.md",
+    "README.zh-CN.md"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",
