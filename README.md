@@ -126,6 +126,12 @@ She receives a text message from herself three years in the future. The message 
 
 Users do **not** need to specify a video platform. Cine Make uses a generic AI-video adapter unless the user explicitly asks for Seedance, Jimeng, or another tool.
 
+## Project article
+
+For a more product-oriented introduction and sharing article, see:
+
+- [Cine Make: 把小说片段变成 AI 漫剧前期制片包](./docs/share-cine-make.zh-CN.md)
+
 ## Install from npm
 
 Install the Codex skill from the published npm package:

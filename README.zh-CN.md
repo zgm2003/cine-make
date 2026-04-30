@@ -112,6 +112,12 @@ C:\Users\you\Desktop\refs\hero.png
 
 用户不需要说平台。默认走通用 AI 视频工具适配。只有用户明确说 Seedance、即梦或其他平台时，才做对应适配。
 
+## 分享文章
+
+如果想看更偏产品介绍和对外分享的版本，可以看：
+
+- [Cine Make：把小说片段变成 AI 漫剧前期制片包](./docs/share-cine-make.zh-CN.md)
+
 ## 从 npm 安装
 
 ```bash
