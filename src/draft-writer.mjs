@@ -258,9 +258,9 @@ function composeReferencePack({ contract, shotlist }) {
   ].join('\n')
 }
 
-const MAX_VIDEO_SEGMENT_SECONDS = 15
-const MAX_VIDEO_SEGMENT_SHOTS = 5
-const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
+const MAX_VIDEO_SEGMENT_SECONDS = 6
+const MAX_VIDEO_SEGMENT_SHOTS = 1
+const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 3
 
 function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
   if (segments.length < 2) return segments
@@ -342,21 +342,21 @@ function composeExternalPack({ platform, contract, anchors, shotlist }) {
     'This pack is for external video synthesis. Cine Make does not render the final video.',
     '',
     `Target: ${contract.target.durationSeconds}s ${contract.target.aspectRatio} ${contract.target.style}.`,
-    `Segment rule: each generation card is capped at ${MAX_VIDEO_SEGMENT_SECONDS}s and ${MAX_VIDEO_SEGMENT_SHOTS} shots; stitch generated clips in editing.`,
+    `Task rule: one visible action per generation task, usually ${MIN_USEFUL_VIDEO_SEGMENT_SECONDS}-${MAX_VIDEO_SEGMENT_SECONDS}s; use start/end frames in the user-facing episodes package.`,
     '',
     ...segments.flatMap((segment, index) => {
       const duration = segmentDuration(segment)
       const camera = [...new Set(segment.map((shot) => shot.camera_movement))].join('; ')
       const lighting = [...new Set(segment.map((shot) => shot.lighting))].join('; ')
       return [
-        `## Segment ${index + 1}: ${segmentLabel(segment)} (${duration}s)`,
+        `## Task ${index + 1}: ${segmentLabel(segment)} (${duration}s)`,
         '',
-        `Upload references: main subject reference, location reference, and storyboard keyframes ${segment.map((shot) => shot.shot_id).join(', ')}.`,
+        `Upload references: main subject reference, location reference, start frame, and end frame for ${segment.map((shot) => shot.shot_id).join(', ')}.`,
         '',
         'Prompt:',
         '',
         '```text',
-        `FORMAT: ${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
+        `FORMAT: ${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / start-end anchored image-to-video task`,
         '',
         `Subject lock: preserve ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.impossibleSign}, costume, lighting, location, and screen direction. Do not invent unrelated characters.`,
         '',

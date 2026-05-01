@@ -24,6 +24,13 @@ test('parses the two product modes and optional visual references', async () => 
   })
 })
 
+test('keeps generate as a user-facing alias for visual mode', async () => {
+  const options = parseArgs(['--mode', 'generate', '故事'])
+  const contract = await createInputContract(options)
+
+  assert.equal(contract.mode, 'visual')
+})
+
 test('defaults to draft mode without requiring reference images', async () => {
   const contract = await createInputContract(parseArgs(['雨夜里，女孩在巷口停下脚步。']))
 

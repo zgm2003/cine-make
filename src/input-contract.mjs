@@ -2,7 +2,20 @@ import { readFile } from 'node:fs/promises'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['seedance', 'jimeng', 'generic'])
-const VALID_MODES = new Set(['draft', 'visual'])
+const MODE_ALIASES = new Map([
+  ['draft', 'draft'],
+  ['visual', 'visual'],
+  ['image', 'visual'],
+  ['generate', 'visual'],
+  ['production', 'visual']
+])
+
+function normalizeMode(value) {
+  const mode = (value || 'draft').toLowerCase()
+  const normalized = MODE_ALIASES.get(mode)
+  if (!normalized) throw new Error(`Unsupported mode: ${mode}`)
+  return normalized
+}
 
 function stableHash(value) {
   let hash = 2166136261
@@ -255,8 +268,7 @@ export async function createInputContract(options) {
   const targetPlatform = (options.platform || 'generic').toLowerCase()
   if (!VALID_PLATFORMS.has(targetPlatform)) throw new Error(`Unsupported platform: ${targetPlatform}`)
 
-  const mode = (options.mode || 'draft').toLowerCase()
-  if (!VALID_MODES.has(mode)) throw new Error(`Unsupported mode: ${mode}`)
+  const mode = normalizeMode(options.mode)
 
   const shotCount = clampInteger(options.shots, defaultShotCount(seconds), 4, 30, 'shots')
   const storyboardCount = clampInteger(options.storyboards, Math.min(15, Math.max(shotCount, 8)), 4, 30, 'storyboards')

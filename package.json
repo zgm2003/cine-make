@@ -33,6 +33,7 @@
   "scripts": {
     "test": "node --test test/*.test.mjs",
     "make": "node src/cli.mjs",
+    "render:images": "node scripts/render-images.mjs",
     "validate": "node scripts/validate-run.mjs",
     "install:skill": "node scripts/install-codex-skill.mjs"
   },

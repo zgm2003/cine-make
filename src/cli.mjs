@@ -16,6 +16,8 @@ import { getReadyTasks, writeTaskPrompt } from './task-runner.mjs'
 import { formatValidationResult, validateRunDirectory } from './run-validator.mjs'
 import { composeDraftAssets } from './draft-writer.mjs'
 import { composeDeliverable, composeStoryboardImagesReadme } from './deliverable-writer.mjs'
+import { createEpisodePlan } from './episode-planner.mjs'
+import { writeVideoTaskArtifacts } from './video-task-writer.mjs'
 
 function usage() {
   return [
@@ -101,9 +103,9 @@ async function writeDraftProductionAssets({ outDir, contract }) {
   return draft
 }
 
-async function writeUserFacingArtifacts({ outDir, contract, draft }) {
-  await writeFile(join(outDir, 'deliverable.md'), `${composeDeliverable({ contract, draft })}\n`, 'utf8')
-  await writeFile(join(outDir, 'storyboard-images', 'README.md'), `${composeStoryboardImagesReadme({ contract, draft })}\n`, 'utf8')
+async function writeUserFacingArtifacts({ outDir, contract, draft, episodePlan }) {
+  await writeFile(join(outDir, 'deliverable.md'), `${composeDeliverable({ contract, draft, episodePlan })}\n`, 'utf8')
+  await writeFile(join(outDir, 'storyboard-images', 'README.md'), `${composeStoryboardImagesReadme({ contract, draft, episodePlan })}\n`, 'utf8')
 }
 
 async function writeInternalArtifacts({ outDir, contract }) {
@@ -133,14 +135,16 @@ async function writeRunArtifacts({ outDir, contract, emitInternal = false }) {
   await mkdir(join(outDir, 'storyboard-images'), { recursive: true })
 
   const draftAssets = composeDraftAssets(contract)
-  await writeUserFacingArtifacts({ outDir, contract, draft: draftAssets })
+  const episodePlan = createEpisodePlan(contract)
+  await writeUserFacingArtifacts({ outDir, contract, draft: draftAssets, episodePlan })
+  await writeVideoTaskArtifacts({ outDir, plan: episodePlan })
 
   let internal = null
   if (emitInternal) {
     internal = await writeInternalArtifacts({ outDir: join(outDir, '.cine-make-internal'), contract })
   }
 
-  return { draftAssets, internal }
+  return { draftAssets, episodePlan, internal }
 }
 
 async function main() {
@@ -170,14 +174,16 @@ async function main() {
 
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
-  const { draftAssets } = await writeRunArtifacts({ outDir, contract, emitInternal: options.emitInternal })
+  const { draftAssets, episodePlan } = await writeRunArtifacts({ outDir, contract, emitInternal: options.emitInternal })
 
   console.log(`Cine Make ready (${contract.mode}):`)
   console.log(`- deliverable: ${join(outDir, 'deliverable.md')}`)
   console.log(`- storyboard images: ${join(outDir, 'storyboard-images')}`)
-  console.log(`- shots: ${draftAssets.shotlist.length}`)
+  console.log(`- episodes: ${join(outDir, 'episodes')} (${episodePlan.episodes.length})`)
+  console.log(`- continuity bible: ${join(outDir, 'continuity-bible.json')}`)
+  console.log(`- video tasks: ${episodePlan.episodes.reduce((total, episode) => total + episode.tasks.length, 0)}`)
   if (options.emitInternal) console.log(`- internal debug artifacts: ${join(outDir, '.cine-make-internal')}`)
-  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then send the video prompt segments to the external video tool' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
+  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill start/end frames, then run each video-tasks/Sxx.md in the external video tool' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
 }
 
 main().catch((error) => {

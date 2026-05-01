@@ -3,9 +3,13 @@
 User-facing output:
 
 - `deliverable.md`
-- `storyboard-images/`
+- `continuity-bible.json`
+- `episodes/`
+- root `storyboard-images/README.md` as a compatibility/index file
 
-The user should not need to read the rest of the run tree.
+The user should not need to read internal debug artifacts. The user should use `episodes/<episode>/video-tasks/Sxx.md` as the actual video-model feed unit.
+
+Each episode must also include `episodes/<episode>/storyboard.md`. This is the director storyboard layer: shot size, lens, camera movement, composition, blocking, performance, lighting, transition, and frame purpose. Start/end frames are generated from this layer; they are not a replacement for storyboard design.
 
 Internal production-run artifacts:
 
@@ -26,23 +30,26 @@ Internal production-run artifacts:
 
 Modes:
 
-- `draft`: no image generation; use `storyboard-images/README.md` as the later image queue.
-- `visual`: generate or fill still images under `storyboard-images/` when imagegen is available.
+- `draft`: no image generation; prepare `continuity-bible.json`, `episodes/*/video-tasks/*.md`, and image queues for later rendering.
+- `visual` / 出图模式: generate or fill still start/end control frames under `episodes/*/storyboard-images/`. The first render path is local `gpt-image-2` CLI/API with `quality=high`; it uses `OPENAI_API_KEY` plus optional `OPENAI_BASE_URL` for official OpenAI or CPA/OpenAI-compatible proxies. Built-in `$imagegen` is only the fallback when API key, base URL, network, or tooling fails. The frames must follow `episodes/*/storyboard.md`.
 
-Optional visual inputs:
+Optional image-output inputs:
 
 - `--character-image <path>`
 - `--scene-image <path>`
 - `--style-image <path>`
 
-Character images are optional. If absent, visual mode may generate `storyboard-images/character-reference.png`.
+Character images are optional. If absent, image-output mode may generate `episodes/<episode>/storyboard-images/character-reference.png`.
 
 No artifact may claim final MP4 generation.
 
 Video-tool feed pack:
 
-- split generated clips into cards of at most 15 seconds and about 5 shots by default;
-- every card must tell the user which reference/keyframe images to upload;
-- every card must include a copyable model-facing prompt, not only a human story summary;
-- each prompt should specify subject lock, timeline, shot size, camera movement, lighting/art direction, continuity, and negative constraints;
+- preserve long source stories and split them into episodes instead of compressing them into one teaser;
+- split generated clips into one visible action per task, usually 3-6 seconds;
+- every task must have a director storyboard before image prompts are written;
+- every task must specify `start_frame`, `end_frame`, `motion`, `camera`, `must_keep`, and `avoid`;
+- every task must include still-frame prompts for `START_FRAME` and `END_FRAME`;
+- each prompt should lock subject identity, scene layout, lighting/art direction, continuity, and negative constraints;
 - longer videos are stitched from generated clips outside Cine Make.
+

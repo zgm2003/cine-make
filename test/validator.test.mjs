@@ -32,6 +32,23 @@ test('reports missing production assets and invalid shot fields', async () => {
   }
 })
 
+test('requires the user-facing continuity bible and episode task tree', async () => {
+  const runDir = await mkdtemp(join(tmpdir(), 'cine-make-missing-episodes-'))
+  try {
+    await mkdir(join(runDir, 'storyboard-images'), { recursive: true })
+    await writeFile(join(runDir, 'deliverable.md'), '# Cine Make Deliverable\n\nCodex 不生成最终视频。', 'utf8')
+    await writeFile(join(runDir, 'storyboard-images', 'README.md'), '# Storyboard images\n', 'utf8')
+
+    const result = await validateRunDirectory({ runDir, stage: 'production' })
+
+    assert.equal(result.ok, false)
+    assert.match(result.errors.join('\n'), /missing required file: continuity-bible\.json/)
+    assert.match(result.errors.join('\n'), /missing required directory: episodes/)
+  } finally {
+    await rm(runDir, { recursive: true, force: true })
+  }
+})
+
 test('rejects final video claims in generated assets', async () => {
   const runDir = await mkdtemp(join(tmpdir(), 'cine-make-video-claim-'))
   try {
@@ -83,8 +100,15 @@ function baseContract() {
 
 async function writeValidProductionRun(runDir) {
   await mkdir(join(runDir, 'storyboard-images'), { recursive: true })
+  await mkdir(join(runDir, 'episodes', 'episode-01', 'storyboard-images'), { recursive: true })
+  await mkdir(join(runDir, 'episodes', 'episode-01', 'video-tasks'), { recursive: true })
   await mkdir(join(runDir, 'exports'), { recursive: true })
   await writeFile(join(runDir, 'storyboard-images', 'README.md'), '# Storyboard images\n\nNo images yet.', 'utf8')
+  await writeFile(join(runDir, 'continuity-bible.json'), JSON.stringify(validContinuityBible(), null, 2), 'utf8')
+  await writeFile(join(runDir, 'episodes', 'episode-01', 'episode.md'), '# Episode 01\n\nS01-S02', 'utf8')
+  await writeFile(join(runDir, 'episodes', 'episode-01', 'storyboard.md'), '# Director Storyboard episode-01\n\n## S01', 'utf8')
+  await writeFile(join(runDir, 'episodes', 'episode-01', 'storyboard-images', 'README.md'), '# Episode images\n\nUse start/end frames.', 'utf8')
+  await writeFile(join(runDir, 'episodes', 'episode-01', 'video-tasks', 'S01.md'), '# Video Task episode-01/S01\n\nstart_frame: `storyboard-images/S01-start.png`\nend_frame: `storyboard-images/S01-end.png`\n', 'utf8')
   await writeFile(join(runDir, 'input-contract.json'), JSON.stringify(baseContract(), null, 2), 'utf8')
   await writeFile(join(runDir, 'source-package.md'), '# Source package\n\n雨夜里，女孩在巷口停下脚步。', 'utf8')
   await writeFile(join(runDir, 'production-brief.md'), '# Production brief\n\nPre-production only.', 'utf8')
@@ -103,6 +127,51 @@ async function writeValidProductionRun(runDir) {
   await writeFile(join(runDir, 'seedance-pack.md'), '# Seedance pack\n\nExternal synthesis prompt pack.', 'utf8')
   await writeFile(join(runDir, 'jimeng-pack.md'), '# Jimeng pack\n\nExternal synthesis prompt pack.', 'utf8')
   await writeFile(join(runDir, 'continuity-review.md'), '# Continuity review\n\nNo blocking issues.', 'utf8')
+}
+
+function validContinuityBible() {
+  return {
+    schemaVersion: 1,
+    mode: 'video-model-first',
+    policy: 'preserve-full-story-and-split-into-episodes',
+    anchors: {
+      protagonist: 'young woman',
+      secondary: 'black umbrella figure',
+      keyObject: 'black umbrella',
+      location: 'rain alley',
+      impossibleSign: 'neon signal'
+    },
+    sourceBeats: [
+      { id: 'B01', text: '雨夜里，女孩在巷口停下脚步。' },
+      { id: 'B02', text: '她看见黑伞人影。' }
+    ],
+    episodes: [
+      {
+        id: 'episode-01',
+        title: '第 1 段',
+        beatIds: ['B01', 'B02'],
+        durationSeconds: 8,
+        tasks: [
+          {
+            id: 'S01',
+            beatId: 'B01',
+            durationSeconds: 4,
+            storyboard: {
+              shotSize: 'medium close-up',
+              lens: '40mm natural perspective',
+              cameraMove: 'slow push-in',
+              composition: 'neon reflection splits the frame',
+              blocking: 'young woman stops at the alley mouth',
+              performance: 'holds breath and looks back',
+              lighting: 'cold rain and red neon'
+            },
+            startFrame: 'storyboard-images/S01-start.png',
+            endFrame: 'storyboard-images/S01-end.png'
+          }
+        ]
+      }
+    ]
+  }
 }
 
 function validShotlist() {

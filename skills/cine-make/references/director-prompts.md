@@ -82,15 +82,14 @@ Include:
 ## External video-model prompt
 
 ```text
-Using the generated keyframe image(s) as visual reference, write an external video-model prompt.
-Write it as a feed card for one generated clip, capped at 15 seconds unless a verified platform limit says otherwise.
-Keep one card to about 5 shots; split denser sequences into more cards.
+Using the generated start/end frame images as hard visual anchors, write an external video-model prompt.
+Write it as one task for one visible action, usually 3-6 seconds unless a verified platform limit says otherwise.
+Do not ask the video model to understand a whole plot arc; split denser sequences into more tasks.
 Describe:
-- uploaded reference images;
+- start_frame and end_frame;
 - exact duration, aspect ratio, and visual style;
 - subject lock: face, body, costume, props, location, lighting;
-- timeline with time ranges;
-- shot size and camera movement for each beat;
+- the single visible action this task should animate;
 - subject motion;
 - camera motion and transition logic;
 - transition bridge from previous shot;

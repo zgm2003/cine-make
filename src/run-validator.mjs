@@ -27,7 +27,12 @@ const PRODUCTION_FILES = [
 
 const USER_FACING_FILES = [
   'deliverable.md',
+  'continuity-bible.json',
   join('storyboard-images', 'README.md')
+]
+
+const USER_FACING_DIRECTORIES = [
+  'episodes'
 ]
 
 const SHOT_REQUIRED_FIELDS = [
@@ -149,6 +154,37 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
   for (const file of USER_FACING_FILES) {
     if (!existsSync(join(runDir, file))) {
       errors.push(`missing required file: ${file}`)
+    }
+  }
+
+  for (const directory of USER_FACING_DIRECTORIES) {
+    if (!(await directoryExists(join(runDir, directory)))) {
+      errors.push(`missing required directory: ${directory}`)
+    }
+  }
+
+  const biblePath = join(runDir, 'continuity-bible.json')
+  const bible = existsSync(biblePath) ? await readJson(biblePath, errors, 'continuity-bible.json') : null
+  if (bible) {
+    if (bible.mode !== 'video-model-first') errors.push('continuity-bible.mode must be video-model-first')
+    if (!Array.isArray(bible.sourceBeats) || bible.sourceBeats.length === 0) {
+      errors.push('continuity-bible.sourceBeats must be a non-empty array')
+    }
+    if (!Array.isArray(bible.episodes) || bible.episodes.length === 0) {
+      errors.push('continuity-bible.episodes must be a non-empty array')
+    }
+    for (const [episodeIndex, episode] of (bible.episodes ?? []).entries()) {
+      for (const [taskIndex, task] of (episode.tasks ?? []).entries()) {
+        if (!task.storyboard || typeof task.storyboard !== 'object') {
+          errors.push(`continuity-bible.episodes[${episodeIndex}].tasks[${taskIndex}].storyboard is required`)
+          continue
+        }
+        for (const field of ['shotSize', 'lens', 'cameraMove', 'composition', 'blocking', 'performance', 'lighting']) {
+          if (isMissing(task.storyboard[field])) {
+            errors.push(`continuity-bible.episodes[${episodeIndex}].tasks[${taskIndex}].storyboard.${field} is required`)
+          }
+        }
+      }
     }
   }
 

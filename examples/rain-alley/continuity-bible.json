@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "mode": "video-model-first",
+  "policy": "preserve-full-story-and-split-into-episodes",
+  "anchors": {
+    "protagonist": "女孩",
+    "secondary": "secondary figure",
+    "keyObject": "黑伞",
+    "location": "巷口",
+    "impossibleSign": "黑伞",
+    "visualStyle": "cinematic noir",
+    "aspectRatio": "9:16"
+  },
+  "sourceBeats": [
+    {
+      "id": "B01",
+      "text": "雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。"
+    }
+  ],
+  "episodes": [
+    {
+      "id": "episode-01",
+      "title": "第 1 段",
+      "beatIds": [
+        "B01"
+      ],
+      "durationSeconds": 6,
+      "tasks": [
+        {
+          "id": "S01",
+          "beatId": "B01",
+          "durationSeconds": 6,
+          "sourceBeat": "雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。",
+          "storyboard": {
+            "shotSize": "establishing wide shot -> environmental detail shot",
+            "lens": "32mm cinematic wide lens",
+            "cameraMove": "slow observational drift, no dramatic shake",
+            "composition": "strong leading lines, protagonist small against architecture, one readable route deeper into the scene",
+            "blocking": "女孩 is positioned as a scale reference; the environment performs the threat",
+            "performance": "minimal movement, alert posture, attention pulled by the abnormal light or sound",
+            "lighting": "cool blue ambience, practical white source, wet surfaces and soft reflections",
+            "transition": "carry the unresolved tension from 开场前状态 into a clearer spatial map",
+            "framePurpose": "build geography for later start/end frames so the video model does not invent the space"
+          },
+          "startFrame": "storyboard-images/S01-start.png",
+          "endFrame": "storyboard-images/S01-end.png",
+          "motion": "女孩完成这一条可见动作：雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。 镜头只表现这个变化，不抢跑后续剧情。",
+          "camera": "slow observational drift, no dramatic shake; 32mm cinematic wide lens; no jump cut inside this task",
+          "mustKeep": [
+            "女孩 identity, face, hair, body shape, costume, and posture logic",
+            "巷口 scene layout, lighting direction, color palette, and screen direction",
+            "黑伞 as the same physical prop when it appears",
+            "story state from the opening state",
+            "director storyboard: establishing wide shot -> environmental detail shot; strong leading lines, protagonist small against architecture, one readable route deeper into the scene; minimal movement, alert posture, attention pulled by the abnormal light or sound"
+          ],
+          "avoid": [
+            "subtitles",
+            "watermarks",
+            "extra characters",
+            "face drift",
+            "costume drift",
+            "new props",
+            "random horror imagery",
+            "summarizing multiple future story beats in one clip"
+          ],
+          "startFramePrompt": "Use case: illustration-story\nAsset type: AI-video control frame for image-to-video generation\nFrame role: START_FRAME\nEpisode: episode-01\nShot id: S01\nScene/backdrop: 巷口; cinematic noir; vertical 9:16\nSubject: 女孩; secondary figure: secondary figure; key object: 黑伞\nVisual delta: moment before the visible action begins; hold the unresolved state from previous beat: opening state\nDirector storyboard:\nShot size: establishing wide shot -> environmental detail shot\nLens: 32mm cinematic wide lens\nComposition: strong leading lines, protagonist small against architecture, one readable route deeper into the scene\nBlocking: 女孩 is positioned as a scale reference; the environment performs the threat\nPerformance: minimal movement, alert posture, attention pulled by the abnormal light or sound\nLighting: cool blue ambience, practical white source, wet surfaces and soft reflections\nComposition/framing rule: one single cinematic frame, no collage, no split panel, no storyboard sheet, clear readable subject silhouette\nContinuity: preserve the same face, hair, body type, costume, key prop, scene layout, lighting direction, color palette, and screen direction from the reference images\nAvoid: no subtitles, no watermark, no UI, no extra characters, no face drift, no costume drift, no new props, no random horror monster, no text overlay",
+          "endFramePrompt": "Use case: illustration-story\nAsset type: AI-video control frame for image-to-video generation\nFrame role: END_FRAME\nEpisode: episode-01\nShot id: S01\nScene/backdrop: 巷口; cinematic noir; vertical 9:16\nSubject: 女孩; secondary figure: secondary figure; key object: 黑伞\nVisual delta: moment after this visible action finishes; show the new state caused by: 雨夜里，女孩在巷口停下脚步，回头看见远处的霓虹灯下有人举起一把黑伞。\nDirector storyboard:\nShot size: establishing wide shot -> environmental detail shot\nLens: 32mm cinematic wide lens\nComposition: strong leading lines, protagonist small against architecture, one readable route deeper into the scene\nBlocking: 女孩 is positioned as a scale reference; the environment performs the threat\nPerformance: minimal movement, alert posture, attention pulled by the abnormal light or sound\nLighting: cool blue ambience, practical white source, wet surfaces and soft reflections\nComposition/framing rule: one single cinematic frame, no collage, no split panel, no storyboard sheet, clear readable subject silhouette\nContinuity: preserve the same face, hair, body type, costume, key prop, scene layout, lighting direction, color palette, and screen direction from the reference images\nAvoid: no subtitles, no watermark, no UI, no extra characters, no face drift, no costume drift, no new props, no random horror monster, no text overlay"
+        }
+      ]
+    }
+  ]
+}

@@ -59,7 +59,9 @@ test('cli --draft writes a production-valid run', async () => {
     assert.equal(validation.ok, true, validation.errors.join('\n'))
 
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
-    assert.match(deliverable, /S12/)
+    assert.match(deliverable, /完整保留剧情/)
+    assert.match(deliverable, /episodes\/episode-01\/storyboard-images\/S01-start\.png/)
+    assert.match(deliverable, /episodes\/episode-01\/video-tasks\/S01\.md/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
