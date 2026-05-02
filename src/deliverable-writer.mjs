@@ -38,22 +38,22 @@ function hasProvidedScene(contract) {
 function characterReferenceLines(contract) {
   const paths = contract.visualReferences?.characterImages ?? []
   if (paths.length) {
-    return paths.map((path) => `- 主角/人物参考图：\`${path}\`（用户提供，保持不变；不要重画脸、发型、服装轮廓）`)
+    return paths.map((path) => `- 主角/人物参考图：\`${path}\``)
   }
-  return ['- 主角/人物参考图：`storyboard-images/character-reference.png`（未提供主角图时生成，用来锁脸、发型、服装轮廓）']
+  return ['- 主角/人物参考图：`storyboard-images/character-reference.png`']
 }
 
 function sceneReferenceLines(contract) {
   const paths = contract.visualReferences?.sceneImages ?? []
   if (paths.length) {
-    return paths.map((path) => `- 场景图：\`${path}\`（用户提供，保持不变；后续分镜沿用空间方向、光源和色调）`)
+    return paths.map((path) => `- 场景图：\`${path}\``)
   }
-  return ['- 场景图：`storyboard-images/scene-reference.png`（未提供场景图时生成，用来锁空间、光源、色调）']
+  return ['- 场景图：`storyboard-images/scene-reference.png`']
 }
 
 function styleReferenceLines(contract) {
   const paths = contract.visualReferences?.styleImages ?? []
-  return paths.map((path) => `- 风格参考图：\`${path}\`（用户提供，保持不变；只继承质感，不改变剧情）`)
+  return paths.map((path) => `- 风格参考图：\`${path}\``)
 }
 
 function segmentStartFrameName(segmentIndex) {
@@ -330,7 +330,7 @@ function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) 
   const continuity = segment.map((shot) => `${shot.shot_id}：${shot.continuity_from_previous}`).join('；')
 
   return [
-    `AI_VIDEO_FEED_CARD：第 ${segmentIndex + 1} 段，只给 AI 视频模型看，不是给人看的文案。`,
+    `视频生成卡：第 ${segmentIndex + 1} 段`,
     '',
     `FORMAT：${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
     '',
@@ -359,7 +359,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
     return [
       `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，单次生成不超过 ${MAX_VIDEO_SEGMENT_SECONDS}s / ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头）`,
       '',
-      `AI_VIDEO_FEED_CARD：第 ${index + 1} 段`,
+      `视频生成卡：第 ${index + 1} 段`,
       '',
       bridgeLine,
       '',
@@ -430,13 +430,13 @@ export function composeDeliverable({ contract, draft }) {
     '',
     '## AI分镜',
     '',
-    '下面不是给人看的宣传文案，是给 AI 视频模型执行的分镜指令。每个镜头必须锁定景别、焦段、运镜、构图、调度、表演、光影和连续性。',
+    '每个镜头锁定景别、焦段、运镜、构图、调度、表演、光影和连续性。',
     '',
     ...composeAIStoryboard(draft.shotlist),
     '## 出图清单',
     '',
     mode === 'visual'
-      ? '出图模式必须按这个清单补齐图片：主角、场景、每段首帧、每段尾帧、若干 AI 分镜关键帧，以及全图缩略图。'
+      ? '按这个清单补齐图片：主角、场景、每段首帧、每段尾帧、若干 AI 分镜关键帧，以及全图缩略图。'
       : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),

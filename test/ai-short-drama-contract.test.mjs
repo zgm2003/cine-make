@@ -55,7 +55,7 @@ test('visual mode produces the AI-short-drama image package contract', async () 
     }
 
     assert.match(deliverable, /## AI分镜/)
-    assert.match(deliverable, /AI_VIDEO_FEED_CARD/)
+    assert.match(deliverable, /视频生成卡/)
     assert.match(deliverable, /镜头语言/)
     assert.match(deliverable, /景别/)
     assert.match(deliverable, /焦段/)
@@ -133,6 +133,41 @@ test('30 second output splits into two feed cards and reuses previous end frame 
     const segmentTwo = deliverable.slice(segmentTwoIndex)
     assert.match(segmentTwo, /起始帧：`storyboard-images\/segment-01-end\.png`/)
     assert.match(segmentTwo, /尾帧：`storyboard-images\/segment-02-end\.png`/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('deliverable does not expose AI meta commentary in the user handoff', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-clean-handoff-'))
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'visual',
+      '--out',
+      out,
+      '--duration',
+      '30s',
+      '--aspect',
+      '9:16',
+      hospitalSource
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.doesNotMatch(deliverable, /只给\s*AI/)
+    assert.doesNotMatch(deliverable, /AI_VIDEO_FEED_CARD/)
+    assert.doesNotMatch(deliverable, /不是给人看的/)
+    assert.doesNotMatch(deliverable, /未提供.*时生成/)
+    assert.doesNotMatch(deliverable, /用来锁/)
+    assert.doesNotMatch(deliverable, /出图模式必须/)
+    assert.match(deliverable, /主角\/人物参考图：`storyboard-images\/character-reference\.png`/)
+    assert.match(deliverable, /场景图：`storyboard-images\/scene-reference\.png`/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
