@@ -8,48 +8,37 @@ English: [`README.md`](./README.md)
 
 它把小说片段、粗剧本、广告 brief、故事梗概转换成一个紧凑、可执行的 AI 视频前期交付包。
 
-Cine Make **不生成 MP4**。它负责拆解故事、锁定连续性、准备首尾帧提示词、优先通过 `gpt-image-2` 生成高质量控制帧，失败时再用 `$imagegen` 兜底，并生成视频模型任务卡；最终视频由 Seedance、即梦或其他 AI 视频工具生成。
+Cine Make **不生成 MP4**。它负责拆解故事、锁定连续性、准备故事板图片提示词和视频工具投喂包；最终视频由 Seedance、即梦或其他 AI 视频工具生成。
 
 ## 用户最终拿到什么
 
-正常运行给用户这些东西：
+正常运行只给用户看这两项：
 
 ```text
 deliverable.md
-continuity-bible.json
-episodes/
-storyboard-images/README.md
+storyboard-images/
 ```
 
-这是故意的。用户不应该看到一堆内部调试文件，但应该拿到真正能喂给视频模型的 `episodes/*/video-tasks/*.md`。
+这是故意的。`deliverable.md` 是用户入口，里面已经包含成片预览、故事全流程、精简分镜、AI分镜、出图清单、故事板图片清单和视频工具投喂包。`storyboard-images/` 是图片目录，放主角/人物参考、场景参考、每段首帧/尾帧、`S01.png`、`S02.png` 这类 AI 分镜关键帧，以及 `contact-sheet.jpg` 全图缩略图。
 
-`deliverable.md` 是核心产物，顺序按用户理解来组织：
+`continuity-bible.json`、`episodes/`、逐镜 task tree、agent handoff 这些都是内部/调试产物；只有显式 `--emit-internal` 时才放进 `.cine-make-internal/`，不要甩给普通用户。
+
+`deliverable.md` 的默认顺序：
 
 ```text
 1. 成片预览
 2. 故事全流程
-3. 完整剧情拆解与视频任务队列
-4. 短片方案
-5. 精简分镜
-6. 故事板图片清单
-7. 视频工具投喂包
-8. 视觉参考
-9. 连续性注意事项
+3. 短片方案
+4. 精简分镜
+5. AI分镜
+6. 出图清单
+7. 故事板图片清单
+8. 视频工具投喂包
+9. 视觉参考
+10. 连续性注意事项
 ```
 
-其中最关键的是 **完整剧情拆解与视频任务队列**。长剧情默认完整保留，不压成一个爆点短片，而是自动拆成多段/多集。每个视频任务都会明确告诉用户：
-
-```text
-start_frame 是哪张图
-end_frame 是哪张图
-motion 怎么写
-must_keep 锁什么
-avoid 禁什么
-```
-
-首尾控制帧不是分镜的替代品。分镜必须先决定景别、镜头/焦段、运镜、构图、人物调度、表演细节、光线色彩和转场继承；然后出图器才按分镜去生成 `start_frame` / `end_frame`。
-
-这里不是单纯给人看的剧情说明，而是给视频模型吃的任务卡。默认每个任务只做一个可见动作变化，通常 **3-6 秒**，用首帧和尾帧硬控画面，不再指望视频模型自己理解整段自然语言剧情。
+视频工具投喂包是核心：它告诉用户上传哪些图片、复制哪段提示词。默认每段不超过 15 秒 / 7 个 AI 分镜镜头；更长故事拆成多段，后一段首帧复用前一段尾帧，最后在外部工具里剪辑拼接。
 
 ## 两种模式
 
@@ -57,8 +46,8 @@ Cine Make 只有两个用户模式，不再发散。
 
 | 模式 | 用途 | 是否生成图片 | 输出 |
 | --- | --- | --- | --- |
-| `draft` | 快速看故事、改节奏、拆剧集/任务 | 不生成图片 | `deliverable.md` + `continuity-bible.json` + `episodes/*/video-tasks/*.md` |
-| `visual` | 草稿确认后，进入出图模式，补齐首尾控制帧 | 默认先走 `gpt-image-2` + `quality=high`，失败才走 `$imagegen` | `deliverable.md` + `continuity-bible.json` + `episodes/*/storyboard-images/` |
+| `draft` | 快速看故事、改节奏、确认分镜 | 不生成图片 | `deliverable.md` + `storyboard-images/README.md` |
+| `visual` | 草稿确认后，进入出图模式，补齐故事板/关键帧 | 生成或准备静态图 | `deliverable.md` + generated/fillable `storyboard-images/` |
 
 ### 草稿模式
 
@@ -81,65 +70,12 @@ Cine Make 只有两个用户模式，不再发散。
 
 - 人物参考图；
 - 场景参考图；
-- `S01-start.png`、`S01-end.png` 这类首尾帧控制图；
-- 给 AI 视频工具使用的逐镜任务卡。
+- 每个 15 秒片段的首帧与尾帧，例如 `segment-01-start.png`、`segment-01-end.png`；
+- `S01.png`、`S02.png` 这类 AI 分镜关键帧；
+- `contact-sheet.jpg` 全图缩略图；
+- `deliverable.md` 里的视频工具投喂包。
 
-出图模式的图片链路固定为：先请求本地 `gpt-image-2` CLI/API，默认 `quality=high`，并按画幅使用高分辨率尺寸（例如 `9:16 -> 2160x3840`）；如果本机 API Key、CPA 代理、网络或工具链失败，再生成 `imagegen-fallback.md/json`，由 Codex 内置 `$imagegen` 兜底。
-
-这里的 CLI/API 不是只能走 OpenAI 官方域名。如果你使用的是 **CPA（CLI Proxy API）**，并且 CPA 已经把 `gpt-image-2` 反代出来，那么 Cine Make 只认下面这两个环境变量：
-
-```text
-OPENAI_API_KEY   必填。官方 OpenAI 就填官方 key；CPA 就填 CPA key。
-OPENAI_BASE_URL  可选。填了就走 CPA / OpenAI-compatible 代理；不填就走 OpenAI SDK 官方默认地址 https://api.openai.com/v1。
-```
-
-也就是说，最终约定非常简单：
-
-- `OPENAI_API_KEY` 是图片 API 的唯一 key 环境变量；
-- `OPENAI_BASE_URL` 是图片 API 的唯一 base URL 环境变量；
-- 不使用 `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` 做图片 API 鉴权；
-- 模型名固定还是 `gpt-image-2`；
-- 如果请求失败，不管是 key 错、额度不够、CPA 不通、网络超时，都会写 `imagegen-fallback.md/json`，然后走 `$imagegen` 兜底。
-
-CPA 调试时这样配：
-
-```powershell
-$env:OPENAI_BASE_URL="https://你的-cpa-base-url/v1"
-$env:OPENAI_API_KEY="你的-cpa-api-key"
-
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-官方 OpenAI 调试时，不配置 `OPENAI_BASE_URL` 即可：
-
-```powershell
-Remove-Item Env:OPENAI_BASE_URL -ErrorAction SilentlyContinue
-$env:OPENAI_API_KEY="你的-openai-api-key"
-
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-Windows 用户要持久保存到当前用户环境变量，可以这样：
-
-```powershell
-[Environment]::SetEnvironmentVariable("OPENAI_BASE_URL", "https://你的-cpa-base-url/v1", "User")
-[Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "你的-cpa-api-key", "User")
-```
-
-如果要切回官方 OpenAI，把 `OPENAI_BASE_URL` 删除，保留 `OPENAI_API_KEY`：
-
-```powershell
-[Environment]::SetEnvironmentVariable("OPENAI_BASE_URL", $null, "User")
-```
-
-设置后重启 Codex / PowerShell。验证时不要打印 key，只看是否存在：
-
-```powershell
-$env:OPENAI_BASE_URL
-[bool]$env:OPENAI_API_KEY
-```
-
-人物图、场景图、风格图都是可选输入。有图就锁脸、服装、气质和场景；没图也能先走主流程。
+如果用户明确说用 `$imagegen`，就直接用内置 `$imagegen` 生成静态图并复制到 `storyboard-images/`。本地 `scripts/render-images.mjs` 属于高级/调试路径，不是默认用户交付链路。
 
 ## 自然语言使用方式
 
@@ -226,13 +162,7 @@ cine-make --mode visual \
   "故事内容..."
 ```
 
-生成首尾控制帧：
-
-```bash
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-这一步默认使用 `gpt-image-2`。它只看 `OPENAI_API_KEY` 和可选的 `OPENAI_BASE_URL`：`OPENAI_BASE_URL` 有值就走 CPA / OpenAI-compatible 代理，没值就走官方 OpenAI 默认地址；如果失败，会在 run 目录写入 `imagegen-fallback.md` / `imagegen-fallback.json`，再按清单用 `$imagegen` 兜底出图。
+生成故事板/关键帧图片时，按 `deliverable.md` 和 `storyboard-images/README.md` 的提示词使用内置 `$imagegen`，并把结果保存为 `storyboard-images/character-reference.png`（如果没提供主角图）、`storyboard-images/scene-reference.png`、`storyboard-images/segment-01-start.png`、`storyboard-images/S01.png`...`S07.png`、`storyboard-images/segment-01-end.png` 和 `storyboard-images/contact-sheet.jpg` 等。
 
 ### 可选参考图
 
@@ -250,9 +180,7 @@ node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
 
 ```text
 deliverable.md
-continuity-bible.json
-episodes/
-storyboard-images/README.md
+storyboard-images/
 ```
 
 只有调试编译器时才使用：
@@ -271,22 +199,15 @@ cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容
 
 ## 如何喂给 AI 视频工具
 
-用户不应该把整个项目文件夹丢给 Seedance 或即梦。
+外部视频生成按短投喂卡处理。用户只需要看 `deliverable.md`：
 
-外部视频生成要按短任务处理。Cine Make 默认每个任务只表达一个可见动作变化，通常 **3-6 秒**；长剧情会先拆成多集，每集再拆成多个 `video-tasks/Sxx.md`，最后再剪辑/拼接。
+1. 先按 `出图清单` 和 `故事板图片清单` 生成/确认主角、场景、首帧、尾帧、`storyboard-images/Sxx.png` 与 `contact-sheet.jpg`；
+2. 到 `视频工具投喂包`，每一段上传列出的图片；
+3. 复制该段提示词；
+4. 在 Seedance / 即梦 / 其他视频工具里生成片段；
+5. 多段结果在外部工具里剪辑拼接；后一段首帧必须等于前一段尾帧。
 
-应该按 `episodes/<episode>/video-tasks/Sxx.md` 逐条操作：
-
-```text
-1. 先看 episodes/<episode>/storyboard.md 的导演分镜
-2. 先用 gpt-image-2 + quality=high 按分镜生成 start_frame / end_frame；失败才用 $imagegen 兜底
-3. 上传这一条任务列出的首尾帧和参考图
-4. 复制这一条任务的 Video model prompt
-5. 在外部视频工具生成这一条短视频
-6. 下一条任务继承上一条 end_frame
-```
-
-Cine Make 负责准备投喂包，外部视频工具负责生成最终视频。
+Cine Make 不生成 MP4，只负责前期包和静态图。
 
 ## 开发
 
@@ -319,7 +240,7 @@ node scripts/install-codex-skill.mjs
 Cine Make 负责前期制片：
 
 ```text
-故事素材 -> 完整剧情拆解 -> 多集/多段任务 -> 首尾帧出图包 -> 视频任务卡
+故事素材 -> deliverable.md -> storyboard-images/ -> 视频工具投喂包 -> 外部视频工具
 ```
 
 外部视频工具负责最终合成：

@@ -8,136 +8,67 @@ English version: this file.
 
 It turns novels, rough scripts, ad briefs, and story fragments into a compact, executable package for AI video workflows.
 
-Cine Make does **not** render MP4 videos. It decomposes the story, locks continuity, prepares start/end-frame prompts, renders high-quality control frames through `gpt-image-2` first, falls back to built-in `$imagegen` only when that path fails, and writes per-shot video-model tasks. Final video synthesis belongs to external tools such as Seedance, Jimeng, or any other AI video generator.
+Cine Make does **not** render MP4 videos. It decomposes the story, locks continuity, prepares storyboard/keyframe image prompts, and writes the video-tool feed pack. Final video synthesis belongs to external tools such as Seedance, Jimeng, or any other AI video generator.
 
 ## What the user gets
 
-A normal run produces these user-facing outputs:
+A normal run exposes only these two user-facing items:
 
 ```text
 deliverable.md
-continuity-bible.json
-episodes/
-storyboard-images/README.md
+storyboard-images/
 ```
 
-That is intentional. Users should not have to read internal debug artifacts, but they should receive the actual model-facing task files under `episodes/*/video-tasks/*.md`.
+This is intentional. `deliverable.md` is the product entrypoint: film preview, story flow, compact storyboard, AI storyboard, image-output checklist, storyboard image list, and video-tool feed pack. `storyboard-images/` holds character references, scene references, segment start/end frames, storyboard/keyframe images such as `S01.png`, `S02.png`, and the `contact-sheet.jpg` overview.
 
-`deliverable.md` is the main product. It is ordered for human understanding first:
+`continuity-bible.json`, `episodes/`, task trees, and agent handoff files are internal/debug artifacts. They are emitted only under `.cine-make-internal/` when `--emit-internal` is explicitly used.
+
+The default `deliverable.md` order:
 
 ```text
 1. Film preview
-2. Full story flow
-3. Full-story episode and video-task breakdown
-4. Short film plan
-5. Compact storyboard
-6. Storyboard image prompt list
-7. Video tool feed pack
-8. Visual references
-9. Continuity notes
+2. Story flow
+3. Short-film plan
+4. Compact storyboard
+5. AI storyboard
+6. Image-output checklist
+7. Storyboard image list
+8. Video-tool feed pack
+9. Visual references
+10. Continuity notes
 ```
 
-The key section for video generation is the **full-story episode and video-task breakdown**. Long stories are preserved and split into episodes instead of compressed into a teaser. Each task tells the user exactly:
-
-```text
-which start_frame to use
-which end_frame to use
-what motion to request
-what must stay locked
-what must be avoided
-```
-
-The feed pack is model-facing, not just human-facing. Each task is one visible action, usually **3-6 seconds**, controlled by a start frame and an end frame. Do not ask the video model to understand a whole plot arc from natural language.
+The video-tool feed pack is the core handoff: it tells the user which images to upload and which prompt to copy. One feed card is capped at 15 seconds / 7 AI-storyboard shots by default; longer stories are split into cards, with the next card's start frame reusing the previous card's end frame.
 
 ## Two modes
 
-Cine Make deliberately has only two user-facing modes.
+Cine Make has only two user modes.
 
-| Mode | Purpose | Image generation | Output |
+| Mode | Purpose | Images | Output |
 | --- | --- | --- | --- |
-| `draft` | Fast first pass to understand, split episodes, and revise tasks | No images | `deliverable.md` + `continuity-bible.json` + `episodes/*/video-tasks/*.md` |
-| `visual` | Start/end-frame image-output package after the draft is approved | `gpt-image-2` with `quality=high` first; built-in `$imagegen` fallback only on failure | `deliverable.md` + `continuity-bible.json` + `episodes/*/storyboard-images/` |
+| `draft` | Fast first pass to understand story, rhythm, and storyboard | No images | `deliverable.md` + `storyboard-images/README.md` |
+| `visual` | Image-output mode after the draft is approved | Generate or prepare still images | `deliverable.md` + generated/fillable `storyboard-images/` |
 
 ### Draft mode
 
-Use draft mode when the story is still being shaped.
+Draft mode is for an unstable story. It answers what the short film is, what happens from beginning to end, which shots matter, and whether it is worth generating images.
 
-It answers:
-
-- What is the short drama about?
-- What happens from start to finish?
-- What does each shot show?
-- Is this worth turning into images?
-
-Draft mode should **not** spend time generating pictures.
+Draft mode should not spend time generating images.
 
 ### Image-output mode
 
-Use image-output mode (`--mode visual`) after the draft is approved.
+Image-output mode is for an approved draft.
 
 It prepares or generates:
 
-- optional character reference image;
-- optional scene reference image;
-- start/end control frames such as `S01-start.png`, `S01-end.png`;
-- per-shot task prompts for AI video tools.
+- character reference image;
+- scene reference image;
+- segment start/end frames such as `segment-01-start.png`, `segment-01-end.png`;
+- AI-storyboard keyframes such as `S01.png`, `S02.png`;
+- the `contact-sheet.jpg` overview;
+- the video-tool feed pack inside `deliverable.md`.
 
-The image path is fixed: try the local `gpt-image-2` CLI/API first with `quality=high` and aspect-aware high-resolution sizes such as `9:16 -> 2160x3840`. If the local API key, CPA proxy, network, or tooling fails, Cine Make writes `imagegen-fallback.md/json` and then the built-in `$imagegen` path is used for the remaining frames.
-
-This CLI/API path is not limited to the official OpenAI base URL. If you use **CPA (CLI Proxy API)** and your CPA exposes an OpenAI-compatible `gpt-image-2` model, Cine Make uses exactly these two environment variables:
-
-```text
-OPENAI_API_KEY   Required. Use the official OpenAI key for official OpenAI, or the CPA key for CPA.
-OPENAI_BASE_URL  Optional. Set it for CPA / OpenAI-compatible proxies; leave it unset for the OpenAI SDK official default https://api.openai.com/v1.
-```
-
-The contract is intentionally simple:
-
-- `OPENAI_API_KEY` is the only image API key variable.
-- `OPENAI_BASE_URL` is the only image API base URL variable.
-- Do not use `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_BASE_URL` for image API auth.
-- The model name remains `gpt-image-2`.
-- If the request fails for any reason — bad key, quota, broken CPA, timeout, or network failure — Cine Make writes `imagegen-fallback.md/json` and then falls back to built-in `$imagegen`.
-
-For CPA debugging:
-
-```powershell
-$env:OPENAI_BASE_URL="https://your-cpa-base-url/v1"
-$env:OPENAI_API_KEY="your-cpa-api-key"
-
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-For official OpenAI debugging, leave `OPENAI_BASE_URL` unset:
-
-```powershell
-Remove-Item Env:OPENAI_BASE_URL -ErrorAction SilentlyContinue
-$env:OPENAI_API_KEY="your-openai-api-key"
-
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-To persist this on Windows for the current user:
-
-```powershell
-[Environment]::SetEnvironmentVariable("OPENAI_BASE_URL", "https://your-cpa-base-url/v1", "User")
-[Environment]::SetEnvironmentVariable("OPENAI_API_KEY", "your-cpa-api-key", "User")
-```
-
-Restart Codex / PowerShell after setting them. Verify without printing the secret:
-
-```powershell
-$env:OPENAI_BASE_URL
-[bool]$env:OPENAI_API_KEY
-```
-
-To switch back to the official OpenAI base URL, delete `OPENAI_BASE_URL` and keep `OPENAI_API_KEY`:
-
-```powershell
-[Environment]::SetEnvironmentVariable("OPENAI_BASE_URL", $null, "User")
-```
-
-Character, scene, and style reference images are optional. If the user provides them, Cine Make uses them to lock identity, clothing, mood, and scene direction. If not, Cine Make can prepare prompts for generating references.
+If the user explicitly asks for built-in `$imagegen`, use built-in `$imagegen` directly and copy still images into `storyboard-images/`. The local `scripts/render-images.mjs` path is an advanced/debug path, not the default user handoff.
 
 ## Natural-language skill usage
 
@@ -242,13 +173,7 @@ cine-make --mode visual \
   "Story material here..."
 ```
 
-Render start/end control frames:
-
-```bash
-node scripts/render-images.mjs --run .cine-make-runs/demo-visual --quality high
-```
-
-This uses `gpt-image-2` by default. It only reads `OPENAI_API_KEY` and optional `OPENAI_BASE_URL`: if `OPENAI_BASE_URL` is set, it uses that CPA / OpenAI-compatible proxy; if not, it uses the official OpenAI SDK default base URL. If it fails, the run directory gets `imagegen-fallback.md` / `imagegen-fallback.json`; use those manifests with built-in `$imagegen`.
+Render storyboard/keyframe stills with built-in `$imagegen` using the prompts in `deliverable.md` and `storyboard-images/README.md`, then save them as `storyboard-images/character-reference.png` when no character image is provided, `storyboard-images/scene-reference.png`, `storyboard-images/segment-01-start.png`, `storyboard-images/S01.png` ... `S07.png`, `storyboard-images/segment-01-end.png`, and `storyboard-images/contact-sheet.jpg`, etc.
 
 ### Optional visual references
 
@@ -266,9 +191,7 @@ By default, the run directory stays clean:
 
 ```text
 deliverable.md
-continuity-bible.json
-episodes/
-storyboard-images/README.md
+storyboard-images/
 ```
 
 Use debug artifacts only when developing the compiler itself:
@@ -289,71 +212,40 @@ Do not expose `.cine-make-internal/` to normal users.
 
 ### `deliverable.md`
 
-The primary user-facing document. It should let the user understand the whole film before generating images.
+The main user document. It explains the film first, then gives the concrete video-tool feed pack.
 
-Expected order:
+### `storyboard-images/`
 
-1. **Film preview** — one short explanation of what is being made.
-2. **Full story flow** — 3 to 5 beats from opening to ending.
-3. **Full-story episode and video-task breakdown** — every source beat is preserved and mapped into per-shot tasks.
-4. **Short film plan** — duration, aspect ratio, style, and identity anchors.
-5. **Compact storyboard** — shot-by-shot visible action.
-6. **Storyboard image prompt list** — still-image prompts for control frames.
-7. **Video tool feed pack** — exactly which start/end frames and task prompt to use.
-8. **Visual references** — optional reference image guidance.
-9. **Continuity notes** — identity, costume, props, lighting, and motion constraints.
-
-### `continuity-bible.json`
-
-The global continuity state. It locks character identity, key props, scene layout, source beats, and episode boundaries.
-
-### `episodes/`
-
-Each episode contains:
-
-```text
-episode.md
-storyboard-images/
-video-tasks/
-```
-
-Each `video-tasks/Sxx.md` is the real feed unit for the video model. It contains `start_frame`, `end_frame`, `motion`, `camera`, `must_keep`, `avoid`, still-frame prompts for both frames, and the video-model prompt.
-
-### Root `storyboard-images/`
-
-The root folder usually contains only `README.md` as a compatibility/index file. Per-episode control frames live under `episodes/<episode>/storyboard-images/`.
-
-In image-output mode (`--mode visual`), it can contain:
+The only user-facing asset folder. It contains `README.md`, optional reference images, and generated stills such as:
 
 ```text
 character-reference.png
 scene-reference.png
-S01-start.png
-S01-end.png
-S02-start.png
-S02-end.png
+segment-01-start.png
+S01.png
+S02.png
 ...
+segment-01-end.png
+contact-sheet.jpg
 ```
 
-These are still images, not videos. They are used as start/end control frames for external AI video tools.
+Internal debug artifacts may exist under `.cine-make-internal/` only when `--emit-internal` is used.
 
 ## What to feed into AI video tools
 
 Users should not feed the whole project folder into Seedance, Jimeng, or any other video tool.
 
-Treat external video generation as a short-task workflow. Cine Make defaults to one visible action per task, usually **3-6 seconds**. Long stories are split into multiple episodes and tasks, then stitched afterwards.
-
-For each `episodes/<episode>/video-tasks/Sxx.md`:
+Use `deliverable.md` directly:
 
 ```text
-1. Generate start_frame and end_frame with gpt-image-2 + quality=high first; use $imagegen only as fallback.
-2. Upload the listed control frames and references.
-3. Copy the task's Video model prompt.
-4. Generate that short clip in the external video tool.
-5. Let the next task inherit the previous end_frame.
+1. Generate or confirm the character, scene, start-frame, end-frame, `Sxx.png`, and `contact-sheet.jpg` images listed in the image-output checklist.
+2. For each feed card, upload the listed images.
+3. Copy the feed-card prompt.
+4. Generate the clip in the external video tool.
+5. Stitch multiple clips externally; each later card must start from the previous card's end frame.
 ```
 
-Cine Make prepares the feed package. The external video tool renders the final video.
+Cine Make prepares the feed package and still images. The external video tool renders the final video.
 
 ## Development
 
@@ -392,7 +284,7 @@ node scripts/install-codex-skill.mjs
 Cine Make owns pre-production:
 
 ```text
-story material -> full-story breakdown -> episodes/tasks -> start/end image-output package -> video task pack
+story material -> deliverable.md -> storyboard-images/ -> video-tool feed pack -> external video tool
 ```
 
 External video tools own final synthesis:

@@ -1,31 +1,133 @@
+function platformName(platform) {
+  if (platform === 'seedance') return 'Seedance'
+  if (platform === 'jimeng') return 'Jimeng'
+  return 'Generic video model'
+}
+
 function modeName(mode) {
   return mode === 'visual' ? '出图模式' : '草稿模式'
 }
 
 function modeSummary(mode) {
   if (mode === 'visual') {
-    return '出图模式：按分镜生成或准备生成角色参考、场景参考和首尾控制帧。'
+    return '出图模式：按分镜生成或准备生成角色参考、场景参考和故事板关键帧。'
   }
   return '草稿模式：只定故事、镜头和提示词，不生成图片。'
 }
 
 function visualReferenceLines(contract) {
-  const visual = contract.visualReferences ?? {}
-  const lines = []
-
-  for (const path of visual.characterImages ?? []) lines.push(`- 人物参考图: ${path}`)
-  for (const path of visual.sceneImages ?? []) lines.push(`- 场景参考图: ${path}`)
-  for (const path of visual.styleImages ?? []) lines.push(`- 风格参考图: ${path}`)
-
-  if (lines.length) return lines
   return [
-    '- 未提供人物图片：可以先按角色设定生成 `storyboard-images/character-reference.png`。',
-    '- 未提供场景/风格图：按导演方案生成场景参考和首尾帧控制图。'
+    ...characterReferenceLines(contract),
+    ...sceneReferenceLines(contract),
+    ...styleReferenceLines(contract)
   ]
 }
 
 function storyboardImageName(shot) {
   return `storyboard-images/${shot.shot_id}.png`
+}
+
+function hasProvidedCharacter(contract) {
+  return Boolean(contract.visualReferences?.characterImages?.length)
+}
+
+function hasProvidedScene(contract) {
+  return Boolean(contract.visualReferences?.sceneImages?.length)
+}
+
+function characterReferenceLines(contract) {
+  const paths = contract.visualReferences?.characterImages ?? []
+  if (paths.length) {
+    return paths.map((path) => `- 主角/人物参考图：\`${path}\`（用户提供，保持不变；不要重画脸、发型、服装轮廓）`)
+  }
+  return ['- 主角/人物参考图：`storyboard-images/character-reference.png`（未提供主角图时生成，用来锁脸、发型、服装轮廓）']
+}
+
+function sceneReferenceLines(contract) {
+  const paths = contract.visualReferences?.sceneImages ?? []
+  if (paths.length) {
+    return paths.map((path) => `- 场景图：\`${path}\`（用户提供，保持不变；后续分镜沿用空间方向、光源和色调）`)
+  }
+  return ['- 场景图：`storyboard-images/scene-reference.png`（未提供场景图时生成，用来锁空间、光源、色调）']
+}
+
+function styleReferenceLines(contract) {
+  const paths = contract.visualReferences?.styleImages ?? []
+  return paths.map((path) => `- 风格参考图：\`${path}\`（用户提供，保持不变；只继承质感，不改变剧情）`)
+}
+
+function segmentStartFrameName(segmentIndex) {
+  if (segmentIndex === 0) return 'storyboard-images/segment-01-start.png'
+  return segmentEndFrameName(segmentIndex - 1)
+}
+
+function segmentEndFrameName(segmentIndex) {
+  return `storyboard-images/segment-${String(segmentIndex + 1).padStart(2, '0')}-end.png`
+}
+
+const MAX_VIDEO_SEGMENT_SECONDS = 15
+const MAX_VIDEO_SEGMENT_SHOTS = 7
+const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
+
+function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
+  if (segments.length < 2) return segments
+
+  const last = segments[segments.length - 1]
+  const previous = segments[segments.length - 2]
+
+  while (segmentDuration(last) < minSeconds && previous.length > 1) {
+    const candidate = previous[previous.length - 1]
+    const candidateSeconds = Number(candidate.duration_seconds) || 1
+    if (segmentDuration(last) + candidateSeconds > maxSeconds) break
+    if (last.length + 1 > maxShots) break
+    last.unshift(previous.pop())
+  }
+
+  return segments.filter((segment) => segment.length)
+}
+
+function segmentShots(shotlist, { maxSeconds = MAX_VIDEO_SEGMENT_SECONDS, maxShots = MAX_VIDEO_SEGMENT_SHOTS } = {}) {
+  const segments = []
+  let current = []
+  let currentSeconds = 0
+
+  for (const shot of shotlist) {
+    const seconds = Number(shot.duration_seconds) || 1
+
+    if (current.length && (currentSeconds + seconds > maxSeconds || current.length >= maxShots)) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+
+    current.push(shot)
+    currentSeconds += seconds
+
+    if (currentSeconds >= maxSeconds) {
+      segments.push(current)
+      current = []
+      currentSeconds = 0
+    }
+  }
+
+  if (current.length) segments.push(current)
+  return balanceTailSegment(segments, { maxSeconds, maxShots })
+}
+
+function segmentDuration(segment) {
+  return segment.reduce((total, shot) => total + (Number(shot.duration_seconds) || 1), 0)
+}
+
+function segmentLabel(segment) {
+  const first = segment[0].shot_id
+  const last = segment[segment.length - 1].shot_id
+  return first === last ? first : `${first}-${last}`
+}
+
+function formatTimecode(seconds) {
+  const minutes = Math.floor(seconds / 60)
+  const rest = String(seconds % 60).padStart(2, '0')
+  return `${minutes}:${rest}`
 }
 
 function compactAction(value) {
@@ -48,7 +150,7 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
   const subject = mainCharacter?.identity_anchor ?? '主角'
 
   return [
-    `我们在做什么：把原始故事拆成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧任务链；默认完整保留剧情，不压成单个爆点短片。`,
+    `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；默认完整保留剧情，长故事按视频工具上限拆成多个投喂段。`,
     '',
     `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
     '',
@@ -65,9 +167,9 @@ function composeStoryFlow(shotlist) {
 
 function composeShotTable(shotlist) {
   return [
-    '| 镜头 | 时长 | 画面动作 | 故事板图 |',
-    '| --- | ---: | --- | --- |',
-    ...shotlist.map((shot) => `| ${shot.shot_id} | ${shot.duration_seconds}s | ${compactAction(shot.action)} | \`${storyboardImageName(shot)}\` |`)
+    '| 镜头 | 时长 | 景别 | 焦段 | 运镜 | 画面动作 | 故事板图 |',
+    '| --- | ---: | --- | --- | --- | --- | --- |',
+    ...shotlist.map((shot) => `| ${shot.shot_id} | ${shot.duration_seconds}s | ${shot.shot_size} | ${shot.lens ?? '按分镜镜头'} | ${shot.camera_movement} | ${compactAction(shot.action)} | \`${storyboardImageName(shot)}\` |`)
   ]
 }
 
@@ -82,96 +184,210 @@ function composeImagePromptList(shotlist) {
   ])
 }
 
-function composeEpisodeTaskTable(episodePlan) {
+function composeAIStoryboard(shotlist) {
+  return shotlist.flatMap((shot) => [
+    `### ${shot.shot_id}｜${shot.duration_seconds}s｜AI_VIDEO_STORYBOARD`,
+    '',
+    `- 画面任务：${compactAction(shot.action)}`,
+    `- 镜头语言：${shot.video_prompt_note}`,
+    `- 景别：${shot.shot_size}`,
+    `- 焦段：${shot.lens ?? '按同一镜头系统延续'}`,
+    `- 运镜：${shot.camera_movement}`,
+    `- 构图：${compactAction(shot.composition)}`,
+    `- 调度：${compactAction(shot.blocking ?? '主体动作从上一镜头自然延续，不突然换位')}`,
+    `- 表演：${compactAction(shot.performance_detail)}`,
+    `- 光影：${compactAction(shot.lighting)}`,
+    `- 连续性：${compactAction(shot.continuity_from_previous)}`,
+    '- 禁止：字幕、水印、跳剪、突然换脸、换服装、乱加角色、乱加道具、恐怖怪物化、脱离本镜头剧情',
+    ''
+  ])
+}
+
+function composeImageAssetQueue({ contract, shotlist }) {
+  const segments = segmentShots(shotlist)
+  const lines = [
+    ...characterReferenceLines(contract),
+    ...sceneReferenceLines(contract),
+    ...styleReferenceLines(contract)
+  ]
+
+  for (const [segmentIndex, segment] of segments.entries()) {
+    const startFrame = segmentStartFrameName(segmentIndex)
+    const endFrame = segmentEndFrameName(segmentIndex)
+    const bridge = segmentIndex === 0 ? '' : '（上一段尾帧 = 本段首帧，不另造新首帧）'
+
+    lines.push(`- 第 ${segmentIndex + 1} 段首帧：\`${startFrame}\`${bridge}`)
+    lines.push(...segment.map((shot) => `- AI分镜关键帧：\`${storyboardImageName(shot)}\`（${shot.shot_id}）`))
+    lines.push(`- 第 ${segmentIndex + 1} 段尾帧：\`${endFrame}\``)
+  }
+
+  lines.push('- 全图缩略图：`storyboard-images/contact-sheet.jpg`（把主角、场景、首尾帧、S图拼成一张检查图）')
+  return lines
+}
+
+function composeReferencePromptList({ contract, shotlist }) {
+  const segments = segmentShots(shotlist)
+  const lines = []
+
+  if (!hasProvidedCharacter(contract)) {
+    lines.push(
+      '### 主角参考图 -> storyboard-images/character-reference.png',
+      '',
+      '```text',
+      'AI short-drama character reference sheet, same protagonist only, front three-quarter portrait, full costume silhouette, clean identity lock, no text, no watermark',
+      '```',
+      ''
+    )
+  }
+
+  if (!hasProvidedScene(contract)) {
+    lines.push(
+      '### 场景图 -> storyboard-images/scene-reference.png',
+      '',
+      '```text',
+      'AI short-drama location reference, one stable cinematic environment, fixed screen direction, practical light sources, atmosphere depth, no text, no watermark',
+      '```',
+      ''
+    )
+  }
+
+  for (const [segmentIndex, segment] of segments.entries()) {
+    const startFrame = segmentStartFrameName(segmentIndex)
+    const endFrame = segmentEndFrameName(segmentIndex)
+    const firstShot = segment[0]
+    const lastShot = segment[segment.length - 1]
+
+    if (segmentIndex === 0) {
+      lines.push(
+        `### 第 ${segmentIndex + 1} 段首帧 -> ${startFrame}`,
+        '',
+        '```text',
+        `${firstShot.image_prompt}, START_FRAME, hold identity and location, frame must be easy to continue into ${firstShot.shot_id}`,
+        '```',
+        ''
+      )
+    } else {
+      lines.push(
+        `### 第 ${segmentIndex + 1} 段首帧 -> ${startFrame}`,
+        '',
+        `复用上一段尾帧：\`${startFrame}\`。不要生成新图。`,
+        ''
+      )
+    }
+
+    lines.push(...composeImagePromptList(segment))
+    lines.push(
+      `### 第 ${segmentIndex + 1} 段尾帧 -> ${endFrame}`,
+      '',
+      '```text',
+      `${lastShot.image_prompt}, END_FRAME, stable final pose, keep enough visual continuity for next 15-second segment`,
+      '```',
+      ''
+    )
+  }
+
+  lines.push(
+    '### 全图缩略图 -> storyboard-images/contact-sheet.jpg',
+    '',
+    '```text',
+    'Create a clean contact sheet from all generated stills: character reference, scene reference, segment start frames, storyboard keyframes, segment end frames. Label slots only outside the images if needed; no fake subtitles inside frames.',
+    '```',
+    ''
+  )
+
+  return lines
+}
+
+function visualUploadLines(contract) {
   return [
-    '| 任务 | 时长 | 原剧情动作 | 导演分镜 | 起始帧 | 结束帧 |',
-    '| --- | ---: | --- | --- | --- | --- |',
-    ...episodePlan.episodes.flatMap((episode) => {
-      return episode.tasks.map((task) => {
-        const storyboard = `${task.storyboard.shotSize}；${task.storyboard.lens}；${task.storyboard.cameraMove}；${task.storyboard.composition}；${task.storyboard.performance}`
-        return `| ${episode.id}/${task.id} | ${task.durationSeconds}s | ${compactAction(task.sourceBeat)} | ${compactAction(storyboard)} | \`episodes/${episode.id}/${task.startFrame}\` | \`episodes/${episode.id}/${task.endFrame}\` |`
-      })
-    })
+    ...characterReferenceLines(contract),
+    ...sceneReferenceLines(contract),
+    ...styleReferenceLines(contract)
   ]
 }
 
-function composeControlFramePromptList(episodePlan) {
-  return episodePlan.episodes.flatMap((episode) => {
-    return episode.tasks.flatMap((task) => [
-      `### ${episode.id}/${task.id} -> start/end frames`,
-      '',
-      `任务文件：\`episodes/${episode.id}/video-tasks/${task.id}.md\``,
-      `导演分镜：\`episodes/${episode.id}/storyboard.md\``,
-      '',
-      `- 景别/镜头：${task.storyboard.shotSize}；${task.storyboard.lens}`,
-      `- 构图/表演：${task.storyboard.composition}；${task.storyboard.performance}`,
-      `- start_frame：\`episodes/${episode.id}/${task.startFrame}\``,
-      `- end_frame：\`episodes/${episode.id}/${task.endFrame}\``,
-      '',
-      '首尾帧提示词以任务文件里的 `$imagegen prompt: start frame` 和 `$imagegen prompt: end frame` 为准。',
-      ''
-    ])
+function composeTimeline(segment) {
+  let cursor = 0
+  return segment.map((shot) => {
+    const seconds = Number(shot.duration_seconds) || 1
+    const start = cursor
+    const end = cursor + seconds
+    cursor = end
+    return `${formatTimecode(start)}-${formatTimecode(end)}｜${shot.shot_id}｜景别：${shot.shot_size}｜焦段：${shot.lens ?? 'same lens system'}｜运镜：${shot.camera_movement}｜构图：${compactAction(shot.composition)}｜调度：${compactAction(shot.blocking ?? '主体动作连续')}｜画面：${compactAction(shot.action)}｜表演：${compactAction(shot.performance_detail)}`
   })
 }
 
-function composeEpisodePlanSection(episodePlan) {
-  if (!episodePlan) return []
-
-  const lines = episodePlan.episodes.flatMap((episode) => [
-    `### ${episode.id}｜${episode.durationSeconds}s｜${episode.tasks.length} 个 video-tasks`,
-    '',
-    `导演分镜：\`episodes/${episode.id}/storyboard.md\``,
-    '',
-    ...episode.tasks.map((task) => {
-      return `- ${task.id}：${task.sourceBeat}  \n  director_storyboard: ${task.storyboard.shotSize}；${task.storyboard.composition}；${task.storyboard.performance}  \n  start_frame: \`episodes/${episode.id}/${task.startFrame}\`  \n  end_frame: \`episodes/${episode.id}/${task.endFrame}\`  \n  task: \`episodes/${episode.id}/video-tasks/${task.id}.md\``
-    }),
-    ''
-  ])
+function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) {
+  const subject = mainCharacter?.identity_anchor ?? segment[0]?.subject ?? '主角'
+  const costume = mainCharacter?.costume_anchor ?? '同一套服装'
+  const prop = mainCharacter?.prop_anchor ?? '关键道具'
+  const duration = segmentDuration(segment)
+  const cameraLanguage = [...new Set(segment.map((shot) => shot.camera_movement))].join('；')
+  const lenses = [...new Set(segment.map((shot) => shot.lens).filter(Boolean))].join('；')
+  const compositions = [...new Set(segment.map((shot) => shot.composition))].join('；')
+  const blocking = [...new Set(segment.map((shot) => shot.blocking).filter(Boolean))].join('；')
+  const lighting = [...new Set(segment.map((shot) => shot.lighting))].join('；')
+  const continuity = segment.map((shot) => `${shot.shot_id}：${shot.continuity_from_previous}`).join('；')
 
   return [
-    '## 完整剧情拆解与视频任务队列',
+    `AI_VIDEO_FEED_CARD：第 ${segmentIndex + 1} 段，只给 AI 视频模型看，不是给人看的文案。`,
     '',
-    '默认策略：完整保留剧情，不把长小说压成一个爆点短片；长剧情自动拆成多段/多集，每个镜头任务只做一个可见动作变化。',
+    `FORMAT：${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
     '',
-    '分镜是第一层：每条任务先有景别、镜头/焦段、构图、调度、表演、光线和转场继承；首尾帧只是从分镜派生出来的出图控制图。',
+    `主体锁定：保持${subject}同一张脸、发型和体型；服装锚点：${costume}；道具锚点：${prop}；不要重新设计人物，不要新增无关角色。`,
     '',
-    '真正喂给即梦 / Seedance / 其他图生视频模型的不是整段小说，而是 `video-tasks/` 里的短任务：每条任务都有导演分镜、`start_frame`、`end_frame`、运动指令、主体锁定和禁止项。',
+    '时间线：',
+    ...composeTimeline(segment),
     '',
-    `全局连续性表：\`continuity-bible.json\`。它锁人物、道具、场景、已发生事件和跨段继承关系。`,
+    `镜头语言：景别、焦段、运镜必须逐镜执行；焦段：${lenses || '沿用同一镜头系统'}；运镜：${cameraLanguage}。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。`,
+    `构图：${compositions}。`,
+    `调度：${blocking || '主体动作从上一镜头自然延续，不突然换位'}。`,
+    `光影/美术：${lighting}。保持同一场景方向、冷暖关系、阴影位置和画面质感。`,
+    `连续性：${continuity}。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。`,
     '',
-    ...lines
-  ]
+    '禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。'
+  ].join('\n')
 }
 
-function composeVideoTaskFeedPack({ episodePlan, mode }) {
-  return episodePlan.episodes.flatMap((episode) => {
+function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
+  const mode = contract.mode ?? 'draft'
+  return segmentShots(shotlist).flatMap((segment, index) => {
+    const duration = segmentDuration(segment)
+    const startFrame = segmentStartFrameName(index)
+    const endFrame = segmentEndFrameName(index)
+    const bridgeLine = index === 0 ? '本段使用独立首帧。' : '上一段尾帧 = 本段首帧。'
     return [
-      `### ${episode.id}（${episode.durationSeconds}s，${episode.tasks.length} 个逐镜任务）`,
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，单次生成不超过 ${MAX_VIDEO_SEGMENT_SECONDS}s / ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头）`,
       '',
-      ...episode.tasks.flatMap((task) => [
-        `#### ${episode.id}/${task.id}（${task.durationSeconds}s）`,
-        '',
-        `- 任务文件：\`episodes/${episode.id}/video-tasks/${task.id}.md\``,
-        `- start_frame：\`episodes/${episode.id}/${task.startFrame}\``,
-        `- end_frame：\`episodes/${episode.id}/${task.endFrame}\``,
-        '',
-        '操作：',
-        '',
-        '1. 用任务文件里的 `$imagegen prompt: start frame` 生成/确认起始帧；',
-        '2. 用任务文件里的 `$imagegen prompt: end frame` 生成/确认结束帧；',
-        '3. 把 start_frame + end_frame + Video model prompt 喂给外部视频工具；',
-        '4. 只生成这一条可见动作，不让模型理解整段剧情。',
-        '',
-        mode === 'draft'
-          ? '状态：草稿模式只准备任务卡和首尾帧提示词；确认后再进入出图模式生成图片。'
-          : '状态：出图模式；首尾帧补齐后可逐条生成视频片段。',
-        ''
-      ])
+      `AI_VIDEO_FEED_CARD：第 ${index + 1} 段`,
+      '',
+      bridgeLine,
+      '',
+      `起始帧：\`${startFrame}\``,
+      `尾帧：\`${endFrame}\``,
+      '',
+      '上传图片：',
+      '',
+      ...visualUploadLines(contract),
+      `- 起始帧：\`${startFrame}\``,
+      ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
+      `- 尾帧：\`${endFrame}\``,
+      '',
+      '复制提示词：',
+      '',
+      '```text',
+      composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex: index }),
+      '```',
+      '',
+      mode === 'draft'
+        ? '状态：草稿模式先不要上传；等出图模式生成这些图片后再用这一段。'
+        : '状态：视觉包模式；如果这些图片已在 `storyboard-images/` 里，就可以上传到视频工具。',
+      ''
     ]
   })
 }
 
-export function composeDeliverable({ contract, draft, episodePlan = null }) {
+export function composeDeliverable({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
   const mainCharacter = draft.characters?.[0]
 
@@ -182,12 +398,10 @@ export function composeDeliverable({ contract, draft, episodePlan = null }) {
     '',
     modeSummary(mode),
     '',
-    '最终交付给用户看这些：',
+    '最终交付给用户只看这两项：',
     '',
     '- `deliverable.md`',
-    '- `continuity-bible.json`',
-    '- `episodes/`',
-    '- `storyboard-images/README.md`',
+    '- `storyboard-images/`',
     '',
     'Codex 不生成最终视频；最终 MP4 由 Seedance / 即梦 / 其他视频工具合成。',
     '',
@@ -198,8 +412,6 @@ export function composeDeliverable({ contract, draft, episodePlan = null }) {
     '## 故事全流程',
     '',
     ...composeStoryFlow(draft.shotlist),
-    '',
-    ...composeEpisodePlanSection(episodePlan),
     '',
     '## 短片方案',
     '',
@@ -214,24 +426,42 @@ export function composeDeliverable({ contract, draft, episodePlan = null }) {
     '',
     '## 精简分镜',
     '',
-    '这不是简单图片列表。每条都先锁导演分镜，再生成首尾帧。',
+    ...composeShotTable(draft.shotlist),
     '',
-    ...(episodePlan ? composeEpisodeTaskTable(episodePlan) : composeShotTable(draft.shotlist)),
+    '## AI分镜',
+    '',
+    '下面不是给人看的宣传文案，是给 AI 视频模型执行的分镜指令。每个镜头必须锁定景别、焦段、运镜、构图、调度、表演、光影和连续性。',
+    '',
+    ...composeAIStoryboard(draft.shotlist),
+    '## 出图清单',
+    '',
+    mode === 'visual'
+      ? '出图模式必须按这个清单补齐图片：主角、场景、每段首帧、每段尾帧、若干 AI 分镜关键帧，以及全图缩略图。'
+      : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
+    '',
+    ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
     '',
     '## 故事板图片清单',
     '',
     mode === 'visual'
       ? '出图模式下，按下面顺序生成或补齐图片。'
-      : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑出图模式。',
+      : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑视觉包模式。',
     '',
-    ...(episodePlan ? composeControlFramePromptList(episodePlan) : composeImagePromptList(draft.shotlist)),
+    ...composeReferencePromptList({ contract, shotlist: draft.shotlist }),
     '## 视频工具投喂包',
     '',
-    episodePlan
-      ? '投喂单位不是整段小说，也不是 15 秒多镜头大卡；投喂单位是 `episodes/<episode>/video-tasks/Sxx.md`。每条任务只做一个可见动作，并用 start_frame / end_frame 控制视频模型。'
-      : '缺少 episode plan：请使用当前 Cine Make CLI 重新生成，让编译器写出 `continuity-bible.json` 和 `episodes/*/video-tasks/*.md`。',
+    `按外部 AI 视频工具单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，且默认不超过 ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
     '',
-    ...(episodePlan ? composeVideoTaskFeedPack({ episodePlan, mode }) : []),
+    '到 AI 视频工具里，每一段只做两件事：',
+    '',
+    '1. 上传这一段列出的图片；',
+    '2. 复制这一段的提示词。',
+    '',
+    mode === 'draft'
+      ? '当前是草稿模式：这里只告诉你之后该怎么投喂；先不要生成图片、不要投喂视频工具。'
+      : '当前是出图模式：按下面分段上传图片并复制提示词。',
+    '',
+    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist, mainCharacter }),
     '## 视觉参考',
     '',
     ...visualReferenceLines(contract),
@@ -239,32 +469,23 @@ export function composeDeliverable({ contract, draft, episodePlan = null }) {
     '## 连续性注意事项',
     '',
     '- 人物脸、发型、服装、道具不要漂移。',
-    '- 每张首尾帧控制图只表达一个静态状态，不要求图片模型生成运动。',
+    '- 每张故事板图只表达一个关键帧，不要求图片模型生成运动。',
     '- 视频工具只负责运动、镜头和转场，不让它重新发明剧情。',
     '- Codex 不生成最终视频。'
   ].join('\n')
 }
 
-export function composeStoryboardImagesReadme({ contract, draft, episodePlan = null }) {
+export function composeStoryboardImagesReadme({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
-  const episodeFrameLines = episodePlan
-    ? episodePlan.episodes.flatMap((episode) => {
-        return episode.tasks.flatMap((task) => [
-          `- \`episodes/${episode.id}/${task.startFrame}\`：${episode.id}/${task.id} 起始帧。`,
-          `- \`episodes/${episode.id}/${task.endFrame}\`：${episode.id}/${task.id} 结束帧。`
-        ])
-      })
-    : draft.shotlist.map((shot) => `- \`${shot.shot_id}.png\`：${compactAction(shot.action)}`)
+  const queue = composeImageAssetQueue({ contract, shotlist: draft.shotlist })
 
   return [
     '# Storyboard images',
     '',
     `当前模式：${modeName(mode)}。`,
-    episodePlan
-      ? '这是根索引。真正的视频控制帧按集存放在 `episodes/<episode>/storyboard-images/`。'
-      : mode === 'visual'
-        ? '这里是出图模式的图片生成队列。'
-        : '草稿模式不生成图片，只保留后续出图模式所需的文件名和提示词。',
+    mode === 'visual'
+      ? '这里是出图模式的图片生成队列。'
+      : '草稿模式不生成图片，只保留后续出图模式所需的文件名和提示词。',
     '',
     '## 用户参考图',
     '',
@@ -272,15 +493,16 @@ export function composeStoryboardImagesReadme({ contract, draft, episodePlan = n
     '',
     '## 建议生成顺序',
     '',
-    '- `character-reference.png`：没有人物参考图时才需要。',
-    '- `scene-reference.png`：没有场景参考图时才需要。',
-    ...episodeFrameLines,
+    ...queue,
+    '',
+    '## AI分镜提示词索引',
+    '',
+    ...draft.shotlist.map((shot) => `- \`${storyboardImageName(shot)}\`：${shot.shot_size} / ${shot.lens ?? 'same lens system'} / ${shot.camera_movement} / ${compactAction(shot.action)}`),
     '',
     '## 规则',
     '',
     '- 只放静态图，不放视频。',
-    '- 每个视频任务使用一张 start frame 和一张 end frame。',
-    '- 文件名和 `episodes/<episode>/video-tasks/Sxx.md` 保持一致。',
+    '- 文件名和 `deliverable.md` 的出图清单、故事板图片清单保持一致。',
     '- 如果用户已经提供人物图，就优先锁定人物，不要重新发明脸。'
   ].join('\n')
 }

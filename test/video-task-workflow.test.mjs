@@ -24,7 +24,7 @@ const longSource = [
   '他回头看见电梯门重新打开，门里站着另一个浑身湿透的自己。'
 ].join('')
 
-test('visual mode decomposes long story into episode video tasks with start and end frame prompts', async () => {
+test('debug mode keeps long-story episode video tasks internal', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-video-tasks-'))
   try {
     const result = spawnSync(process.execPath, [
@@ -33,6 +33,7 @@ test('visual mode decomposes long story into episode video tasks with start and 
       'visual',
       '--out',
       out,
+      '--emit-internal',
       '--duration',
       '60s',
       '--aspect',
@@ -45,13 +46,14 @@ test('visual mode decomposes long story into episode video tasks with start and 
 
     assert.equal(result.status, 0, result.stderr)
 
-    const biblePath = join(out, 'continuity-bible.json')
+    const internalDir = join(out, '.cine-make-internal')
+    const biblePath = join(internalDir, 'continuity-bible.json')
     assert.ok(existsSync(biblePath), 'continuity-bible.json should exist')
     const bible = JSON.parse(await readFile(biblePath, 'utf8'))
     assert.ok(bible.sourceBeats.length >= 10, 'long source beats should be preserved, not compressed away')
     assert.ok(bible.episodes.length >= 2, 'long source should be split into multiple episodes')
 
-    const episodeDir = join(out, 'episodes', 'episode-01')
+    const episodeDir = join(internalDir, 'episodes', 'episode-01')
     const taskPath = join(episodeDir, 'video-tasks', 'S01.md')
     assert.ok(existsSync(join(episodeDir, 'episode.md')), 'episode.md should exist')
     assert.ok(existsSync(join(episodeDir, 'storyboard.md')), 'director storyboard should exist')
@@ -76,11 +78,11 @@ test('visual mode decomposes long story into episode video tasks with start and 
 
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
     assert.match(deliverable, /完整保留剧情/)
-    assert.match(deliverable, /导演分镜/)
+    assert.match(deliverable, /精简分镜/)
     assert.match(deliverable, /景别/)
-    assert.match(deliverable, /video-tasks/)
-    assert.match(deliverable, /start_frame/)
-    assert.match(deliverable, /end_frame/)
+    assert.doesNotMatch(deliverable, /video-tasks/)
+    assert.doesNotMatch(deliverable, /start_frame/)
+    assert.doesNotMatch(deliverable, /end_frame/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

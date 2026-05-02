@@ -32,8 +32,8 @@ test('reports missing production assets and invalid shot fields', async () => {
   }
 })
 
-test('requires the user-facing continuity bible and episode task tree', async () => {
-  const runDir = await mkdtemp(join(tmpdir(), 'cine-make-missing-episodes-'))
+test('accepts a clean user-facing package without continuity bible or episode tree', async () => {
+  const runDir = await mkdtemp(join(tmpdir(), 'cine-make-public-run-'))
   try {
     await mkdir(join(runDir, 'storyboard-images'), { recursive: true })
     await writeFile(join(runDir, 'deliverable.md'), '# Cine Make Deliverable\n\nCodex 不生成最终视频。', 'utf8')
@@ -41,9 +41,8 @@ test('requires the user-facing continuity bible and episode task tree', async ()
 
     const result = await validateRunDirectory({ runDir, stage: 'production' })
 
-    assert.equal(result.ok, false)
-    assert.match(result.errors.join('\n'), /missing required file: continuity-bible\.json/)
-    assert.match(result.errors.join('\n'), /missing required directory: episodes/)
+    assert.equal(result.ok, true, result.errors.join('\n'))
+    assert.deepEqual(result.errors, [])
   } finally {
     await rm(runDir, { recursive: true, force: true })
   }

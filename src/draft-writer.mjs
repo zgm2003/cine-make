@@ -1,19 +1,154 @@
 const SHOT_BLUEPRINTS = [
-  ['threshold call', '注意到不该出现的信号，在越过边界前停住', '克制的迟疑；握住关键物的手指收紧', 'wide establishing shot', 'slow push toward the threshold'],
-  ['object wound', '查看把当下和旧伤连接起来的关键物', '手指压得过紧；呼吸变短但表情仍然收住', 'macro insert', 'locked macro frame'],
-  ['entry', '从普通空间进入禁区', '走得很慢，但不回头', 'medium back shot', 'tracking behind the subject'],
-  ['world reveal', '进入主体空间，意识到它重新活了过来', '肩膀微沉，旧记忆变成可触摸的现实', 'wide environmental shot', 'slow lateral slide'],
-  ['identity detail', '触碰过去的职业或私人锚点', '手在落下前悬停半秒', 'medium close-up', 'small push-in'],
-  ['sound trigger', '听见不该存在的声音、信号或记忆', '身体先僵住，脸部反应随后才出现', 'insert shot', 'locked frame with subtle vibration'],
-  ['reaction', '消化这个不可能的信息', '眼眶发紧但不崩溃；嘴角压住情绪', 'tight close-up', 'slow eye-level push-in'],
-  ['approach', '环境开始向主体逼近或开启', '脚没有后退，反而停在边界线上', 'low angle shot', 'push along the floor line'],
-  ['reveal', '不可能的载具、门、人物或通道显形', '关键物在手里轻微颤动', 'wide reveal shot', 'slow dolly backward'],
-  ['reflection', '只通过倒影或剪影看到失去的人或真相', '朝影像转头，却说不出话', 'reflection close-up', 'parallel slide'],
-  ['invitation', '门、开口或路径刚好对准主体', '决定前低头看了一眼关键物', 'symmetrical medium shot', 'locked frontal frame'],
-  ['memory object', '发现证明旧连接真实存在的小物件', '手伸出去，却停在触碰之前', 'insert-medium hybrid', 'slow push toward the object'],
-  ['threshold decision', '把关键物放到边界处', '一只脚悬在留下和离开之间', 'low close-up', 'tilt from object to foot'],
-  ['answer waits', '失去的人或最终信号伸出邀请，但不强迫', '邀请停在光里等待，不抓取主体', 'long lens interior shot', 'slow rack focus'],
-  ['unresolved crossing', '半步踏入不可能的空间', '恐惧还在，但身体已经向前选择', 'wide final frame', 'slow pull-back']
+  {
+    label: 'threshold call',
+    purpose: '注意到不该出现的信号，在越过边界前停住',
+    performance: '克制的迟疑；握住关键物的手指收紧',
+    shotSize: 'wide establishing shot',
+    lens: '24mm controlled wide lens',
+    camera: 'slow push toward the threshold',
+    composition: '主体压在下三分之一，入口或信号居中形成压迫性负空间',
+    blocking: '主体先停住不跨线，手机或关键物压低在胸前'
+  },
+  {
+    label: 'object wound',
+    purpose: '查看把当下和旧伤连接起来的关键物',
+    performance: '手指压得过紧；呼吸变短但表情仍然收住',
+    shotSize: 'macro insert',
+    lens: '85mm macro lens',
+    camera: 'locked macro frame',
+    composition: '关键物占据画面中心，主体指尖从边缘进入，背景只保留场景色块',
+    blocking: '主体不说话，只用手指和停顿完成信息确认'
+  },
+  {
+    label: 'entry',
+    purpose: '从普通空间进入禁区',
+    performance: '走得很慢，但不回头',
+    shotSize: 'medium back shot',
+    lens: '35mm natural perspective lens',
+    camera: 'tracking behind the subject',
+    composition: '主体背影挡住一半入口，画面前景保留雨水或门框遮挡',
+    blocking: '主体肩膀先进画，脚步跨过边界后仍然保持犹豫'
+  },
+  {
+    label: 'world reveal',
+    purpose: '进入主体空间，意识到它重新活了过来',
+    performance: '肩膀微沉，旧记忆变成可触摸的现实',
+    shotSize: 'wide environmental shot',
+    lens: '28mm controlled wide lens',
+    camera: 'slow lateral slide',
+    composition: '空间纵深从主体身侧展开，异常光源切出一条明确通道',
+    blocking: '主体走到画面边缘停下，让场景自己占据主导'
+  },
+  {
+    label: 'identity detail',
+    purpose: '触碰过去的职业或私人锚点',
+    performance: '手在落下前悬停半秒',
+    shotSize: 'medium close-up',
+    lens: '50mm intimate lens',
+    camera: 'small push-in',
+    composition: '人物半身和锚点同框，锚点在前景虚化后慢慢清晰',
+    blocking: '主体伸手到一半停住，视线先落在锚点再落回空间'
+  },
+  {
+    label: 'sound trigger',
+    purpose: '听见不该存在的声音、信号或记忆',
+    performance: '身体先僵住，脸部反应随后才出现',
+    shotSize: 'insert shot',
+    lens: '65mm detail lens',
+    camera: 'locked frame with subtle vibration',
+    composition: '声源物体在画面一侧，另一侧留出空白等待声音进入',
+    blocking: '主体不立刻转头，先用肩颈僵硬表现听见'
+  },
+  {
+    label: 'reaction',
+    purpose: '消化这个不可能的信息',
+    performance: '眼眶发紧但不崩溃；嘴角压住情绪',
+    shotSize: 'tight close-up',
+    lens: '75mm portrait lens',
+    camera: 'slow eye-level push-in',
+    composition: '眼睛位于上三分之一，背景异常光保持同方向不漂移',
+    blocking: '主体只后退半步，身体仍朝向异常源'
+  },
+  {
+    label: 'approach',
+    purpose: '环境开始向主体逼近或开启',
+    performance: '脚没有后退，反而停在边界线上',
+    shotSize: 'low angle shot',
+    lens: '32mm low perspective lens',
+    camera: 'push along the floor line',
+    composition: '地面线条把视线推向主体脚边，异常源从远端逼近',
+    blocking: '主体脚尖不离开画面中的边界线，关键物保持可见'
+  },
+  {
+    label: 'reveal',
+    purpose: '不可能的载具、门、人物或通道显形',
+    performance: '关键物在手里轻微颤动',
+    shotSize: 'wide reveal shot',
+    lens: '24mm reveal lens',
+    camera: 'slow dolly backward',
+    composition: '显形物居中，主体偏侧形成尺度对比，保留可剪接的稳定画面',
+    blocking: '主体被迫后撤半步但不转身逃跑'
+  },
+  {
+    label: 'reflection',
+    purpose: '只通过倒影或剪影看到失去的人或真相',
+    performance: '朝影像转头，却说不出话',
+    shotSize: 'reflection close-up',
+    lens: '50mm reflection lens',
+    camera: 'parallel slide',
+    composition: '真实主体和倒影分在左右两侧，倒影更亮但不完全露脸',
+    blocking: '主体转头动作慢半拍，倒影先出现，真人后反应'
+  },
+  {
+    label: 'invitation',
+    purpose: '门、开口或路径刚好对准主体',
+    performance: '决定前低头看了一眼关键物',
+    shotSize: 'symmetrical medium shot',
+    lens: '40mm balanced lens',
+    camera: 'locked frontal frame',
+    composition: '门缝或通道严格居中，主体站在中轴线外一点点',
+    blocking: '主体先看关键物，再把身体摆正面对通道'
+  },
+  {
+    label: 'memory object',
+    purpose: '发现证明旧连接真实存在的小物件',
+    performance: '手伸出去，却停在触碰之前',
+    shotSize: 'insert-medium hybrid',
+    lens: '60mm object-memory lens',
+    camera: 'slow push toward the object',
+    composition: '物件占前景三分之一，主体脸部只在背景保留压低的轮廓',
+    blocking: '主体手停在物件上方，直到下一镜头才做选择'
+  },
+  {
+    label: 'threshold decision',
+    purpose: '把关键物放到边界处',
+    performance: '一只脚悬在留下和离开之间',
+    shotSize: 'low close-up',
+    lens: '35mm ground-level lens',
+    camera: 'tilt from object to foot',
+    composition: '关键物和鞋尖同框，边界线横切画面下方',
+    blocking: '主体先放下关键物，再让脚停在边界上，不立刻迈过'
+  },
+  {
+    label: 'answer waits',
+    purpose: '失去的人或最终信号伸出邀请，但不强迫',
+    performance: '邀请停在光里等待，不抓取主体',
+    shotSize: 'long lens interior shot',
+    lens: '100mm compressed long lens',
+    camera: 'slow rack focus',
+    composition: '邀请者或信号在远端光里，主体前景轮廓压暗',
+    blocking: '远端只伸手或亮起，不主动靠近主体'
+  },
+  {
+    label: 'unresolved crossing',
+    purpose: '半步踏入不可能的空间',
+    performance: '恐惧还在，但身体已经向前选择',
+    shotSize: 'wide final frame',
+    lens: '28mm final tableau lens',
+    camera: 'slow pull-back',
+    composition: '主体、通道、关键物形成三角构图，留下可接下一段的开放空间',
+    blocking: '主体只迈半步，尾帧冻结在可继续动作的位置'
+  }
 ]
 
 function stripSourcePrefix(sourceText) {
@@ -40,7 +175,7 @@ function firstMatch(text, patterns, fallback) {
 function inferAnchors(contract) {
   const text = stripSourcePrefix(contract.sourceText)
   const protagonist = firstMatch(text, [
-    /((?:退役|前)?(?:潜水员|外卖员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{2})(?=送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|在|，|。|$)/u,
+    /((?:退役|前)?(?:潜水员|外卖骑手|外卖员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{1,4})(?=接|送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|伸|在|，|。|$)/u,
     /(女孩|男孩|女人|男人|母亲|父亲|老人|孩子)/u
   ], 'main subject')
 
@@ -59,7 +194,7 @@ function inferAnchors(contract) {
   ], 'liminal location')
 
   const impossibleSign = firstMatch(text, [
-    /(不存在的13楼|13楼|电梯|绿色信号灯|鲸鱼的低鸣|报站声|深海光|没有司机的银色列车|黑伞|广播)/u
+    /(不存在的13楼|13楼|电梯|绿色信号灯|鲸鱼的低鸣|鲸鱼低鸣|报站声|深海光|没有司机的银色列车|黑伞|广播)/u
   ], 'impossible signal')
 
   return {
@@ -74,13 +209,31 @@ function inferAnchors(contract) {
 }
 
 function distributeDurations(totalSeconds, count) {
-  const base = Math.floor(totalSeconds / count)
-  let remainder = totalSeconds - base * count
-  return Array.from({ length: count }, () => {
-    const extra = remainder > 0 ? 1 : 0
-    remainder -= extra
-    return Math.max(1, base + extra)
-  })
+  const segmentCount = Math.max(1, Math.ceil(totalSeconds / 15))
+  const shotsPerSegment = Math.ceil(count / segmentCount)
+  const durations = []
+  let remainingShots = count
+  let remainingSeconds = totalSeconds
+
+  for (let segmentIndex = 0; segmentIndex < segmentCount && remainingShots > 0; segmentIndex += 1) {
+    const shotsInSegment = Math.min(shotsPerSegment, remainingShots)
+    const segmentSeconds = segmentIndex === segmentCount - 1
+      ? remainingSeconds
+      : Math.min(15, remainingSeconds - Math.max(0, segmentCount - segmentIndex - 1))
+    const base = Math.floor(segmentSeconds / shotsInSegment)
+    let remainder = segmentSeconds - base * shotsInSegment
+
+    for (let index = 0; index < shotsInSegment; index += 1) {
+      const extra = remainder > 0 ? 1 : 0
+      remainder -= extra
+      durations.push(Math.max(1, base + extra))
+    }
+
+    remainingShots -= shotsInSegment
+    remainingSeconds -= segmentSeconds
+  }
+
+  return durations
 }
 
 function shotId(index) {
@@ -91,19 +244,30 @@ function visibleBeat(beats, index) {
   return beats[index % beats.length]
 }
 
-function composeImagePrompt({ anchors, blueprint, action, shotSize, index }) {
+function selectBlueprints(count) {
+  if (count === 7) return [0, 1, 3, 6, 8, 9, 12].map((index) => SHOT_BLUEPRINTS[index])
+  if (count === 14) return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14].map((index) => SHOT_BLUEPRINTS[index])
+  return Array.from({ length: count }, (_, index) => SHOT_BLUEPRINTS[Math.floor(index * SHOT_BLUEPRINTS.length / count)])
+}
+
+function composeImagePrompt({ anchors, blueprint, action, index }) {
   return [
-    `${anchors.visualStyle} still keyframe`,
+    `${anchors.visualStyle} AI-video storyboard keyframe, single still image`,
     `${anchors.protagonist} in ${anchors.location}`,
     `visible action: ${action}`,
     `key object: ${anchors.keyObject}`,
     `impossible sign: ${anchors.impossibleSign}`,
-    shotSize,
+    `shot size: ${blueprint.shotSize}`,
+    `lens: ${blueprint.lens}`,
+    `camera language: ${blueprint.camera}`,
+    `composition: ${blueprint.composition}`,
+    `blocking: ${blueprint.blocking}`,
+    `performance: ${blueprint.performance}`,
     `continuity anchor with ${anchors.lostFigure}`,
     `vertical ${anchors.aspectRatio}`,
     'no text overlay',
     'no watermark',
-    `shot ${shotId(index)} ${blueprint}`
+    `shot ${shotId(index)} ${blueprint.label}`
   ].join(', ')
 }
 
@@ -112,26 +276,28 @@ export function composeDraftAssets(contract) {
   const beats = splitBeats(contract.sourceText)
   const count = contract.target.shotCount
   const durations = distributeDurations(contract.target.durationSeconds, count)
-  const selectedBlueprints = Array.from({ length: count }, (_, index) => SHOT_BLUEPRINTS[Math.floor(index * SHOT_BLUEPRINTS.length / count)])
+  const selectedBlueprints = selectBlueprints(count)
 
-  const shotlist = selectedBlueprints.map(([label, purpose, performance, shotSize, camera], index) => {
+  const shotlist = selectedBlueprints.map((blueprint, index) => {
     const beat = visibleBeat(beats, index)
-    const action = `${purpose}；源剧情：${beat}`
+    const action = `${blueprint.purpose}；源剧情：${beat}`
     return {
       shot_id: shotId(index),
       duration_seconds: durations[index],
       scene: anchors.location,
       subject: index < Math.floor(count * 0.7) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`,
       action,
-      performance_detail: performance,
-      shot_size: shotSize,
-      camera_movement: camera,
-      composition: `${label} composition with ${anchors.keyObject} and ${anchors.impossibleSign} as visual anchors`,
+      performance_detail: blueprint.performance,
+      shot_size: blueprint.shotSize,
+      lens: blueprint.lens,
+      camera_movement: blueprint.camera,
+      composition: `${blueprint.composition}；${anchors.keyObject} 与 ${anchors.impossibleSign} 必须作为稳定视觉锚点`,
+      blocking: blueprint.blocking,
       lighting: `${anchors.visualStyle}; motivated by the impossible sign and practical location light`,
       dialogue_or_voiceover: index === Math.floor(count / 2) ? `${anchors.lostFigure}的声音或信号进入场景。` : '',
-      image_prompt: composeImagePrompt({ anchors, blueprint: label, action, shotSize, index }),
+      image_prompt: composeImagePrompt({ anchors, blueprint, action, index }),
       continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的 ${anchors.location}、${anchors.protagonist}、${anchors.keyObject} 和 ${anchors.impossibleSign}`,
-      video_prompt_note: 'external video tool should animate only subject motion, camera motion, atmosphere, and continuity-preserving transitions'
+      video_prompt_note: `external video tool should animate only subject motion, ${blueprint.camera}, atmosphere, and continuity-preserving transitions; keep ${blueprint.lens}`
     }
   })
 
@@ -205,9 +371,9 @@ function composeStoryboardBoard(shotlist) {
   return [
     '# Storyboard board',
     '',
-    '| Shot | Image slot | Purpose | Continuity anchor |',
-    '| --- | --- | --- | --- |',
-    ...shotlist.map((shot) => `| ${shot.shot_id} | \`storyboard-images/${shot.shot_id}.png\` | ${shot.action} | ${shot.continuity_from_previous} |`)
+    '| Shot | Image slot | Shot size | Lens | Camera | Purpose | Continuity anchor |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    ...shotlist.map((shot) => `| ${shot.shot_id} | \`storyboard-images/${shot.shot_id}.png\` | ${shot.shot_size} | ${shot.lens} | ${shot.camera_movement} | ${shot.action} | ${shot.continuity_from_previous} |`)
   ].join('\n')
 }
 
@@ -250,9 +416,12 @@ function composeReferencePack({ contract, shotlist }) {
     '',
     'Recommended generation order:',
     '',
-    '- `storyboard-images/character-reference.png`',
-    '- `storyboard-images/scene-reference.png`',
+    ...(visual.characterImages?.length ? visual.characterImages.map((path) => `- user character reference: \`${path}\` (keep unchanged)`) : ['- `storyboard-images/character-reference.png`']),
+    ...(visual.sceneImages?.length ? visual.sceneImages.map((path) => `- user scene reference: \`${path}\` (keep unchanged)`) : ['- `storyboard-images/scene-reference.png`']),
+    '- `storyboard-images/segment-01-start.png`',
     ...shotlist.map((shot) => `- \`storyboard-images/${shot.shot_id}.png\``),
+    '- `storyboard-images/segment-01-end.png`',
+    '- `storyboard-images/contact-sheet.jpg`',
     '',
     'After Codex image generation, record actual image filenames here.'
   ].join('\n')
@@ -342,7 +511,7 @@ function composeExternalPack({ platform, contract, anchors, shotlist }) {
     'This pack is for external video synthesis. Cine Make does not render the final video.',
     '',
     `Target: ${contract.target.durationSeconds}s ${contract.target.aspectRatio} ${contract.target.style}.`,
-    `Task rule: one visible action per generation task, usually ${MIN_USEFUL_VIDEO_SEGMENT_SECONDS}-${MAX_VIDEO_SEGMENT_SECONDS}s; use start/end frames in the user-facing episodes package.`,
+    `Task rule: one visible action per generation task, usually ${MIN_USEFUL_VIDEO_SEGMENT_SECONDS}-${MAX_VIDEO_SEGMENT_SECONDS}s; use the storyboard images from the user-facing package.`,
     '',
     ...segments.flatMap((segment, index) => {
       const duration = segmentDuration(segment)

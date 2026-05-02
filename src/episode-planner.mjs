@@ -24,7 +24,7 @@ function firstMatch(text, patterns, fallback) {
 function inferContinuityAnchors(contract) {
   const text = stripSourcePrefix(contract.sourceText)
   const protagonist = firstMatch(text, [
-    /((?:退役|前)?(?:外卖员|潜水员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{1,4})(?=送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|伸|在|，|。|$)/u,
+    /((?:退役|前)?(?:外卖骑手|外卖员|潜水员|列车调度员|调度员|医生|记者|画家|警探|工程师|母亲|父亲)[\u4e00-\u9fa5]{1,4})(?=接|送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|伸|在|，|。|$)/u,
     /(女孩|男孩|女人|男人|母亲|父亲|老人|孩子|主角)/u
   ], 'main subject')
 

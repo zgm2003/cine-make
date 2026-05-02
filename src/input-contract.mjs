@@ -249,9 +249,8 @@ function inferContentType(sourceText) {
 }
 
 function defaultShotCount(seconds) {
-  if (seconds <= 15) return 8
-  if (seconds <= 30) return 12
-  return 15
+  const segmentCount = Math.ceil(seconds / 15)
+  return Math.min(30, segmentCount * 7)
 }
 
 export async function createInputContract(options) {
@@ -271,7 +270,7 @@ export async function createInputContract(options) {
   const mode = normalizeMode(options.mode)
 
   const shotCount = clampInteger(options.shots, defaultShotCount(seconds), 4, 30, 'shots')
-  const storyboardCount = clampInteger(options.storyboards, Math.min(15, Math.max(shotCount, 8)), 4, 30, 'storyboards')
+  const storyboardCount = clampInteger(options.storyboards, shotCount, 4, 30, 'storyboards')
   const title = options.title || `${inferContentType(sourceText)}-${slugify(sourceText)}`
   const visualReferences = {
     characterImages: [...(options.visualReferences?.characterImages ?? [])],

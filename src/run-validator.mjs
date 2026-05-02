@@ -27,13 +27,10 @@ const PRODUCTION_FILES = [
 
 const USER_FACING_FILES = [
   'deliverable.md',
-  'continuity-bible.json',
   join('storyboard-images', 'README.md')
 ]
 
-const USER_FACING_DIRECTORIES = [
-  'episodes'
-]
+const USER_FACING_DIRECTORIES = []
 
 const SHOT_REQUIRED_FIELDS = [
   'shot_id',
@@ -163,7 +160,9 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
     }
   }
 
-  const biblePath = join(runDir, 'continuity-bible.json')
+  const biblePath = artifactDir
+    ? join(artifactDir, 'continuity-bible.json')
+    : join(runDir, 'continuity-bible.json')
   const bible = existsSync(biblePath) ? await readJson(biblePath, errors, 'continuity-bible.json') : null
   if (bible) {
     if (bible.mode !== 'video-model-first') errors.push('continuity-bible.mode must be video-model-first')
