@@ -1,6 +1,6 @@
 {
   "name": "cine-make",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "private": false,
   "type": "module",
   "description": "Local AI short-drama pre-production factory: compact deliverable, optional storyboard images, and video-model prompt packs.",

@@ -1,31 +1,28 @@
 # Cine Make
 
-**中文优先**：简体中文说明在这里，不应该埋在文档底部：[`README.zh-CN.md`](./README.zh-CN.md)
+**中文优先**: Simplified Chinese documentation is the primary entrypoint: [`README.zh-CN.md`](./README.zh-CN.md)
 
-English version: this file.
+Cine Make is a local AI short-drama pre-production tool for Codex-style agents. It turns novels, rough scripts, ad briefs, and story fragments into a compact package that can be handed to AI video tools.
 
-**Cine Make** is a local AI short-drama pre-production factory for Codex-style agents.
+Cine Make does **not** render MP4 videos. It handles story decomposition, continuity, still-image/keyframe prompts, and video feed cards. Final video synthesis belongs to external tools such as Seedance, Jimeng, or another AI video generator.
 
-It turns novels, rough scripts, ad briefs, and story fragments into a compact, executable package for AI video workflows.
+## Current version
 
-Cine Make does **not** render MP4 videos. It decomposes the story, locks continuity, prepares storyboard/keyframe image prompts, and writes the video-tool feed pack. Final video synthesis belongs to external tools such as Seedance, Jimeng, or any other AI video generator.
+```text
+0.0.4
+```
 
 ## What the user gets
 
-A normal run exposes only these two user-facing items:
+A normal run exposes only:
 
 ```text
 deliverable.md
 storyboard-images/
 ```
 
-This is intentional. `deliverable.md` is the product entrypoint: film preview, story flow, compact storyboard, AI storyboard, image-output checklist, storyboard image list, and video-tool feed pack. `storyboard-images/` holds character references, scene references, segment start/end frames, storyboard/keyframe images such as `S01.png`, `S02.png`, and the `contact-sheet.jpg` overview.
+`deliverable.md` is the user entrypoint. It contains:
 
-`continuity-bible.json`, `episodes/`, task trees, and agent handoff files are internal/debug artifacts. They are emitted only under `.cine-make-internal/` when `--emit-internal` is explicitly used.
-
-The default `deliverable.md` order:
-
-```text
 1. Film preview
 2. Story flow
 3. Short-film plan
@@ -36,45 +33,62 @@ The default `deliverable.md` order:
 8. Video-tool feed pack
 9. Visual references
 10. Continuity notes
+
+`storyboard-images/` contains or prepares:
+
+```text
+character-reference.png
+scene-reference.png
+segment-01-start.png
+S01.png ... S07.png
+segment-01-end.png
+segment-02-end.png
+contact-sheet.jpg
 ```
 
-The video-tool feed pack is the core handoff: it tells the user which images to upload and which prompt to copy. One feed card is capped at 15 seconds / 7 AI-storyboard shots by default; longer stories are split into cards, with the next card's start frame reusing the previous card's end frame.
+A 30-second piece is split into two 15-second cards by default. Each card uses up to 7 AI-storyboard shots. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
-## Two modes
+Internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files.
 
-Cine Make has only two user modes.
+## Modes
 
 | Mode | Purpose | Images | Output |
 | --- | --- | --- | --- |
-| `draft` | Fast first pass to understand story, rhythm, and storyboard | No images | `deliverable.md` + `storyboard-images/README.md` |
-| `visual` | Image-output mode after the draft is approved | Generate or prepare still images | `deliverable.md` + generated/fillable `storyboard-images/` |
+| `draft` | Fast first pass for story, rhythm, and storyboard | No images | `deliverable.md` + `storyboard-images/README.md` |
+| `visual` | Image-output mode after draft approval | Generated or prepared stills | `deliverable.md` + `storyboard-images/` |
 
 ### Draft mode
 
-Draft mode is for an unstable story. It answers what the short film is, what happens from beginning to end, which shots matter, and whether it is worth generating images.
-
-Draft mode should not spend time generating images.
+Use this while the story is still unstable. It answers what the short is about, how the story progresses, which shots matter, and whether it is ready for image output.
 
 ### Image-output mode
 
-Image-output mode is for an approved draft.
-
-It prepares or generates:
+Use this after the draft is approved. It prepares:
 
 - character reference image;
 - scene reference image;
-- segment start/end frames such as `segment-01-start.png`, `segment-01-end.png`;
-- AI-storyboard keyframes such as `S01.png`, `S02.png`;
-- the `contact-sheet.jpg` overview;
-- the video-tool feed pack inside `deliverable.md`.
+- segment start/end frames;
+- `S01.png` ... `Sxx.png` storyboard keyframes;
+- `contact-sheet.jpg` overview;
+- video feed cards inside `deliverable.md`.
 
-If the user explicitly asks for built-in `$imagegen`, use built-in `$imagegen` directly and copy still images into `storyboard-images/`. The local `scripts/render-images.mjs` path is an advanced/debug path, not the default user handoff.
+If the user explicitly asks for built-in `$imagegen`, use built-in `$imagegen` directly and copy still images into `storyboard-images/`.
 
-## Natural-language skill usage
+## Install
 
-After installing the Codex skill, users should interact naturally.
+```bash
+npx --registry=https://registry.npmjs.org/ cine-make install-skill
+```
 
-### Draft example
+Restart Codex after installation, then use:
+
+```text
+$cine-make ...
+```
+
+## Natural-language usage
+
+### Draft
 
 ```text
 $cine-make
@@ -86,28 +100,16 @@ Story fragment:
 At 3 a.m., delivery rider Chen Mo delivers his last order to an abandoned hospital. The elevator stops on a non-existent 13th floor. When the doors open, he sees his sister, who disappeared ten years ago, sitting at the nurse station and holding the red marble he lost as a child.
 ```
 
-Chinese prompts work too:
-
-```text
-$cine-make
-
-把下面小说片段做成 30 秒竖屏 AI 漫剧草稿。
-风格：电影感悬疑、冷色调、克制表演。
-
-小说片段：
-凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。
-```
-
-### Image-output example
+### Image-output package
 
 ```text
 $cine-make
 
 The draft works. Continue into image-output mode.
-Generate or prepare the character reference, scene reference, and start/end control frames.
+Generate the character reference, scene reference, start/end control frames, and storyboard keyframes.
 ```
 
-### Image-output package with a character image
+### With a character image
 
 ```text
 $cine-make
@@ -122,33 +124,9 @@ Story:
 She receives a text message from herself three years in the future. The message says only one thing: do not go home.
 ```
 
-Users do **not** need to specify a video platform. Cine Make uses a generic AI-video adapter unless the user explicitly asks for Seedance, Jimeng, or another tool.
-
-## Project article
-
-For a more product-oriented introduction and sharing article, see:
-
-- [Cine Make: 把小说片段变成 AI 漫剧前期制片包](./docs/share-cine-make.zh-CN.md)
-
-## Install from npm
-
-Install the Codex skill from the published npm package:
-
-```bash
-npx --registry=https://registry.npmjs.org/ cine-make install-skill
-```
-
-Then restart Codex so the new skill is discovered.
-
-After that, use:
-
-```text
-$cine-make ...
-```
+Users do not need to specify a video platform. Cine Make uses a generic video-tool format unless the user explicitly asks for Seedance, Jimeng, or another platform.
 
 ## CLI usage
-
-The CLI is the compiler kernel behind the skill. Most end users should use the skill, but the CLI is useful for local testing, automation, and development.
 
 ### Draft mode
 
@@ -173,8 +151,6 @@ cine-make --mode visual \
   "Story material here..."
 ```
 
-Render storyboard/keyframe stills with built-in `$imagegen` using the prompts in `deliverable.md` and `storyboard-images/README.md`, then save them as `storyboard-images/character-reference.png` when no character image is provided, `storyboard-images/scene-reference.png`, `storyboard-images/segment-01-start.png`, `storyboard-images/S01.png` ... `S07.png`, `storyboard-images/segment-01-end.png`, and `storyboard-images/contact-sheet.jpg`, etc.
-
 ### Optional visual references
 
 ```bash
@@ -183,24 +159,15 @@ Render storyboard/keyframe stills with built-in `$imagegen` using the prompts in
 --style-image refs/noir-style.png
 ```
 
-These inputs are optional. Never make reference images required for the main flow.
+These inputs are optional.
 
 ### Debug artifacts
-
-By default, the run directory stays clean:
-
-```text
-deliverable.md
-storyboard-images/
-```
-
-Use debug artifacts only when developing the compiler itself:
 
 ```bash
 cine-make --mode draft --emit-internal --out .cine-make-runs/debug "Story material"
 ```
 
-This creates:
+This additionally creates:
 
 ```text
 .cine-make-internal/
@@ -208,75 +175,45 @@ This creates:
 
 Do not expose `.cine-make-internal/` to normal users.
 
-## Output contract
-
-### `deliverable.md`
-
-The main user document. It explains the film first, then gives the concrete video-tool feed pack.
-
-### `storyboard-images/`
-
-The only user-facing asset folder. It contains `README.md`, optional reference images, and generated stills such as:
-
-```text
-character-reference.png
-scene-reference.png
-segment-01-start.png
-S01.png
-S02.png
-...
-segment-01-end.png
-contact-sheet.jpg
-```
-
-Internal debug artifacts may exist under `.cine-make-internal/` only when `--emit-internal` is used.
-
-## What to feed into AI video tools
-
-Users should not feed the whole project folder into Seedance, Jimeng, or any other video tool.
+## Feeding AI video tools
 
 Use `deliverable.md` directly:
 
-```text
 1. Generate or confirm the character, scene, start-frame, end-frame, `Sxx.png`, and `contact-sheet.jpg` images listed in the image-output checklist.
-2. For each feed card, upload the listed images.
+2. For each video feed card, upload the listed images.
 3. Copy the feed-card prompt.
 4. Generate the clip in the external video tool.
-5. Stitch multiple clips externally; each later card must start from the previous card's end frame.
-```
-
-Cine Make prepares the feed package and still images. The external video tool renders the final video.
+5. Stitch multiple clips externally; every later card must start from the previous card's end frame.
 
 ## Development
 
-Install dependencies if needed:
-
-```bash
-npm install
-```
-
-Run tests:
-
 ```bash
 npm test
-```
-
-Validate a run:
-
-```bash
 node src/cli.mjs validate --run .cine-make-runs/demo --stage production
+npm pack --dry-run
+node scripts/install-codex-skill.mjs
 ```
 
-Dry-run package contents:
+## npm publish
+
+Preflight:
 
 ```bash
+npm whoami --registry=https://registry.npmjs.org/
+npm test
 npm pack --dry-run
 ```
 
-Install the local skill during development:
+Publish:
 
 ```bash
-node scripts/install-codex-skill.mjs
+npm publish --registry=https://registry.npmjs.org/ --access public
+```
+
+Verify:
+
+```bash
+npm view cine-make version --registry=https://registry.npmjs.org/
 ```
 
 ## Boundary
@@ -290,9 +227,7 @@ story material -> deliverable.md -> storyboard-images/ -> video-tool feed pack -
 External video tools own final synthesis:
 
 ```text
-video task pack -> generated video segments -> final edit/export
+video feed card -> generated video segment -> final edit/export
 ```
 
 Cine Make must never claim that Codex rendered the final MP4.
-
-
