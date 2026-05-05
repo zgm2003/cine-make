@@ -381,7 +381,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
       '',
       mode === 'draft'
         ? '状态：草稿模式先不要上传；等出图模式生成这些图片后再用这一段。'
-        : '状态：视觉包模式；如果这些图片已在 `storyboard-images/` 里，就可以上传到视频工具。',
+        : '状态：出图模式；如果这些图片已在 `storyboard-images/` 里，就可以上传到视频工具。',
       ''
     ]
   })
@@ -445,7 +445,7 @@ export function composeDeliverable({ contract, draft }) {
     '',
     mode === 'visual'
       ? '出图模式下，按下面顺序生成或补齐图片。'
-      : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑视觉包模式。',
+      : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑出图模式。',
     '',
     ...composeReferencePromptList({ contract, shotlist: draft.shotlist }),
     '## 视频工具投喂包',

@@ -57,6 +57,9 @@ test('draft mode exposes only deliverable.md and storyboard-images to users', as
     assert.doesNotMatch(deliverable, /continuity-bible\.json/)
     assert.doesNotMatch(deliverable, /episodes\//)
     assert.match(deliverable, /Codex 不生成最终视频/)
+    assert.match(deliverable, /出图模式/)
+    assert.doesNotMatch(deliverable, /视觉包模式/)
+    assert.doesNotMatch(deliverable, /生产模式/)
 
     assert.ok(deliverable.indexOf('## 成片预览') < deliverable.indexOf('## 故事全流程'))
     assert.ok(deliverable.indexOf('## 故事全流程') < deliverable.indexOf('## 精简分镜'))
@@ -122,6 +125,9 @@ test('visual mode prepares an image-output queue and keeps references optional',
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
     assert.match(deliverable, /人物参考图/)
     assert.match(deliverable, /refs\/hero\.png/)
+    assert.match(deliverable, /出图模式/)
+    assert.doesNotMatch(deliverable, /视觉包模式/)
+    assert.doesNotMatch(deliverable, /生产模式/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

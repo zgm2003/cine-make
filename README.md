@@ -9,7 +9,7 @@ Cine Make does **not** render MP4 videos. It handles story decomposition, contin
 ## Current version
 
 ```text
-0.0.4
+0.0.5
 ```
 
 ## What the user gets
@@ -72,7 +72,7 @@ Use this after the draft is approved. It prepares:
 - `contact-sheet.jpg` overview;
 - video feed cards inside `deliverable.md`.
 
-If the user explicitly asks for built-in `$imagegen`, use built-in `$imagegen` directly and copy still images into `storyboard-images/`.
+If the user explicitly asks for built-in image generation, use the current session's available built-in image generation tool directly and copy still images into `storyboard-images/`.
 
 ## Install
 

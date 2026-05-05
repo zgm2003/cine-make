@@ -30,3 +30,14 @@ test('cli writes a draft run with the compact user deliverable', async () => {
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('cli help keeps the default example platform-neutral', () => {
+  const result = spawnSync(process.execPath, ['src/cli.mjs', '--help'], {
+    cwd: root,
+    encoding: 'utf8'
+  })
+
+  assert.equal(result.status, 0, result.stderr)
+  assert.match(result.stdout, /--platform <seedance\|jimeng\|generic>/)
+  assert.doesNotMatch(result.stdout, /--mode draft[^\n]*--platform seedance/)
+})

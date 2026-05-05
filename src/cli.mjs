@@ -28,7 +28,7 @@ function usage() {
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
     '',
     'Example:',
-    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic --platform seedance "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
+    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --duration 30s --aspect 9:16 --style cinematic "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
     '  node src/cli.mjs --mode visual --out .cine-make-runs/demo-visual --character-image refs/hero.png "小说片段..."'
   ].join('\n')
 }

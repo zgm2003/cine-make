@@ -124,14 +124,14 @@ When triggered by a story-to-video-preproduction request:
    - each segment end frame, e.g. `storyboard-images/segment-01-end.png`;
    - `storyboard-images/contact-sheet.jpg` as the overview of all stills.
    For segment 2 and later, reuse the previous end frame as the new start frame: `segment-01-end.png` is segment 2's start frame.
-   Use built-in `$imagegen` directly when the user asks for it. The optional local `scripts/render-images.mjs` path is an advanced/debug path, not part of the default user-facing handoff.
+   Use the current session's available built-in image generation tool directly when the user asks for still images. The optional local `scripts/render-images.mjs` path is an advanced/debug path, not part of the default user-facing handoff.
 6. Summarize only the deliverable path, storyboard folder, mode, and next action.
 
 ## Output rules
 
 - A good shot is concrete and AI-facing: subject, action, performance, shot size, lens, camera movement, composition, blocking, lighting, continuity bridge, and negative constraints.
 - A good image prompt asks for one storyboard/keyframe still, not motion.
-- For Cine Make specifically, if the user explicitly asks for built-in `$imagegen`, use built-in `$imagegen` directly and copy the generated still images into `storyboard-images/`.
+- For Cine Make specifically, if the user explicitly asks for built-in image generation, use 当前会话可用的内建图片生成工具 directly and copy the generated still images into `storyboard-images/`.
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
