@@ -64,7 +64,7 @@ function reviewMarkdown(kind, plan) {
     return [
       '# Video pack readiness review',
       '',
-      'Check whether Seedance/Jimeng/general video-model packs are usable by an external tool.',
+      'Check whether the Jimeng video-model pack is usable by an external tool.',
       '',
       'Check for:',
       '',
@@ -138,4 +138,3 @@ export async function writeAgentPlanArtifacts({ outDir, plan }) {
 
   return { taskFiles, reviewFiles }
 }
-

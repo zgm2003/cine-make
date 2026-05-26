@@ -31,13 +31,13 @@ test('cli writes a draft run with the compact user deliverable', async () => {
   }
 })
 
-test('cli help keeps the default example platform-neutral', () => {
+test('cli help is Jimeng-only', () => {
   const result = spawnSync(process.execPath, ['src/cli.mjs', '--help'], {
     cwd: root,
     encoding: 'utf8'
   })
 
   assert.equal(result.status, 0, result.stderr)
-  assert.match(result.stdout, /--platform <seedance\|jimeng\|generic>/)
-  assert.doesNotMatch(result.stdout, /--mode draft[^\n]*--platform seedance/)
+  assert.match(result.stdout, /--platform <jimeng>/)
+  assert.doesNotMatch(result.stdout, /seedance|generic/i)
 })

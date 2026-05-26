@@ -308,7 +308,6 @@ export function composeDraftAssets(contract) {
     storyboardBoard: composeStoryboardBoard(shotlist),
     storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist }),
     referencePack: composeReferencePack({ contract, shotlist }),
-    seedancePack: composeExternalPack({ platform: 'Seedance', contract, anchors, shotlist }),
     jimengPack: composeExternalPack({ platform: 'Jimeng', contract, anchors, shotlist }),
     continuityReview: composeContinuityReview({ anchors, shotlist })
   }
@@ -552,7 +551,7 @@ function composeContinuityReview({ anchors, shotlist }) {
     `- Location anchor: ${anchors.location}.`,
     `- Impossible sign anchor: ${anchors.impossibleSign}.`,
     '- Still-image prompts ask for keyframes only.',
-    '- External video motion is isolated to Seedance/Jimeng packs.',
+    '- External video motion is isolated to Jimeng packs.',
     `- ${shotlist.length} storyboard images are treated as pre-production/keyframe references.`,
     '',
     '## Watch',

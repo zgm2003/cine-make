@@ -22,7 +22,7 @@ import { writeVideoTaskArtifacts } from './video-task-writer.mjs'
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <seedance|jimeng|generic>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
+    '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <jimeng>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -90,9 +90,8 @@ async function writeDraftProductionAssets({ outDir, contract }) {
     ['storyboard-board.md', `${draft.storyboardBoard}\n`],
     ['storyboard-prompts.md', `${draft.storyboardPrompts}\n`],
     ['reference-pack.md', `${draft.referencePack}\n`],
-    ['seedance-pack.md', `${draft.seedancePack}\n`],
     ['jimeng-pack.md', `${draft.jimengPack}\n`],
-    ['exports/video-model-pack.md', `${draft.seedancePack}\n---\n\n${draft.jimengPack}\n`],
+    ['exports/video-model-pack.md', `${draft.jimengPack}\n`],
     ['continuity-review.md', `${draft.continuityReview}\n`]
   ]
 
@@ -182,7 +181,7 @@ async function main() {
   console.log(`- deliverable: ${join(outDir, 'deliverable.md')}`)
   console.log(`- storyboard images: ${join(outDir, 'storyboard-images')}`)
   if (options.emitInternal) console.log(`- internal debug artifacts: ${join(outDir, '.cine-make-internal')}`)
-  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then use the video feed pack in deliverable.md with the external video tool' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
+  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then use the video feed pack in deliverable.md with Jimeng' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
 }
 
 main().catch((error) => {

@@ -75,8 +75,8 @@ export function createAgentPlan({ contract, outDir }) {
     task(
       '05-video-pack',
       'video-pack-agent',
-      'Compose Seedance/Jimeng/general external video-model prompt packs from the storyboards and image manifest.',
-      ['seedance-pack.md', 'jimeng-pack.md', 'exports/video-model-pack.md'],
+      'Compose the Jimeng external video-model prompt pack from the storyboards and image manifest.',
+      ['jimeng-pack.md', 'exports/video-model-pack.md'],
       ['02-shotlist', '03-storyboard-prompts', '04-reference-images']
     ),
     task(
@@ -104,4 +104,3 @@ export function createAgentPlan({ contract, outDir }) {
     }))
   }
 }
-

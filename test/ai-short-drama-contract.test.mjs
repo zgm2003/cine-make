@@ -65,7 +65,7 @@ test('visual mode produces the AI-short-drama image package contract', async () 
     assert.match(deliverable, /运镜/)
     assert.match(deliverable, /主角锚点：外卖骑手林野/)
     assert.ok(deliverable.split('\n').length <= 180)
-    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 10))
+    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
   } finally {
     await rm(out, { recursive: true, force: true })
   }
@@ -126,7 +126,8 @@ test('30 second output splits into two feed cards and reuses previous end frame 
     assert.match(deliverable, /第 1 段/)
     assert.match(deliverable, /第 2 段/)
     assert.match(deliverable, /上一段尾帧 = 本段首帧/)
-    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 10))
+    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
+    assert.deepEqual(allSegmentReferenceCounts(deliverable), [11, 11])
 
     const segmentTwoIndex = deliverable.indexOf('### 第 2 段')
     assert.notEqual(segmentTwoIndex, -1)

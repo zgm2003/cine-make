@@ -26,7 +26,9 @@ test('skill keeps user prompts natural and internal output rules implicit', asyn
 
   assert.match(skill, /Natural-language UX/)
   assert.match(skill, /The user should not have to say/)
-  assert.match(skill, /generic adapter unless the user explicitly asks/)
+  assert.match(skill, /Jimeng/)
+  assert.doesNotMatch(skill, /generic adapter unless the user explicitly asks/)
+  assert.doesNotMatch(skill, /Seedance/)
   assert.match(skill, /That rule belongs to this skill, not to the user/)
   assert.match(skill, /Do not pass `--emit-internal` in normal user runs/)
   assert.match(skill, /视频工具投喂包/)

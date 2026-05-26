@@ -4,7 +4,7 @@ description: >-
   Use when a developer wants to turn novels, rough scripts, ad briefs, or story
   material into a compact AI short-drama pre-production deliverable, with a
   fast draft mode, an optional image-output mode, optional character/scene
-  reference images, and Seedance/Jimeng/general video-model prompts. Use for AI
+  reference images, and Jimeng video-model prompts. Use for AI
   video workflows where Codex prepares still images and prompts but does not
   render MP4 video.
 ---
@@ -20,7 +20,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - turn novel/script/ad material into one readable `deliverable.md`;
 - preserve long source stories by splitting them into feed cards instead of compressing them into one teaser;
 - generate storyboard/keyframe prompts and, in image-output mode (`visual` internally), still images into `storyboard-images/`;
-- package concrete video-tool feed cards for generic AI video generation, with optional internal adapters when a user explicitly names a platform;
+- package concrete Jimeng feed cards for external AI video generation;
 - preserve continuity instead of relying on random video generation.
 
 ## Product boundary
@@ -35,12 +35,12 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - User-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
-- The user should not have to name a video platform. Use the generic adapter unless the user explicitly asks for Seedance, Jimeng, or another target.
+- The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
 - Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
 - `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the `出图清单` and concise `视频工具投喂包`.
 - `精简分镜` is mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly which images to upload and which prompt text to copy.
-- Treat external AI video generation as a short feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, but each feed card may upload at most 10 reference images total. With character + scene + start/end frames, split cards at 6 storyboard images when needed.
+- Treat external AI video generation as a short Jimeng feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, and each feed card may upload at most 12 reference images total.
 - For multi-card outputs, the previous card's end frame is the next card's start frame. Do not generate a separate new start frame that breaks continuity.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
@@ -103,7 +103,7 @@ When triggered by a story-to-video-preproduction request:
    ```
    Normal runs must leave the run root with only the user-facing package: `deliverable.md` and `storyboard-images/`.
    Use `--emit-internal` only when debugging the compiler itself.
-   Only pass `--platform <seedance|jimeng|generic>` if the user explicitly names a target platform. Otherwise omit it and let the compiler use the generic adapter.
+   The compiler targets Jimeng. Do not pass other platforms.
    Optional references:
    ```bash
    --character-image <path> --scene-image <path> --style-image <path>
@@ -134,14 +134,14 @@ When triggered by a story-to-video-preproduction request:
 - A good image prompt asks for one storyboard/keyframe still, not motion.
 - For Cine Make specifically, if the user explicitly asks for image generation, use `$imagegen` directly and copy the generated still images into `storyboard-images/`.
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
-- Each video-tool feed card must keep uploaded reference images at or under 10 total.
+- Each video-tool feed card must keep uploaded reference images at or under 12 total.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
 - If character identity is under-specified, generate or request character references before final storyboards.
 - In draft mode, do not spend time generating images.
 - In image-output mode, use provided character images to lock face/hair/clothing instead of inventing a new identity.
-- Never make users infer how to use Seedance/Jimeng/other tools from raw shotlists. Spell out the per-task feed package in user language.
+- Never make users infer how to use Jimeng from raw shotlists. Spell out the per-task feed package in user language.
 
 ## Built-in references
 

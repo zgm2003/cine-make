@@ -13,7 +13,7 @@ const source = '小说片段：退役潜水员周祁回到废弃海洋馆，空�
 test('draft mode exposes only deliverable.md and storyboard-images to users', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-deliverable-'))
   try {
-    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '30s', '--aspect', '9:16', '--platform', 'seedance', source], {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '30s', '--aspect', '9:16', '--platform', 'jimeng', source], {
       cwd: root,
       encoding: 'utf8'
     })
@@ -50,6 +50,7 @@ test('draft mode exposes only deliverable.md and storyboard-images to users', as
     assert.match(deliverable, /storyboard-images\/S01\.png/)
     assert.match(deliverable, /动漫二次元/)
     assert.match(deliverable, /上传参考图\s+\d+\s+张以内/)
+    assert.match(deliverable, /即梦/)
     assert.doesNotMatch(deliverable, /FORMAT：/)
     assert.doesNotMatch(deliverable, /主体锁定：/)
     assert.doesNotMatch(deliverable, /时间线：/)

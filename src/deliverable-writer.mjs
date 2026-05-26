@@ -1,9 +1,3 @@
-function platformName(platform) {
-  if (platform === 'seedance') return 'Seedance'
-  if (platform === 'jimeng') return 'Jimeng'
-  return 'Generic video model'
-}
-
 function modeName(mode) {
   return mode === 'visual' ? '出图模式' : '草稿模式'
 }
@@ -66,8 +60,8 @@ function segmentEndFrameName(segmentIndex) {
 }
 
 const MAX_VIDEO_SEGMENT_SECONDS = 15
-const MAX_REFERENCE_IMAGES_PER_SEGMENT = 10
-const MAX_VIDEO_SEGMENT_SHOTS = 6
+const MAX_REFERENCE_IMAGES_PER_SEGMENT = 12
+const MAX_VIDEO_SEGMENT_SHOTS = 8
 const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
 
 function maxStoryboardImagesPerSegment(contract) {
@@ -390,7 +384,7 @@ export function composeDeliverable({ contract, draft }) {
     '- `deliverable.md`',
     '- `storyboard-images/`',
     '',
-    'Codex 不生成最终视频；最终 MP4 由 Seedance / 即梦 / 其他视频工具合成。',
+    'Codex 不生成最终视频；最终 MP4 由即梦合成。',
     '',
     '## 成片预览',
     '',
@@ -418,16 +412,16 @@ export function composeDeliverable({ contract, draft }) {
     '## 出图清单',
     '',
     mode === 'visual'
-      ? '按这个清单用 Codex `$imagegen` 补齐静态图；每段投喂视频工具时，上传图片控制在 10 张以内。'
+      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段投喂即梦时，上传图片控制在 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张以内。`
       : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
     '',
     '## 视频工具投喂包',
     '',
-    `按外部 AI 视频工具单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
+    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
     '',
-    '到 AI 视频工具里，每一段只做两件事：',
+    '到即梦里，每一段只做两件事：',
     '',
     '1. 上传这一段列出的图片；',
     '2. 复制这一段的提示词。',

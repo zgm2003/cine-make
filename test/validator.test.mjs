@@ -52,7 +52,7 @@ test('rejects final video claims in generated assets', async () => {
   const runDir = await mkdtemp(join(tmpdir(), 'cine-make-video-claim-'))
   try {
     await writeValidProductionRun(runDir)
-    await writeFile(join(runDir, 'seedance-pack.md'), 'Codex generated the final mp4 video successfully.', 'utf8')
+    await writeFile(join(runDir, 'jimeng-pack.md'), 'Codex generated the final mp4 video successfully.', 'utf8')
     const result = await validateRunDirectory({ runDir, stage: 'production' })
 
     assert.equal(result.ok, false)
@@ -84,7 +84,7 @@ function baseContract() {
       durationSeconds: 30,
       aspectRatio: '9:16',
       style: 'cinematic noir',
-      platform: 'seedance',
+      platform: 'jimeng',
       shotCount: 2,
       storyboardCount: 2
     },
@@ -123,7 +123,6 @@ async function writeValidProductionRun(runDir) {
   await writeFile(join(runDir, 'storyboard-board.md'), '# Storyboard board\n\nS01-S02', 'utf8')
   await writeFile(join(runDir, 'storyboard-prompts.md'), '# Storyboard prompts\n\nStill keyframes only.', 'utf8')
   await writeFile(join(runDir, 'reference-pack.md'), '# Reference pack\n\nNo generated images yet.', 'utf8')
-  await writeFile(join(runDir, 'seedance-pack.md'), '# Seedance pack\n\nExternal synthesis prompt pack.', 'utf8')
   await writeFile(join(runDir, 'jimeng-pack.md'), '# Jimeng pack\n\nExternal synthesis prompt pack.', 'utf8')
   await writeFile(join(runDir, 'continuity-review.md'), '# Continuity review\n\nNo blocking issues.', 'utf8')
 }

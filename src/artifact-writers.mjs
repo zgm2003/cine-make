@@ -65,7 +65,7 @@ export function composeProductionBrief(contract) {
     '- `storyboard-board.md`: storyboard table with shot image slots.',
     '- `storyboard-prompts.md`: image-generation prompts for keyframes/storyboards.',
     '- `reference-pack.md`: generated image manifest and usage notes.',
-    '- `seedance-pack.md` / `jimeng-pack.md`: external video-model prompt packs.',
+    '- `jimeng-pack.md`: external video-model prompt pack.',
     '- `continuity-review.md`: continuity and platform-readiness review.',
     '',
     '## Hard boundary',

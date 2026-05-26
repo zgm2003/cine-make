@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
-const VALID_PLATFORMS = new Set(['seedance', 'jimeng', 'generic'])
+const VALID_PLATFORMS = new Set(['jimeng'])
 const DEFAULT_STYLE = '动漫二次元，非真人写实，电影感短剧，克制表演'
 const ANIME_STYLE_MARKERS = /(动漫|二次元|anime|manga|非真人写实)/i
-const MAX_VISUAL_REFERENCE_IMAGES = 10
+const MAX_VISUAL_REFERENCE_IMAGES = 12
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
   ['visual', 'visual'],
@@ -69,7 +69,7 @@ export function parseArgs(argv) {
     duration: '30s',
     aspect: '9:16',
     style: DEFAULT_STYLE,
-    platform: 'generic',
+    platform: 'jimeng',
     stage: 'skeleton',
     draft: true,
     emitInternal: false,
@@ -282,8 +282,8 @@ export async function createInputContract(options) {
   const aspectRatio = options.aspect || '9:16'
   if (!VALID_ASPECTS.has(aspectRatio)) throw new Error(`Unsupported aspect ratio: ${aspectRatio}`)
 
-  const targetPlatform = (options.platform || 'generic').toLowerCase()
-  if (!VALID_PLATFORMS.has(targetPlatform)) throw new Error(`Unsupported platform: ${targetPlatform}`)
+  const targetPlatform = (options.platform || 'jimeng').toLowerCase()
+  if (!VALID_PLATFORMS.has(targetPlatform)) throw new Error(`Cine Make only supports jimeng platform, got: ${targetPlatform}`)
 
   const mode = normalizeMode(options.mode)
   const visualReferenceImageCount = countVisualReferenceImages(options)
@@ -320,7 +320,7 @@ export async function createInputContract(options) {
     boundaries: {
       codexCanGenerate: ['text production assets', 'storyboard/keyframe images through image generation tools', 'review reports'],
       codexCannotGenerate: ['mp4 video', 'guaranteed external model motion fidelity'],
-      finalVideoOwner: 'external video model such as Seedance, Jimeng, or another video synthesis tool'
+      finalVideoOwner: 'Jimeng external video synthesis tool'
     }
   }
 }

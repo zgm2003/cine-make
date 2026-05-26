@@ -9,7 +9,7 @@ It turns raw story material into full-story episode breakdowns, continuity state
 - Not an MP4 generator.
 - Not a hosted video platform.
 - Not a web IDE.
-- Not a Seedance-only wrapper.
+- Not a multi-platform video-tool wrapper.
 
 ## This
 

@@ -4,7 +4,7 @@
 
 Cine Make is a local AI short-drama pre-production tool for Codex-style agents. It turns novels, rough scripts, ad briefs, and story fragments into a compact package that can be handed to AI video tools.
 
-Cine Make does **not** render MP4 videos. It handles story decomposition, continuity, still-image/keyframe prompts, and video feed cards. Final video synthesis belongs to external tools such as Seedance, Jimeng, or another AI video generator.
+Cine Make does **not** render MP4 videos. It handles story decomposition, continuity, still-image/keyframe prompts, and Jimeng video feed cards. Final video synthesis belongs to Jimeng.
 
 ## Current version
 
@@ -43,7 +43,7 @@ segment-01-end.png
 segment-02-end.png
 ```
 
-Storyboard density can stay high, but each video feed card must upload at most 10 reference images total. With character, scene, start, and end frames included, a card usually carries up to 6 `Sxx.png` storyboard images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+Storyboard density can stay high, but each Jimeng feed card must upload at most 12 reference images total. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
 Internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files.
 
@@ -120,7 +120,7 @@ Story:
 She receives a text message from herself three years in the future. The message says only one thing: do not go home.
 ```
 
-Users do not need to specify a video platform. Cine Make uses a generic video-tool format unless the user explicitly asks for Seedance, Jimeng, or another platform.
+Users do not need to specify a video platform. Cine Make outputs Jimeng feed cards only.
 
 ## CLI usage
 
@@ -176,7 +176,7 @@ Do not expose `.cine-make-internal/` to normal users.
 Use `deliverable.md` directly:
 
 1. Generate or confirm the character, scene, start-frame, end-frame, and `Sxx.png` images listed in the image-output checklist with `$imagegen`.
-2. For each video feed card, upload the listed images and keep each card at or under 10 images.
+2. For each video feed card, upload the listed images and keep each card at or under 12 images.
 3. Copy the feed-card prompt.
 4. Generate the clip in the external video tool.
 5. Stitch multiple clips externally; every later card must start from the previous card's end frame.

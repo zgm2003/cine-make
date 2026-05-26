@@ -20,7 +20,6 @@ const PRODUCTION_FILES = [
   'storyboard-board.md',
   'storyboard-prompts.md',
   'reference-pack.md',
-  'seedance-pack.md',
   'jimeng-pack.md',
   'continuity-review.md'
 ]
@@ -111,7 +110,6 @@ async function scanForbiddenClaims(runDir, errors) {
     'director-script.md',
     'storyboard-prompts.md',
     'reference-pack.md',
-    'seedance-pack.md',
     'jimeng-pack.md',
     'continuity-review.md',
     'video-model-pack.md'
