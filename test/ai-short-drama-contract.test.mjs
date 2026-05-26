@@ -50,23 +50,22 @@ test('visual mode produces the AI-short-drama image package contract', async () 
       assert.match(text, /storyboard-images\/segment-01-end\.png/)
       assert.match(text, /storyboard-images\/S01\.png/)
       assert.match(text, /storyboard-images\/S07\.png/)
-      assert.match(text, /storyboard-images\/contact-sheet\.jpg/)
+      assert.doesNotMatch(text, /storyboard-images\/contact-sheet\.jpg/)
       assert.doesNotMatch(text, /episodes\//)
     }
 
-    assert.match(deliverable, /## AI分镜/)
-    assert.match(deliverable, /视频生成卡/)
-    assert.match(deliverable, /镜头语言/)
+    assert.match(deliverable, /动漫二次元/)
+    assert.match(deliverable, /非真人写实/)
+    assert.match(deliverable, /## 精简分镜/)
+    assert.doesNotMatch(deliverable, /## AI分镜/)
+    assert.doesNotMatch(deliverable, /视频生成卡/)
+    assert.doesNotMatch(deliverable, /```text/)
     assert.match(deliverable, /景别/)
     assert.match(deliverable, /焦段/)
     assert.match(deliverable, /运镜/)
-    assert.match(deliverable, /构图/)
-    assert.match(deliverable, /调度/)
-    assert.match(deliverable, /表演/)
-    assert.match(deliverable, /光影/)
-    assert.match(deliverable, /连续性/)
-    assert.match(deliverable, /禁止/)
     assert.match(deliverable, /主角锚点：外卖骑手林野/)
+    assert.ok(deliverable.split('\n').length <= 180)
+    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 10))
   } finally {
     await rm(out, { recursive: true, force: true })
   }
@@ -127,6 +126,7 @@ test('30 second output splits into two feed cards and reuses previous end frame 
     assert.match(deliverable, /第 1 段/)
     assert.match(deliverable, /第 2 段/)
     assert.match(deliverable, /上一段尾帧 = 本段首帧/)
+    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 10))
 
     const segmentTwoIndex = deliverable.indexOf('### 第 2 段')
     assert.notEqual(segmentTwoIndex, -1)
@@ -172,3 +172,9 @@ test('deliverable does not expose AI meta commentary in the user handoff', async
     await rm(out, { recursive: true, force: true })
   }
 })
+
+function allSegmentReferenceCounts(deliverable) {
+  const matches = [...deliverable.matchAll(/上传参考图\s+(\d+)\s+张以内/g)]
+  assert.ok(matches.length, 'missing segment reference counts')
+  return matches.map((match) => Number(match[1]))
+}

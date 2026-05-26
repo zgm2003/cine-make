@@ -97,7 +97,7 @@ const SHOT_BLUEPRINTS = [
     lens: '50mm reflection lens',
     camera: 'parallel slide',
     composition: '真实主体和倒影分在左右两侧，倒影更亮但不完全露脸',
-    blocking: '主体转头动作慢半拍，倒影先出现，真人后反应'
+    blocking: '主体转头动作慢半拍，倒影先出现，主体随后反应'
   },
   {
     label: 'invitation',
@@ -421,9 +421,8 @@ function composeReferencePack({ contract, shotlist }) {
     '- `storyboard-images/segment-01-start.png`',
     ...shotlist.map((shot) => `- \`storyboard-images/${shot.shot_id}.png\``),
     '- `storyboard-images/segment-01-end.png`',
-    '- `storyboard-images/contact-sheet.jpg`',
     '',
-    'After Codex image generation, record actual image filenames here.'
+    'After Codex `$imagegen` generation, record actual image filenames here.'
   ].join('\n')
 }
 

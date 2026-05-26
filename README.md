@@ -27,12 +27,10 @@ storyboard-images/
 2. Story flow
 3. Short-film plan
 4. Compact storyboard
-5. AI storyboard
-6. Image-output checklist
-7. Storyboard image list
-8. Video-tool feed pack
-9. Visual references
-10. Continuity notes
+5. Image-output checklist
+6. Video-tool feed pack
+7. Visual references
+8. Continuity notes
 
 `storyboard-images/` contains or prepares:
 
@@ -43,10 +41,9 @@ segment-01-start.png
 S01.png ... S07.png
 segment-01-end.png
 segment-02-end.png
-contact-sheet.jpg
 ```
 
-A 30-second piece is split into two 15-second cards by default. Each card uses up to 7 AI-storyboard shots. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+Storyboard density can stay high, but each video feed card must upload at most 10 reference images total. With character, scene, start, and end frames included, a card usually carries up to 6 `Sxx.png` storyboard images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
 Internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files.
 
@@ -69,10 +66,9 @@ Use this after the draft is approved. It prepares:
 - scene reference image;
 - segment start/end frames;
 - `S01.png` ... `Sxx.png` storyboard keyframes;
-- `contact-sheet.jpg` overview;
 - video feed cards inside `deliverable.md`.
 
-If the user explicitly asks for built-in image generation, use the current session's available built-in image generation tool directly and copy still images into `storyboard-images/`.
+Image generation is Codex-only: use `$imagegen`, copy selected stills into `storyboard-images/`, and do not require external image APIs or extra image credentials.
 
 ## Install
 
@@ -94,7 +90,7 @@ $cine-make ...
 $cine-make
 
 Turn the following story fragment into a 30-second vertical AI short-drama draft.
-Style: cinematic suspense, cold color palette, restrained acting.
+Style: anime / non-live-action, cinematic suspense, cold color palette, restrained acting.
 
 Story fragment:
 At 3 a.m., delivery rider Chen Mo delivers his last order to an abandoned hospital. The elevator stops on a non-existent 13th floor. When the doors open, he sees his sister, who disappeared ten years ago, sitting at the nurse station and holding the red marble he lost as a child.
@@ -135,7 +131,7 @@ cine-make --mode draft \
   --out .cine-make-runs/demo \
   --duration 30s \
   --aspect 9:16 \
-  --style "cinematic suspense, cold palette, restrained acting" \
+  --style "anime, non-live-action, cinematic suspense, cold palette, restrained acting" \
   "At 3 a.m., a delivery rider enters an abandoned hospital..."
 ```
 
@@ -146,7 +142,7 @@ cine-make --mode visual \
   --out .cine-make-runs/demo-visual \
   --duration 30s \
   --aspect 9:16 \
-  --style "cinematic suspense, cold palette" \
+  --style "anime, non-live-action, cinematic suspense, cold palette" \
   --character-image refs/hero.png \
   "Story material here..."
 ```
@@ -179,8 +175,8 @@ Do not expose `.cine-make-internal/` to normal users.
 
 Use `deliverable.md` directly:
 
-1. Generate or confirm the character, scene, start-frame, end-frame, `Sxx.png`, and `contact-sheet.jpg` images listed in the image-output checklist.
-2. For each video feed card, upload the listed images.
+1. Generate or confirm the character, scene, start-frame, end-frame, and `Sxx.png` images listed in the image-output checklist with `$imagegen`.
+2. For each video feed card, upload the listed images and keep each card at or under 10 images.
 3. Copy the feed-card prompt.
 4. Generate the clip in the external video tool.
 5. Stitch multiple clips externally; every later card must start from the previous card's end frame.

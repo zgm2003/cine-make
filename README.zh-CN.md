@@ -27,12 +27,10 @@ storyboard-images/
 2. 故事全流程
 3. 短片方案
 4. 精简分镜
-5. AI分镜
-6. 出图清单
-7. 故事板图片清单
-8. 视频工具投喂包
-9. 视觉参考
-10. 连续性注意事项
+5. 出图清单
+6. 视频工具投喂包
+7. 视觉参考
+8. 连续性注意事项
 
 `storyboard-images/` 是图片资产目录，包含或准备：
 
@@ -43,10 +41,9 @@ segment-01-start.png
 S01.png ... S07.png
 segment-01-end.png
 segment-02-end.png
-contact-sheet.jpg
 ```
 
-30 秒会拆成两段，每段最多 15 秒 / 7 个 AI 分镜镜头。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
+分镜可以保持密度，但每段投喂视频工具时上传参考图必须控制在 10 张以内。带主角图、场景图、首帧和尾帧时，单段通常最多放 6 张 `Sxx.png`。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
 
 内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。
 
@@ -69,10 +66,9 @@ contact-sheet.jpg
 - 场景图；
 - 每段首帧、尾帧；
 - `S01.png` ... `Sxx.png` 分镜关键帧；
-- `contact-sheet.jpg` 全图缩略图；
 - `deliverable.md` 里的视频生成卡。
 
-如果用户明确要求用内建图片生成，就用当前会话可用的内建图片生成工具直接生成静态图，再复制到 `storyboard-images/`。
+图片生成只用 Codex `$imagegen`。Cine Make 不走外部图片 API，也不需要额外图片密钥。
 
 ## 安装
 
@@ -94,7 +90,7 @@ $cine-make ...
 $cine-make
 
 把下面小说片段做成 30 秒竖屏 AI 漫剧草稿。
-风格：电影感悬疑、冷色调、克制表演。
+风格：动漫二次元、非真人写实、电影感悬疑、冷色调、克制表演。
 
 小说片段：
 凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。
@@ -135,7 +131,7 @@ cine-make --mode draft \
   --out .cine-make-runs/demo \
   --duration 30s \
   --aspect 9:16 \
-  --style "电影感悬疑，冷色调，克制表演" \
+  --style "动漫二次元，非真人写实，电影感悬疑，冷色调，克制表演" \
   "凌晨三点，外卖员陈默走进废弃医院..."
 ```
 
@@ -146,7 +142,7 @@ cine-make --mode visual \
   --out .cine-make-runs/demo-visual \
   --duration 30s \
   --aspect 9:16 \
-  --style "电影感悬疑，冷色调" \
+  --style "动漫二次元，非真人写实，电影感悬疑，冷色调" \
   --character-image refs/hero.png \
   "故事内容..."
 ```
@@ -179,8 +175,8 @@ cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容
 
 用户只看 `deliverable.md`：
 
-1. 按 `出图清单` 生成或确认主角、场景、首帧、尾帧、`Sxx.png` 和 `contact-sheet.jpg`；
-2. 到 `视频工具投喂包`，每段上传列出的图片；
+1. 按 `出图清单` 用 `$imagegen` 生成或确认主角、场景、首帧、尾帧和 `Sxx.png`；
+2. 到 `视频工具投喂包`，每段上传列出的图片，确保每段不超过 10 张；
 3. 复制该段提示词；
 4. 在 Seedance / 即梦 / 其他视频工具里生成片段；
 5. 多段结果外部剪辑拼接，后一段首帧必须等于前一段尾帧。

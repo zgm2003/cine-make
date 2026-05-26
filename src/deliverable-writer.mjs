@@ -66,8 +66,16 @@ function segmentEndFrameName(segmentIndex) {
 }
 
 const MAX_VIDEO_SEGMENT_SECONDS = 15
-const MAX_VIDEO_SEGMENT_SHOTS = 7
+const MAX_REFERENCE_IMAGES_PER_SEGMENT = 10
+const MAX_VIDEO_SEGMENT_SHOTS = 6
 const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
+
+function maxStoryboardImagesPerSegment(contract) {
+  const fixedFrameCount = 2
+  const referenceCapacity = MAX_REFERENCE_IMAGES_PER_SEGMENT - fixedFrameCount
+  const preferredReferenceCount = Math.min(visualUploadLines(contract).length, 2)
+  return Math.max(1, referenceCapacity - preferredReferenceCount)
+}
 
 function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
   if (segments.length < 2) return segments
@@ -204,7 +212,7 @@ function composeAIStoryboard(shotlist) {
 }
 
 function composeImageAssetQueue({ contract, shotlist }) {
-  const segments = segmentShots(shotlist)
+  const segments = segmentShots(shotlist, { maxShots: maxStoryboardImagesPerSegment(contract) })
   const lines = [
     ...characterReferenceLines(contract),
     ...sceneReferenceLines(contract),
@@ -221,7 +229,6 @@ function composeImageAssetQueue({ contract, shotlist }) {
     lines.push(`- 第 ${segmentIndex + 1} 段尾帧：\`${endFrame}\``)
   }
 
-  lines.push('- 全图缩略图：`storyboard-images/contact-sheet.jpg`（把主角、场景、首尾帧、S图拼成一张检查图）')
   return lines
 }
 
@@ -286,15 +293,6 @@ function composeReferencePromptList({ contract, shotlist }) {
     )
   }
 
-  lines.push(
-    '### 全图缩略图 -> storyboard-images/contact-sheet.jpg',
-    '',
-    '```text',
-    'Create a clean contact sheet from all generated stills: character reference, scene reference, segment start frames, storyboard keyframes, segment end frames. Label slots only outside the images if needed; no fake subtitles inside frames.',
-    '```',
-    ''
-  )
-
   return lines
 }
 
@@ -304,6 +302,11 @@ function visualUploadLines(contract) {
     ...sceneReferenceLines(contract),
     ...styleReferenceLines(contract)
   ]
+}
+
+function segmentUploadLines({ contract, segment }) {
+  const availableReferenceSlots = Math.max(0, MAX_REFERENCE_IMAGES_PER_SEGMENT - 2 - segment.length)
+  return visualUploadLines(contract).slice(0, availableReferenceSlots)
 }
 
 function composeTimeline(segment) {
@@ -322,44 +325,33 @@ function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) 
   const costume = mainCharacter?.costume_anchor ?? '同一套服装'
   const prop = mainCharacter?.prop_anchor ?? '关键道具'
   const duration = segmentDuration(segment)
-  const cameraLanguage = [...new Set(segment.map((shot) => shot.camera_movement))].join('；')
-  const lenses = [...new Set(segment.map((shot) => shot.lens).filter(Boolean))].join('；')
-  const compositions = [...new Set(segment.map((shot) => shot.composition))].join('；')
-  const blocking = [...new Set(segment.map((shot) => shot.blocking).filter(Boolean))].join('；')
-  const lighting = [...new Set(segment.map((shot) => shot.lighting))].join('；')
-  const continuity = segment.map((shot) => `${shot.shot_id}：${shot.continuity_from_previous}`).join('；')
+  const shotIds = segment.map((shot) => shot.shot_id).join(' -> ')
+  const actions = segment.map((shot) => `${shot.shot_id} ${shotPurpose(shot)}`).join('；')
+  const cameraLanguage = [...new Set(segment.map((shot) => `${shot.shot_size}/${shot.lens ?? '同一镜头系统'}/${shot.camera_movement}`))].join('；')
 
   return [
-    `视频生成卡：第 ${segmentIndex + 1} 段`,
-    '',
-    `FORMAT：${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / multi-shot cinematic sequence`,
-    '',
-    `主体锁定：保持${subject}同一张脸、发型和体型；服装锚点：${costume}；道具锚点：${prop}；不要重新设计人物，不要新增无关角色。`,
-    '',
-    '时间线：',
-    ...composeTimeline(segment),
-    '',
-    `镜头语言：景别、焦段、运镜必须逐镜执行；焦段：${lenses || '沿用同一镜头系统'}；运镜：${cameraLanguage}。动作要克制、连续，镜头只做分镜里指定的缓慢运动和自然转场。`,
-    `构图：${compositions}。`,
-    `调度：${blocking || '主体动作从上一镜头自然延续，不突然换位'}。`,
-    `光影/美术：${lighting}。保持同一场景方向、冷暖关系、阴影位置和画面质感。`,
-    `连续性：${continuity}。关键帧图片只负责视觉锚定，视频模型只负责运动、镜头、雾气/灯光/微表情。`,
-    '',
-    '禁止：不要字幕、不要水印、不要跳剪、不要突然换脸、不要换服装、不要新增道具、不要把悬疑做成夸张恐怖片、不要超出本段剧情。'
-  ].join('\n')
+    `${duration}s / ${contract.target.aspectRatio} / ${contract.target.style}。按精简分镜顺序生成 ${shotIds}：${actions}。`,
+    `锁定${subject}同一张脸、发型、体型和服装（${costume}），保留${prop}。`,
+    `镜头按分镜执行：${cameraLanguage}。动作克制连续，只表现本段剧情。`,
+    '不要字幕、水印、跳剪、突然换脸、真人写实、换服装、乱加角色、乱加道具或超出剧情。'
+  ].join('')
 }
 
 function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
   const mode = contract.mode ?? 'draft'
-  return segmentShots(shotlist).flatMap((segment, index) => {
+  return segmentShots(shotlist, { maxShots: maxStoryboardImagesPerSegment(contract) }).flatMap((segment, index) => {
     const duration = segmentDuration(segment)
     const startFrame = segmentStartFrameName(index)
     const endFrame = segmentEndFrameName(index)
     const bridgeLine = index === 0 ? '本段使用独立首帧。' : '上一段尾帧 = 本段首帧。'
+    const uploadLines = [
+      ...segmentUploadLines({ contract, segment }),
+      `- 起始帧：\`${startFrame}\``,
+      ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
+      `- 尾帧：\`${endFrame}\``
+    ]
     return [
-      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，单次生成不超过 ${MAX_VIDEO_SEGMENT_SECONDS}s / ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头）`,
-      '',
-      `视频生成卡：第 ${index + 1} 段`,
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，上传参考图 ${uploadLines.length} 张以内）`,
       '',
       bridgeLine,
       '',
@@ -368,16 +360,11 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
       '',
       '上传图片：',
       '',
-      ...visualUploadLines(contract),
-      `- 起始帧：\`${startFrame}\``,
-      ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
-      `- 尾帧：\`${endFrame}\``,
+      ...uploadLines,
       '',
       '复制提示词：',
       '',
-      '```text',
       composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex: index }),
-      '```',
       '',
       mode === 'draft'
         ? '状态：草稿模式先不要上传；等出图模式生成这些图片后再用这一段。'
@@ -428,29 +415,17 @@ export function composeDeliverable({ contract, draft }) {
     '',
     ...composeShotTable(draft.shotlist),
     '',
-    '## AI分镜',
-    '',
-    '每个镜头锁定景别、焦段、运镜、构图、调度、表演、光影和连续性。',
-    '',
-    ...composeAIStoryboard(draft.shotlist),
     '## 出图清单',
     '',
     mode === 'visual'
-      ? '按这个清单补齐图片：主角、场景、每段首帧、每段尾帧、若干 AI 分镜关键帧，以及全图缩略图。'
+      ? '按这个清单用 Codex `$imagegen` 补齐静态图；每段投喂视频工具时，上传图片控制在 10 张以内。'
       : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
     '',
-    '## 故事板图片清单',
-    '',
-    mode === 'visual'
-      ? '出图模式下，按下面顺序生成或补齐图片。'
-      : '草稿模式下这里只准备提示词，不生成图片；确认方案后再跑出图模式。',
-    '',
-    ...composeReferencePromptList({ contract, shotlist: draft.shotlist }),
     '## 视频工具投喂包',
     '',
-    `按外部 AI 视频工具单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，且默认不超过 ${MAX_VIDEO_SEGMENT_SHOTS} 个镜头。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
+    `按外部 AI 视频工具单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
     '',
     '到 AI 视频工具里，每一段只做两件事：',
     '',
@@ -502,7 +477,7 @@ export function composeStoryboardImagesReadme({ contract, draft }) {
     '## 规则',
     '',
     '- 只放静态图，不放视频。',
-    '- 文件名和 `deliverable.md` 的出图清单、故事板图片清单保持一致。',
+    '- 文件名和 `deliverable.md` 的出图清单保持一致。',
     '- 如果用户已经提供人物图，就优先锁定人物，不要重新发明脸。'
   ].join('\n')
 }

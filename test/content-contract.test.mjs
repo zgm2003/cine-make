@@ -37,21 +37,24 @@ test('skill keeps user prompts natural and internal output rules implicit', asyn
   assert.match(skill, /故事全流程/)
 })
 
-test('skill describes image generation without hard-coding a tool alias', async () => {
+test('skill describes Codex-only image generation through $imagegen', async () => {
   const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
 
-  assert.match(skill, /当前会话可用的内建图片生成工具/)
-  assert.doesNotMatch(skill, /\$imagegen/)
+  assert.match(skill, /\$imagegen/)
+  assert.doesNotMatch(skill, /gpt-image-2/)
+  assert.doesNotMatch(skill, /OPENAI_API_KEY/)
 })
 
-test('readmes describe built-in image generation without hard-coding a tool alias', async () => {
+test('readmes describe Codex-only image generation through $imagegen', async () => {
   const english = await readFile(join(root, 'README.md'), 'utf8')
   const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
 
-  assert.match(english, /available built-in image generation tool/)
-  assert.match(chinese, /当前会话可用的内建图片生成工具/)
-  assert.doesNotMatch(english, /\$imagegen/)
-  assert.doesNotMatch(chinese, /\$imagegen/)
+  assert.match(english, /\$imagegen/)
+  assert.match(chinese, /\$imagegen/)
+  assert.doesNotMatch(english, /gpt-image-2/)
+  assert.doesNotMatch(chinese, /gpt-image-2/)
+  assert.doesNotMatch(english, /OPENAI_API_KEY/)
+  assert.doesNotMatch(chinese, /OPENAI_API_KEY/)
 })
 
 test('golden rain-alley example is a valid production run', async () => {

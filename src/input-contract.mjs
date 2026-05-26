@@ -2,6 +2,9 @@ import { readFile } from 'node:fs/promises'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['seedance', 'jimeng', 'generic'])
+const DEFAULT_STYLE = '动漫二次元，非真人写实，电影感短剧，克制表演'
+const ANIME_STYLE_MARKERS = /(动漫|二次元|anime|manga|非真人写实)/i
+const MAX_VISUAL_REFERENCE_IMAGES = 10
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
   ['visual', 'visual'],
@@ -65,7 +68,7 @@ export function parseArgs(argv) {
     title: null,
     duration: '30s',
     aspect: '9:16',
-    style: 'cinematic',
+    style: DEFAULT_STYLE,
     platform: 'generic',
     stage: 'skeleton',
     draft: true,
@@ -253,6 +256,21 @@ function defaultShotCount(seconds) {
   return Math.min(30, segmentCount * 7)
 }
 
+function normalizeStyle(value) {
+  const style = String(value || DEFAULT_STYLE).trim() || DEFAULT_STYLE
+  if (ANIME_STYLE_MARKERS.test(style)) return style
+  return `${style}，动漫二次元，非真人写实`
+}
+
+function countVisualReferenceImages(options) {
+  return [
+    ...(options.references ?? []),
+    ...(options.visualReferences?.characterImages ?? []),
+    ...(options.visualReferences?.sceneImages ?? []),
+    ...(options.visualReferences?.styleImages ?? [])
+  ].length
+}
+
 export async function createInputContract(options) {
   const fileText = options.input ? await readFile(options.input, 'utf8') : ''
   const inlineText = options.sourceParts.join(' ').trim()
@@ -268,6 +286,10 @@ export async function createInputContract(options) {
   if (!VALID_PLATFORMS.has(targetPlatform)) throw new Error(`Unsupported platform: ${targetPlatform}`)
 
   const mode = normalizeMode(options.mode)
+  const visualReferenceImageCount = countVisualReferenceImages(options)
+  if (visualReferenceImageCount > MAX_VISUAL_REFERENCE_IMAGES) {
+    throw new Error(`visual references must include at most ${MAX_VISUAL_REFERENCE_IMAGES} images`)
+  }
 
   const shotCount = clampInteger(options.shots, defaultShotCount(seconds), 4, 30, 'shots')
   const storyboardCount = clampInteger(options.storyboards, shotCount, 4, 30, 'storyboards')
@@ -288,7 +310,7 @@ export async function createInputContract(options) {
     target: {
       durationSeconds: seconds,
       aspectRatio,
-      style: options.style || 'cinematic',
+      style: normalizeStyle(options.style),
       platform: targetPlatform,
       shotCount,
       storyboardCount

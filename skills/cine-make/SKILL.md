@@ -30,15 +30,17 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Do not require a server or web IDE.
 - Do not expose the full run tree unless the user asks.
 - Use image generation only for still images: references, keyframes, storyboards.
+- Cine Make is Codex-only for still images: use `$imagegen`, not external image APIs or API-key workflows.
+- The default visual style is anime/二次元 and explicitly non-live-action / 非真人写实.
 - User-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Use the generic adapter unless the user explicitly asks for Seedance, Jimeng, or another target.
 - Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
-- `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the AI-facing `AI分镜`, `出图清单`, and `视频工具投喂包`.
-- `精简分镜` and `AI分镜` are mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
+- `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the `出图清单` and concise `视频工具投喂包`.
+- `精简分镜` is mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly which images to upload and which prompt text to copy.
-- Treat external AI video generation as a short feed-card workflow. Default to **15 seconds max and 7 AI-storyboard shots per generation card**; split longer stories into multiple cards for later editing/stitching.
+- Treat external AI video generation as a short feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, but each feed card may upload at most 10 reference images total. With character + scene + start/end frames, split cards at 6 storyboard images when needed.
 - For multi-card outputs, the previous card's end frame is the next card's start frame. Do not generate a separate new start frame that breaks continuity.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
@@ -116,23 +118,23 @@ When triggered by a story-to-video-preproduction request:
    ```bash
    node src/cli.mjs --mode visual --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> [--character-image <path>] "<source material>"
    ```
-5. In image-output mode, generate still images in this order when image generation is available:
+5. In image-output mode, generate still images with `$imagegen` in this order:
    - `storyboard-images/character-reference.png` only if no character image was provided;
    - `storyboard-images/scene-reference.png` only if no scene image was provided;
    - each 15-second segment start frame, e.g. `storyboard-images/segment-01-start.png`;
    - AI-storyboard keyframes, e.g. `storyboard-images/S01.png` ... `S07.png` for a 15-second card;
    - each segment end frame, e.g. `storyboard-images/segment-01-end.png`;
-   - `storyboard-images/contact-sheet.jpg` as the overview of all stills.
    For segment 2 and later, reuse the previous end frame as the new start frame: `segment-01-end.png` is segment 2's start frame.
-   Use the current session's available built-in image generation tool directly when the user asks for still images. The optional local `scripts/render-images.mjs` path is an advanced/debug path, not part of the default user-facing handoff.
+   Use `$imagegen` directly when the user asks for still images. Do not route image generation through external image APIs.
 6. Summarize only the deliverable path, storyboard folder, mode, and next action.
 
 ## Output rules
 
 - A good shot is concrete and AI-facing: subject, action, performance, shot size, lens, camera movement, composition, blocking, lighting, continuity bridge, and negative constraints.
 - A good image prompt asks for one storyboard/keyframe still, not motion.
-- For Cine Make specifically, if the user explicitly asks for built-in image generation, use 当前会话可用的内建图片生成工具 directly and copy the generated still images into `storyboard-images/`.
+- For Cine Make specifically, if the user explicitly asks for image generation, use `$imagegen` directly and copy the generated still images into `storyboard-images/`.
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
+- Each video-tool feed card must keep uploaded reference images at or under 10 total.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
@@ -159,4 +161,3 @@ Before saying a Cine Make run is ready, report:
 - video prompt pack status; mention a platform only if the user explicitly named one;
 - continuity review result;
 - clear reminder that final video synthesis belongs to the external video tool.
-
