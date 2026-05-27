@@ -308,6 +308,163 @@ const ENTERPRISE_DOCUMENTARY_BLUEPRINTS = [
   }
 ]
 
+const FOLKLORE_FANTASY_BLUEPRINTS = [
+  {
+    label: 'ritual voice',
+    sourceNote: '祭祖幻听',
+    purpose: '莫川在卧室听见祭祖幻听，怒意压过恐惧',
+    performance: '眉头拧紧，眼底有怒火，身体仍僵在床沿',
+    shotSize: 'wide establishing shot',
+    lens: '28mm room-to-ritual lens',
+    camera: 'slow push from dark bedroom toward the unseen voice',
+    composition: '现代卧室压暗，声音方向留出大片负空间',
+    blocking: '莫川从床上撑起上身，视线扫向空无一人的房间'
+  },
+  {
+    label: 'incense burner appears',
+    sourceNote: '双耳三足香炉显形',
+    purpose: '双耳三足香炉悬空显形，供香青烟扑向莫川',
+    performance: '怒火瞬间凝住，瞳孔收紧，呼吸停半拍',
+    shotSize: 'macro insert',
+    lens: '85mm ritual object macro lens',
+    camera: 'locked macro frame with slight smoke drift',
+    composition: '香炉占画面中心，三炷供香和青烟形成通往前景的弧线',
+    blocking: '莫川的手停在半空，青烟越过手指扑向面部'
+  },
+  {
+    label: 'world overlap',
+    sourceNote: '卧室与古祠堂重叠',
+    purpose: '青烟打开重叠世界，卧室与陈家古祠堂互相穿透',
+    performance: '莫川从愤怒转为迟疑，视线被神龛吸住',
+    shotSize: 'wide environmental shot',
+    lens: '24mm overlapping-space lens',
+    camera: 'slow lateral slide through smoke layers',
+    composition: '床沿、朱红神龛、供桌和雕花梁柱叠在同一纵深',
+    blocking: '莫川站在现代空间边缘，祠堂老人跪在另一层空间里'
+  },
+  {
+    label: 'descendants plead',
+    sourceNote: '老人青年求祖庇佑',
+    purpose: '老人和青年在祠堂中求祖庇佑，陈家灾祸被摆到眼前',
+    performance: '老人涕泗横流，青年恐惧发颤，莫川旁观困惑',
+    shotSize: 'symmetrical medium shot',
+    lens: '40mm ancestral hall lens',
+    camera: 'locked frontal frame with gentle push',
+    composition: '供桌居中，老人青年跪在下方，莫川虚影压在侧后方烟里',
+    blocking: '青年拉老人起身，老人又跌回蒲团前叩首'
+  },
+  {
+    label: 'folklore rule',
+    sourceNote: '黄皮讨封因果',
+    purpose: '黄皮讨封的禁忌被说出：像人人亡，像神神衰',
+    performance: '老人从怒骂转为失神，青年委屈又绝望',
+    shotSize: 'tight close-up',
+    lens: '75mm confession lens',
+    camera: 'slow eye-level push-in',
+    composition: '老人苍白侧脸、蒲团和供香烟线同框',
+    blocking: '老人按住青年后忽然松手，整个人瘫坐在地'
+  },
+  {
+    label: 'monster arrives',
+    sourceNote: '黄不语入祠堂',
+    purpose: '白烟灌入祠堂，黄不语以庞大精怪之形探首而入',
+    performance: '青年惊恐失控，老人护子但双腿发抖',
+    shotSize: 'wide reveal shot',
+    lens: '24mm monster reveal lens',
+    camera: 'slow dolly backward from doorway into hall',
+    composition: '门框横梁压住黄不语头顶，猩红双眸穿过白烟',
+    blocking: '老人把青年护到身后，黄不语从白烟里压入祠堂'
+  },
+  {
+    label: 'death demand',
+    sourceNote: '黄不语索命补道行',
+    purpose: '黄不语点明要取青年性命填补道行，陈家无路可退',
+    performance: '精怪暴怒，老人脸上绝望沉下去',
+    shotSize: 'low angle shot',
+    lens: '32mm oppressive monster lens',
+    camera: 'push along floor line toward claws and smoke',
+    composition: '黄不语占据上方，老人青年被压在下三分之一',
+    blocking: '黄不语低头逼近，老人跪行半步仍挡在青年身前'
+  },
+  {
+    label: 'incense enters',
+    sourceNote: '香火入莫川口鼻',
+    purpose: '绝望求祖时供香暴燃，青烟钻入莫川口鼻',
+    performance: '莫川本能后仰，随后被玄妙感定住',
+    shotSize: 'insert shot',
+    lens: '65mm incense bridge lens',
+    camera: 'locked frame with smoke flowing across planes',
+    composition: '供香、莫川面部和神龛牌位被青烟连成一线',
+    blocking: '莫川想躲开却吸入青烟，身体在烟里轻微虚化'
+  },
+  {
+    label: 'first power',
+    sourceNote: '飨食香火解人灾殃',
+    purpose: '莫川感到飨食香火，解人灾殃的规则在心头成形',
+    performance: '惊惧转为凝神，眼神第一次落到陈家父子身上',
+    shotSize: 'medium close-up',
+    lens: '50mm spirit awakening lens',
+    camera: 'small push-in from smoke to eyes',
+    composition: '莫川半透明轮廓、香火线和陈家父子形成三角关系',
+    blocking: '莫川低头看向双手，烟线缠绕手腕又伸向神龛'
+  },
+  {
+    label: 'monster senses',
+    sourceNote: '黄不语察觉神龛异动',
+    purpose: '黄不语察觉神龛异动，凶煞中第一次出现惊悚',
+    performance: '精怪猛然昂首，猩红眼神从凶狠变成警觉',
+    shotSize: 'reflection close-up',
+    lens: '50mm smoke reflection lens',
+    camera: 'parallel slide from monster eye to shrine tablet',
+    composition: '黄不语眼中倒映神龛烟影，牌位被青烟遮住半截',
+    blocking: '黄不语前爪停在门槛内，身体没有继续压进来'
+  },
+  {
+    label: 'ancestor silhouette',
+    sourceNote: '神龛上老祖峥嵘显影',
+    purpose: '闪电照亮神龛，青烟凝成不辨形体的陈家老祖影',
+    performance: '老人抬头呆住，青年停止发抖，莫川被迫进入神位',
+    shotSize: 'wide final-spirit reveal',
+    lens: '28mm shrine reveal lens',
+    camera: 'slow pull-back from shrine to whole hall',
+    composition: '朱漆神龛居中，青烟如焰，窗外闪电切出至阴气柱',
+    blocking: '莫川虚影被烟线托上牌位，祠堂众人同时仰望'
+  },
+  {
+    label: 'named ancestor',
+    sourceNote: '黄不语惊问陈家老祖',
+    purpose: '黄不语惊疑问出陈家老祖，莫川意识到自己被认成祖宗',
+    performance: '莫川错愕低头，黄不语进退踌躇',
+    shotSize: 'symmetrical medium shot',
+    lens: '40mm confrontation lens',
+    camera: 'locked frontal frame with slow rack focus',
+    composition: '牌位、莫川虚影和黄不语门口巨影形成对峙中轴',
+    blocking: '莫川低头确认自身，黄不语身体前倾但脚步停住'
+  },
+  {
+    label: 'ghost body',
+    sourceNote: '莫川发现自己透明无影',
+    purpose: '莫川低头发现自己飘在牌位上，透明无影，疑似成了鬼',
+    performance: '惊悸压到喉间，手掌穿过牌位边缘',
+    shotSize: 'insert-medium hybrid',
+    lens: '60mm spirit-body lens',
+    camera: 'slow push from candle shadow to transparent waist',
+    composition: '豆大烛火拉长牌位阴影，却没有莫川影子',
+    blocking: '莫川伸手摸向牌位，腰部以下在烟里消散'
+  },
+  {
+    label: 'monster threat',
+    sourceNote: '鬼死作鬼见怕但黄不语不是鬼',
+    purpose: '莫川在牌位上发现自己成了透明鬼影，黄不语看穿形散尽消后冷声逼近',
+    performance: '莫川强压慌乱，黄不语恢复凶意',
+    shotSize: 'wide final frame',
+    lens: '28mm final tableau lens',
+    camera: 'slow pull-back from shrine to monster-filled doorway',
+    composition: '神龛、透明莫川、陈家父子和黄不语形成四角压迫',
+    blocking: '黄不语重新踏入一爪，莫川停在牌位上没有退路'
+  }
+]
+
 function stripSourcePrefix(sourceText) {
   return sourceText.replace(/^(小说片段|粗剧本|广告短片|广告文案|剧情|剧本)[:：]\s*/u, '').trim()
 }
@@ -335,6 +492,10 @@ function enterpriseBeatLibrary(sourceText) {
   ]
   const selected = candidates.filter(([, pattern]) => pattern.test(text)).map(([, , beat]) => beat)
   return selected.length ? selected : splitBeats(sourceText)
+}
+
+function isFolkloreFantasyText(sourceText) {
+  return /(黄皮|黄不语|讨封|香炉|神龛|祠堂|牌位|列祖列宗|祖宗|老祖|香火|供香|飨食|鬼|精怪|妖|仙家)/u.test(stripSourcePrefix(sourceText))
 }
 
 function firstMatch(text, patterns, fallback) {
@@ -415,6 +576,29 @@ function inferEnterpriseAnchors(contract) {
   }
 }
 
+function inferFolkloreFantasyAnchors(contract) {
+  const text = stripSourcePrefix(contract.sourceText)
+  const protagonist = firstIncluded(text, ['莫川'], firstMatch(text, [
+    /([\u4e00-\u9fa5]{2,4})(?=下意识|心神一动|低头发现|心中悸动)/u,
+    /(陈[\u4e00-\u9fa5]{1,3})/u
+  ], '莫川'))
+  const monster = firstIncluded(text, ['黄不语', '黄皮子', '黄皮', '精怪'], '黄不语')
+  const keyObject = firstIncluded(text, ['双耳三足香炉', '香炉', '供香', '牌位', '神龛'], '双耳三足香炉')
+  const location = firstIncluded(text, ['古祠堂', '祠堂', '神龛', '卧室'], '陈家祠堂')
+  const storySignal = firstIncluded(text, ['陈家老祖', '飨食香火', '香火', '青烟', '黄皮讨封', '讨封'], '香火青烟')
+
+  return {
+    strategy: 'folklore_fantasy',
+    protagonist,
+    lostFigure: monster,
+    keyObject,
+    location,
+    impossibleSign: storySignal,
+    visualStyle: contract.target.style,
+    aspectRatio: contract.target.aspectRatio
+  }
+}
+
 function distributeDurations(totalSeconds, count) {
   const segmentCount = Math.max(1, Math.ceil(totalSeconds / 15))
   const shotsPerSegment = Math.ceil(count / segmentCount)
@@ -475,6 +659,12 @@ function selectEnterpriseBlueprints(count) {
   return Array.from({ length: count }, (_, index) => ENTERPRISE_DOCUMENTARY_BLUEPRINTS[Math.floor(index * ENTERPRISE_DOCUMENTARY_BLUEPRINTS.length / count)])
 }
 
+function selectFolkloreFantasyBlueprints(count) {
+  if (count === 7) return [0, 1, 2, 5, 7, 10, 12].map((index) => FOLKLORE_FANTASY_BLUEPRINTS[index])
+  if (count === 14) return FOLKLORE_FANTASY_BLUEPRINTS
+  return Array.from({ length: count }, (_, index) => FOLKLORE_FANTASY_BLUEPRINTS[Math.floor(index * FOLKLORE_FANTASY_BLUEPRINTS.length / count)])
+}
+
 function selectBlueprints(count) {
   if (count === 7) return [0, 1, 3, 6, 8, 9, 12].map((index) => SHOT_BLUEPRINTS[index])
   if (count === 14) return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14].map((index) => SHOT_BLUEPRINTS[index])
@@ -483,11 +673,12 @@ function selectBlueprints(count) {
 
 function selectBlueprintsForContract(contract, count) {
   if (contract.contentType === 'enterprise_documentary') return selectEnterpriseBlueprints(count)
+  if (isFolkloreFantasyText(contract.sourceText)) return selectFolkloreFantasyBlueprints(count)
   return selectBlueprints(count)
 }
 
 function composeImagePrompt({ anchors, blueprint, action, index }) {
-  const signalLabel = anchors.strategy === 'enterprise_documentary' ? 'story signal' : 'impossible sign'
+  const signalLabel = anchors.strategy === 'enterprise_documentary' || anchors.strategy === 'folklore_fantasy' ? 'story signal' : 'impossible sign'
   return [
     `${anchors.visualStyle} AI short-drama storyboard keyframe, single still image`,
     `preset lock: protagonist ${anchors.protagonist}; location ${anchors.location}; key object ${anchors.keyObject}; ${signalLabel} ${anchors.impossibleSign}`,
@@ -513,6 +704,8 @@ function composeImagePrompt({ anchors, blueprint, action, index }) {
 export function composeDraftAssets(contract) {
   const anchors = contract.contentType === 'enterprise_documentary'
     ? inferEnterpriseAnchors(contract)
+    : isFolkloreFantasyText(contract.sourceText)
+      ? inferFolkloreFantasyAnchors(contract)
     : inferAnchors(contract)
   const beats = contract.contentType === 'enterprise_documentary'
     ? enterpriseBeatLibrary(contract.sourceText)
@@ -524,6 +717,8 @@ export function composeDraftAssets(contract) {
   const shotlist = selectedBlueprints.map((blueprint, index) => {
     const beat = anchors.strategy === 'enterprise_documentary'
       ? blueprint.sourceNote
+      : anchors.strategy === 'folklore_fantasy'
+        ? blueprint.sourceNote
       : visibleBeat(beats, index)
     const action = `${blueprint.purpose}；源剧情：${beat}`
     return {
@@ -532,6 +727,8 @@ export function composeDraftAssets(contract) {
       scene: anchors.location,
       subject: anchors.strategy === 'enterprise_documentary'
         ? (index < Math.floor(count * 0.8) ? anchors.protagonist : `${anchors.protagonist} and next generation`)
+        : anchors.strategy === 'folklore_fantasy'
+          ? (index < Math.floor(count * 0.75) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
         : (index < Math.floor(count * 0.7) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`),
       action,
       performance_detail: blueprint.performance,
@@ -542,9 +739,15 @@ export function composeDraftAssets(contract) {
       blocking: blueprint.blocking,
       lighting: anchors.strategy === 'enterprise_documentary'
         ? `${anchors.visualStyle}; practical workshop light, welding flare, dawn factory atmosphere`
+        : anchors.strategy === 'folklore_fantasy'
+          ? `${anchors.visualStyle}; incense smoke, candlelight, lightning through carved windows, shrine shadows`
         : `${anchors.visualStyle}; motivated by the impossible sign and practical location light`,
       dialogue_or_voiceover: index === Math.floor(count / 2)
-        ? (anchors.strategy === 'enterprise_documentary' ? `旁白：上班号声不是结束的提醒，而是出发的战鼓。` : `${anchors.lostFigure}的声音或信号进入场景。`)
+        ? (anchors.strategy === 'enterprise_documentary'
+            ? `旁白：上班号声不是结束的提醒，而是出发的战鼓。`
+            : anchors.strategy === 'folklore_fantasy'
+              ? `旁白：飨食香火，解人灾殃。`
+              : `${anchors.lostFigure}的声音或信号进入场景。`)
         : '',
       image_prompt: composeImagePrompt({ anchors, blueprint, action, index }),
       continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的 ${anchors.location}、${anchors.protagonist}、${anchors.keyObject} 和 ${anchors.impossibleSign}`,
@@ -573,6 +776,8 @@ function composeDirectorScript({ contract, anchors, beats }) {
       '',
       anchors.strategy === 'enterprise_documentary'
         ? `导演处理：让${anchors.protagonist}始终具体地站在${anchors.location}和${anchors.organization ?? '工厂'}的真实劳动场景里。围绕${anchors.keyObject}、焊花、图纸、工位灯和代际问答，把散文里的精神主题压缩成可见动作。30秒只抓精神主线，不机械铺完整原文。`
+        : anchors.strategy === 'folklore_fantasy'
+          ? `导演处理：让${anchors.protagonist}始终被${anchors.keyObject}和${anchors.location}牵引。30秒只抓民俗主线：幻听祭祖、香炉显界、祠堂求救、${anchors.lostFigure}逼命、香火入身、老祖显影、发现鬼身。`
         : `导演处理：让${anchors.protagonist}始终具体地站在${anchors.location}里。围绕${anchors.keyObject}和${anchors.impossibleSign}把抽象信息变成可见动作。情绪转折必须通过呼吸、视线、手部紧张和走位读出来，不靠旁白解释。`
     ].join('\n')
   })
@@ -584,12 +789,16 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '',
     anchors.strategy === 'enterprise_documentary'
       ? `${anchors.protagonist}因${anchors.keyObject}回望${anchors.organization ?? '企业'}三代人的劳动记忆，在焊花与攻坚中听懂奋斗的分量。`
+      : anchors.strategy === 'folklore_fantasy'
+        ? `${anchors.protagonist}因${anchors.keyObject}看见${anchors.location}，被陈家香火牵到${anchors.lostFigure}讨命现场，最后发现自己成了陈家老祖鬼影。`
       : `${anchors.protagonist}因${anchors.impossibleSign}进入${anchors.location}，一段与${anchors.lostFigure}有关的旧伤被重新打开。`,
     '',
     '## Director intent',
     '',
     anchors.strategy === 'enterprise_documentary'
       ? `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制真实：把企业精神落到劳动动作、工具、车间节奏和代际凝视上，不靠口号和大段旁白。`
+      : anchors.strategy === 'folklore_fantasy'
+        ? `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制压迫：香火、青烟、牌位、神龛和怪物体量承担恐怖，不靠乱加血腥和跳吓。`
       : `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制：异常现象是真实的，但表演必须落在人身上，不靠解释和大喊大叫。`,
     '',
     '## Adaptation rules',
@@ -597,9 +806,12 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '- 把心理活动外化为眼神、呼吸、手部紧张、停顿、走位或对关键物的反应。',
     anchors.strategy === 'enterprise_documentary'
       ? '- 重要节点独立成镜：童年号声、入厂、师傅点题、创业溯源、攻坚难题、工艺突破、提前交付、代际传承。'
+      : anchors.strategy === 'folklore_fantasy'
+        ? '- 重要节点独立成镜：幻听、香炉、祠堂重叠、讨封因果、黄不语入场、香火入身、老祖显影、鬼身揭示。'
       : '- 线索、惊吓、反转和门槛选择要独立成镜，不把爆点和过渡动作混成一镜。',
     '- 每个镜头只推进一个信息或情绪变化，保持原始剧情顺序和连续性。',
     anchors.strategy === 'enterprise_documentary' ? '- 纪实散文只提炼30秒精神主线：记忆钩子、入厂、师傅点题、创业溯源、攻坚突破、代际传承。' : '',
+    anchors.strategy === 'folklore_fantasy' ? '- 长开篇只提炼30秒民俗主线，不把前半段幻听解释铺满整个短片。' : '',
     '',
     ...beatLines,
     '',
@@ -607,6 +819,8 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '',
     anchors.strategy === 'enterprise_documentary'
       ? `结束在${anchors.keyObject}成为新一代出发信号的画面上。不要把全文讲完，要让30秒短片完成“听见号声 -> 投入劳动 -> 传承使命”的闭环。`
+      : anchors.strategy === 'folklore_fantasy'
+        ? `结束在${anchors.protagonist}发现自己无影透明、${anchors.lostFigure}重新逼近的压迫尾帧上。保留下一段对抗，不提前解决危机。`
       : `结束在“门槛选择”上。不要过度解释${anchors.lostFigure}，给外部视频合成保留悬念。`
   ].join('\n')
 }
@@ -633,6 +847,31 @@ function composeCharacters(anchors) {
         performance_anchor: 'quiet transmission of values; no melodramatic speeching',
         preset_policy: `Keep ${anchors.mentor ?? '师傅'} and family roles clearly separated from ${anchors.protagonist}.`,
         continuity_notes: `Use ${anchors.lostFigure} to show the value chain: family memory, craft discipline, and next-generation handoff.`
+      }
+    ]
+  }
+
+  if (anchors.strategy === 'folklore_fantasy') {
+    return [
+      {
+        id: 'main_subject',
+        role: 'folklore fantasy protagonist',
+        identity_anchor: anchors.protagonist,
+        costume_anchor: `现代睡衣或居家衣物逐渐被香火鬼影覆盖，符合${anchors.visualStyle}`,
+        prop_anchor: anchors.keyObject,
+        performance_anchor: 'anger turning into shock, then forced composure as incense power enters the body',
+        preset_policy: `Treat 他, 主角, and ${anchors.protagonist} as the same protagonist preset; do not replace him with the praying elder.`,
+        continuity_notes: `Keep ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.location}, smoke direction, tablet position, and ghost transparency stable across all shots.`
+      },
+      {
+        id: 'monster_or_threat',
+        role: 'folklore threat',
+        identity_anchor: anchors.lostFigure,
+        costume_anchor: 'large folklore spirit silhouette, swollen canine-weasel body, red eyes, smoke-wrapped mane',
+        prop_anchor: anchors.impossibleSign,
+        performance_anchor: 'threatening confidence that breaks into caution when the ancestor image appears',
+        preset_policy: `Use ${anchors.lostFigure} consistently for the monster threat; keep the praying elder and youth as supporting presets.`,
+        continuity_notes: `Represent ${anchors.lostFigure} through white smoke, doorway scale, red eyes, claws, and halted forward pressure.`
       }
     ]
   }
@@ -847,6 +1086,8 @@ function composeContinuityReview({ anchors, shotlist }) {
     `- Location anchor: ${anchors.location}.`,
     anchors.strategy === 'enterprise_documentary'
       ? `- Story signal anchor: ${anchors.impossibleSign}.`
+      : anchors.strategy === 'folklore_fantasy'
+        ? `- Folklore signal anchor: ${anchors.impossibleSign}.`
       : `- Impossible sign anchor: ${anchors.impossibleSign}.`,
     '- Still-image prompts ask for keyframes only.',
     '- External video motion is isolated to Jimeng packs.',
@@ -857,6 +1098,8 @@ function composeContinuityReview({ anchors, shotlist }) {
     '- Do not let generated images invent extra characters, readable fake text, or unrelated props.',
     anchors.strategy === 'enterprise_documentary'
       ? '- Do not turn the documentary into a suspense plot; keep the conflict in labor, craft, deadline pressure, and generational transmission.'
+      : anchors.strategy === 'folklore_fantasy'
+        ? `- Do not let the praying elder replace ${anchors.protagonist}; the 30-second arc must reach ${anchors.lostFigure}, the ancestor reveal, and the ghost-body twist.`
       : `- Keep ${anchors.lostFigure} visually restrained unless the user explicitly asks for a full reveal.`,
     `- Keep ${anchors.protagonist} identity stable across all shots.`,
     '- Codex does not render the final video; final synthesis belongs to the external video tool.'
