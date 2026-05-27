@@ -25,8 +25,13 @@ test('composeDraftAssets creates production assets from a story contract', async
   assert.equal(draft.shotlist.length, contract.target.shotCount)
   assert.equal(draft.shotlist[0].shot_id, 'S01')
   assert.match(draft.storyboardPrompts, /still-image generation prompts/)
+  assert.match(draft.storyboardPrompts, /preset lock: protagonist/)
+  assert.match(draft.storyboardPrompts, /secondary animation cue frozen as a still/)
+  assert.match(draft.storyboardPrompts, /do not turn the still prompt into a video prompt/)
   assert.equal(draft.seedancePack, undefined)
   assert.match(draft.jimengPack, /external video synthesis/)
+  assert.match(draft.jimengPack, /Shot alignment: generate exactly/)
+  assert.match(draft.jimengPack, /do not skip, merge, split, or borrow story from other shots/)
   assert.match(draft.continuityReview, /Codex does not render the final video/)
 })
 

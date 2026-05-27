@@ -12,6 +12,7 @@ Identify:
 - the subject whose continuity must be preserved;
 - the must-keep object, place, weather, or lighting anchor;
 - what is prose-only and must become visible behavior.
+- whether names, pronouns, aliases, family titles, or time periods point to the same character preset.
 Return only production-relevant notes.
 ```
 
@@ -26,6 +27,7 @@ For each beat, write:
 - blocking: where the subject moves in the frame;
 - emotional transition;
 - continuity anchor carried into the next shot.
+Keep the source order intact. Clues, scares, reversals, and threshold decisions should become separate beats when they carry story weight.
 Do not add lore unless it is needed on screen.
 ```
 
@@ -59,6 +61,7 @@ Every shot must include:
 - continuity_from_previous;
 - video_prompt_note.
 No random beauty shots. Every cut must advance information, emotion, or continuity.
+Do not skip, merge, duplicate, or reorder source beats. `video_prompt_note` must include the main motion, secondary animation, focus path, and drift constraints.
 ```
 
 ## Storyboard image prompt
@@ -69,14 +72,18 @@ The prompt must describe a single keyframe, not motion.
 Include:
 - subject identity anchor;
 - costume and prop anchor;
+- character/scene/prop preset locks;
 - scene and weather anchor;
 - visible action;
 - micro-performance;
+- expression details from brows, eyes, mouth, breath, and hand tension;
+- body action and one secondary-animation cue frozen into a still frame;
 - shot size and lens feeling;
 - composition;
 - lighting and color palette;
 - continuity anchor from the previous shot;
 - "no text overlay, no watermark".
+Do not ask the image model to animate, infer the whole story, add extra characters, or change identity/costume/props.
 ```
 
 ## External video-model prompt
@@ -88,9 +95,13 @@ Do not ask the video model to understand a whole plot arc; split denser sequence
 Describe:
 - start_frame and end_frame;
 - exact duration, aspect ratio, and visual style;
+- exact shot alignment: no skipped, merged, duplicated, or reordered shots;
+- time sub-ranges that cover the full task without overlap;
 - subject lock: face, body, costume, props, location, lighting;
 - the single visible action this task should animate;
 - subject motion;
+- secondary animation: hair, clothing, prop, breath, or hand motion that follows the main action;
+- focus path between subject, prop, and story signal;
 - camera motion and transition logic;
 - transition bridge from previous shot;
 - negative constraints: no subtitles, no watermark, no face drift, no random characters, no jump cuts, no story outside this segment.

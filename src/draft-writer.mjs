@@ -244,6 +244,24 @@ function visibleBeat(beats, index) {
   return beats[index % beats.length]
 }
 
+function expressionCue(performance) {
+  if (/恐惧|fear|惊|僵|发紧|迟疑/u.test(performance)) return '眼神先停住，呼吸变短，手指收紧'
+  if (/旧记忆|grief|伤|记忆/u.test(performance)) return '眼眶压住情绪，嘴角轻收，视线慢半拍落到关键物'
+  if (/邀请|决定|选择|crossing/u.test(performance)) return '下颌收紧，视线先确认关键物，再看向通道'
+  return '克制表情，眉眼和手部先于身体动作泄露情绪'
+}
+
+function secondaryMotionCue(index) {
+  const cues = [
+    '衣摆和肩线随停步轻微回弹，指尖有短促颤动',
+    '发梢或衣角被空间气流带起，关键物轻轻晃动',
+    '呼吸带动胸口微起伏，手部先紧后松',
+    '脚尖停在线上，身体重心缓慢前移',
+    '眼神焦点从远处异常源切回手中关键物'
+  ]
+  return cues[index % cues.length]
+}
+
 function selectBlueprints(count) {
   if (count === 7) return [0, 1, 3, 6, 8, 9, 12].map((index) => SHOT_BLUEPRINTS[index])
   if (count === 14) return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14].map((index) => SHOT_BLUEPRINTS[index])
@@ -252,21 +270,23 @@ function selectBlueprints(count) {
 
 function composeImagePrompt({ anchors, blueprint, action, index }) {
   return [
-    `${anchors.visualStyle} AI-video storyboard keyframe, single still image`,
-    `${anchors.protagonist} in ${anchors.location}`,
-    `visible action: ${action}`,
-    `key object: ${anchors.keyObject}`,
-    `impossible sign: ${anchors.impossibleSign}`,
+    `${anchors.visualStyle} AI short-drama storyboard keyframe, single still image`,
+    `preset lock: protagonist ${anchors.protagonist}; location ${anchors.location}; key object ${anchors.keyObject}; impossible sign ${anchors.impossibleSign}`,
+    `shot ${shotId(index)} visible action: ${action}`,
+    `expression: ${expressionCue(blueprint.performance)}`,
+    `body action: ${blueprint.blocking}`,
+    `secondary animation cue frozen as a still: ${secondaryMotionCue(index)}`,
     `shot size: ${blueprint.shotSize}`,
     `lens: ${blueprint.lens}`,
     `camera language: ${blueprint.camera}`,
     `composition: ${blueprint.composition}`,
-    `blocking: ${blueprint.blocking}`,
     `performance: ${blueprint.performance}`,
-    `continuity anchor with ${anchors.lostFigure}`,
+    `continuity anchor: same ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.location}, and ${anchors.impossibleSign}; relation to ${anchors.lostFigure} stays restrained`,
     `vertical ${anchors.aspectRatio}`,
     'no text overlay',
     'no watermark',
+    'no extra characters',
+    'do not turn the still prompt into a video prompt',
     `shot ${shotId(index)} ${blueprint.label}`
   ].join(', ')
 }
@@ -297,7 +317,7 @@ export function composeDraftAssets(contract) {
       dialogue_or_voiceover: index === Math.floor(count / 2) ? `${anchors.lostFigure}的声音或信号进入场景。` : '',
       image_prompt: composeImagePrompt({ anchors, blueprint, action, index }),
       continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的 ${anchors.location}、${anchors.protagonist}、${anchors.keyObject} 和 ${anchors.impossibleSign}`,
-      video_prompt_note: `external video tool should animate only subject motion, ${blueprint.camera}, atmosphere, and continuity-preserving transitions; keep ${blueprint.lens}`
+      video_prompt_note: `只执行 ${shotId(index)} 的单一可见动作，不合并、不串镜；主运动：${blueprint.purpose}；二级动画：${secondaryMotionCue(index)}；焦点按人物、${anchors.keyObject}、异常信号之间转移；运镜保持 ${blueprint.camera} 和 ${blueprint.lens}`
     }
   })
 
@@ -335,6 +355,12 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '',
     `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制：异常现象是真实的，但表演必须落在人身上，不靠解释和大喊大叫。`,
     '',
+    '## Adaptation rules',
+    '',
+    '- 把心理活动外化为眼神、呼吸、手部紧张、停顿、走位或对关键物的反应。',
+    '- 线索、惊吓、反转和门槛选择要独立成镜，不把爆点和过渡动作混成一镜。',
+    '- 每个镜头只推进一个信息或情绪变化，保持原始剧情顺序和连续性。',
+    '',
     ...beatLines,
     '',
     '## Ending principle',
@@ -352,6 +378,7 @@ function composeCharacters(anchors) {
       costume_anchor: `固定服装与外观，符合${anchors.visualStyle}`,
       prop_anchor: anchors.keyObject,
       performance_anchor: 'controlled grief or fear, expressed through breath, eye line, hand tension, and restrained posture',
+      preset_policy: `Treat pronouns, family titles, and short references that point to ${anchors.protagonist} as the same preset unless the source clearly introduces another subject.`,
       continuity_notes: `Keep ${anchors.protagonist}, ${anchors.keyObject}, and the same physical silhouette stable across all shots.`
     },
     {
@@ -361,6 +388,7 @@ function composeCharacters(anchors) {
       costume_anchor: 'keep partially hidden unless the source explicitly demands a reveal',
       prop_anchor: anchors.impossibleSign,
       performance_anchor: 'patient and quiet; never turns into random horror spectacle',
+      preset_policy: `Use one stable preset for ${anchors.lostFigure}; reveal through voice, reflection, silhouette, object, or distant gesture before a full face reveal.`,
       continuity_notes: `Represent ${anchors.lostFigure} through voice, reflection, silhouette, object, or distant gesture before any full reveal.`
     }
   ]
@@ -526,6 +554,7 @@ function composeExternalPack({ platform, contract, anchors, shotlist }) {
         `FORMAT: ${duration}s / ${contract.target.aspectRatio} / ${contract.target.style} / start-end anchored image-to-video task`,
         '',
         `Subject lock: preserve ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.impossibleSign}, costume, lighting, location, and screen direction. Do not invent unrelated characters.`,
+        `Shot alignment: generate exactly ${segment.map((shot) => shot.shot_id).join(', ')} in order; do not skip, merge, split, or borrow story from other shots.`,
         '',
         'Timeline:',
         ...composeVideoTimeline(segment),

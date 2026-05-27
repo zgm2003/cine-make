@@ -314,6 +314,43 @@ function composeTimeline(segment) {
   })
 }
 
+function dynamicExpression(shot) {
+  const performance = compactAction(shot.performance_detail)
+  if (/恐惧|fear|惊|僵|发紧|迟疑/u.test(performance)) return '眼神先停住，呼吸变短，指尖收紧'
+  if (/旧记忆|grief|伤|记忆/u.test(performance)) return '眼眶压住情绪，嘴角轻收，视线慢半拍落到关键物'
+  if (/邀请|决定|选择|crossing/u.test(performance)) return '下颌收紧，视线先确认关键物，再看向通道'
+  return '表情克制，眉眼和手部先于身体动作泄露情绪'
+}
+
+function secondaryAnimation(shot) {
+  const action = compactAction(shot.action)
+  if (/手|指|触碰|放下|关键物|弹珠|车票|照片/u.test(action)) return '手指轻颤，关键物轻微晃动，动作完成后短暂停住'
+  if (/走|进入|迈|靠近|后退/u.test(action)) return '脚步带动衣摆和肩线回弹，身体重心连续移动'
+  if (/抬头|看|听|声音|信号/u.test(action)) return '呼吸带动胸口微起伏，眼神焦点缓慢转移'
+  return '衣角、发梢或道具做小幅连带运动，避免夸张变形'
+}
+
+function formatSeconds(value) {
+  return Number(value).toFixed(1).replace(/\.0$/, '')
+}
+
+function composeVideoBeatLine({ shot, startSecond }) {
+  const shotDuration = Number(shot.duration_seconds) || 1
+  const firstTurn = startSecond + shotDuration * 0.35
+  const secondTurn = startSecond + shotDuration * 0.68
+  const endSecond = startSecond + shotDuration
+
+  if (shotDuration <= 2) {
+    return `${shot.shot_id}（${formatSeconds(startSecond)}-${formatSeconds(endSecond)}s）：${shotPurpose(shot)}；运镜 ${shot.camera_movement}；表情 ${dynamicExpression(shot)}；二级动画 ${secondaryAnimation(shot)}。`
+  }
+
+  return [
+    `${shot.shot_id}（${formatSeconds(startSecond)}-${formatSeconds(firstTurn)}s）：起幅稳定，锁定主体位置和${shot.lens ?? '同一镜头系统'}，不要提前泄露下一镜。`,
+    `（${formatSeconds(firstTurn)}-${formatSeconds(secondTurn)}s）：${shotPurpose(shot)}；主运动清楚，表情 ${dynamicExpression(shot)}。`,
+    `（${formatSeconds(secondTurn)}-${formatSeconds(endSecond)}s）：${secondaryAnimation(shot)}；焦点按主体、关键物、异常信号顺序收束，尾帧可接下一段。`
+  ].join('')
+}
+
 function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) {
   const subject = mainCharacter?.identity_anchor ?? segment[0]?.subject ?? '主角'
   const costume = mainCharacter?.costume_anchor ?? '同一套服装'
@@ -322,11 +359,18 @@ function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) 
   const shotIds = segment.map((shot) => shot.shot_id).join(' -> ')
   const actions = segment.map((shot) => `${shot.shot_id} ${shotPurpose(shot)}`).join('；')
   const cameraLanguage = [...new Set(segment.map((shot) => `${shot.shot_size}/${shot.lens ?? '同一镜头系统'}/${shot.camera_movement}`))].join('；')
+  let cursor = 0
+  const beatLines = segment.map((shot) => {
+    const line = composeVideoBeatLine({ shot, startSecond: cursor })
+    cursor += Number(shot.duration_seconds) || 1
+    return line
+  }).join('')
 
   return [
     `${duration}s / ${contract.target.aspectRatio} / ${contract.target.style}。按精简分镜顺序生成 ${shotIds}：${actions}。`,
     `锁定${subject}同一张脸、发型、体型和服装（${costume}），保留${prop}。`,
-    `镜头按分镜执行：${cameraLanguage}。动作克制连续，只表现本段剧情。`,
+    `镜头按分镜执行：${cameraLanguage}。只表现本段剧情，不跳过、不合并、不串到其他段。`,
+    beatLines,
     '不要字幕、水印、跳剪、突然换脸、真人写实、换服装、乱加角色、乱加道具或超出剧情。'
   ].join('')
 }

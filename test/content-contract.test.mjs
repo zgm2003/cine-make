@@ -19,6 +19,9 @@ test('skill points agents to built-in director prompt references', async () => {
   assert.match(promptText, /Director rewrite prompt/)
   assert.match(promptText, /micro-performance/)
   assert.match(promptText, /screen direction/)
+  assert.match(promptText, /preset locks/)
+  assert.match(promptText, /secondary-animation/)
+  assert.match(promptText, /no skipped, merged, duplicated, or reordered shots/)
 })
 
 test('skill keeps user prompts natural and internal output rules implicit', async () => {
