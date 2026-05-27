@@ -140,6 +140,10 @@ function shotPurpose(shot) {
   return compactAction(shot.action).split('；源剧情：')[0]
 }
 
+function shotSourceNote(shot) {
+  return compactAction(shot.action).split('；源剧情：')[1]
+}
+
 function pickStoryFlowShots(shotlist) {
   const last = shotlist.length - 1
   const indices = [0, Math.floor(last * 0.25), Math.floor(last * 0.5), Math.floor(last * 0.75), last]
@@ -150,18 +154,25 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
   const firstShot = draft.shotlist[0]
   const lastShot = draft.shotlist[draft.shotlist.length - 1]
   const subject = mainCharacter?.identity_anchor ?? '主角'
+  const isEnterpriseDocumentary = contract.contentType === 'enterprise_documentary'
 
   return [
-    `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；默认完整保留剧情，长故事按视频工具上限拆成多个投喂段。`,
+    isEnterpriseDocumentary
+      ? `我们在做什么：把原始纪实/企业稿浓缩成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 主题短片草稿；30秒只抓精神主线，不机械铺完整原文。`
+      : `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；默认完整保留剧情，长故事按视频工具上限拆成多个投喂段。`,
     '',
-    `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
+    isEnterpriseDocumentary
+      ? `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入主题，最后落到“${shotPurpose(lastShot)}”的传承画面上。`
+      : `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
     '',
     '你先看这个部分判断故事方向；认可后再看分镜和图片提示词。'
   ]
 }
 
-function composeStoryFlow(shotlist) {
-  const labels = ['开场', '异常出现', '真相靠近', '情绪推进', '悬念收束']
+function composeStoryFlow({ contract, shotlist }) {
+  const labels = contract.contentType === 'enterprise_documentary'
+    ? ['记忆钩子', '入厂锻造', '创业溯源', '攻坚突破', '传承收束']
+    : ['开场', '异常出现', '真相靠近', '情绪推进', '悬念收束']
   return pickStoryFlowShots(shotlist).map((shot, index) => {
     return `${index + 1}. ${labels[index] ?? '剧情节点'}：${shotPurpose(shot)}`
   })
@@ -171,7 +182,11 @@ function composeShotTable(shotlist) {
   return [
     '| 镜头 | 时长 | 景别 | 焦段 | 运镜 | 画面动作 | 故事板图 |',
     '| --- | ---: | --- | --- | --- | --- | --- |',
-    ...shotlist.map((shot) => `| ${shot.shot_id} | ${shot.duration_seconds}s | ${shot.shot_size} | ${shot.lens ?? '按分镜镜头'} | ${shot.camera_movement} | ${compactAction(shot.action)} | \`${storyboardImageName(shot)}\` |`)
+    ...shotlist.map((shot) => {
+      const sourceNote = shotSourceNote(shot)
+      const action = sourceNote ? `${shotPurpose(shot)}；素材节点：${sourceNote}` : compactAction(shot.action)
+      return `| ${shot.shot_id} | ${shot.duration_seconds}s | ${shot.shot_size} | ${shot.lens ?? '按分镜镜头'} | ${shot.camera_movement} | ${action} | \`${storyboardImageName(shot)}\` |`
+    })
   ]
 }
 
@@ -436,7 +451,7 @@ export function composeDeliverable({ contract, draft }) {
     '',
     '## 故事全流程',
     '',
-    ...composeStoryFlow(draft.shotlist),
+    ...composeStoryFlow({ contract, shotlist: draft.shotlist }),
     '',
     '## 短片方案',
     '',

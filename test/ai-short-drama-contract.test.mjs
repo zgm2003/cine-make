@@ -178,6 +178,51 @@ test('deliverable does not expose AI meta commentary in the user handoff', async
   }
 })
 
+test('enterprise documentary deliverable uses theme-film labels instead of suspense labels', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-enterprise-doc-'))
+  const enterpriseSource = [
+    '号声里的奋斗密码。',
+    '1996年夏，我从东锅技校毕业，进入轻容分厂成为电焊工。',
+    '师傅问我世上最好听的音乐是什么，我回答下班号，他说是上班号声。',
+    '父亲讲起三线内迁和东锅创业史。',
+    '2011年燃烧器车间九天攻坚，我们改进氩弧焊工艺，七昼夜提前交付。',
+    '2025年儿子问我最动听的旋律，我回答上班号声。'
+  ].join('')
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'draft',
+      '--out',
+      out,
+      '--duration',
+      '30s',
+      '--aspect',
+      '9:16',
+      '--style',
+      '企业奋斗短片，钢铁工业质感',
+      enterpriseSource
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.match(deliverable, /AI 主题短片草稿/)
+    assert.match(deliverable, /30秒只抓精神主线/)
+    assert.match(deliverable, /记忆钩子/)
+    assert.match(deliverable, /攻坚突破/)
+    assert.match(deliverable, /传承收束/)
+    assert.doesNotMatch(deliverable, /悬念点/)
+    assert.doesNotMatch(deliverable, /异常出现/)
+    assert.doesNotMatch(deliverable, /真相靠近/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
 function allSegmentReferenceCounts(deliverable) {
   const matches = [...deliverable.matchAll(/上传参考图\s+(\d+)\s+张以内/g)]
   assert.ok(matches.length, 'missing segment reference counts')

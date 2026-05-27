@@ -46,6 +46,58 @@ test('composeDraftAssets extracts common short-drama anchors', async () => {
   assert.match(draft.storyboardPrompts, /妹妹/)
 })
 
+test('enterprise documentary draft condenses long essays into a 30 second theme film', async () => {
+  const essay = [
+    '号声里的奋斗密码。',
+    '桃花山下，父亲每天听着下班号声从东方锅炉归来。',
+    '1996年夏，我从东锅技校毕业，进入轻容分厂成为电焊工。',
+    '师傅于进川问我世上最好听的音乐是什么，我回答下班号，他却说是上班号声。',
+    '父亲讲起三线内迁和创业岁月，东锅人靠双手和实干托起厂房。',
+    '2011年燃烧器车间落户德阳制造基地，海外2×660MW锅炉稳燃器任务只有九天。',
+    '我们退掉端午车票，改进氩弧焊工艺，七昼夜攻坚提前交付。',
+    '2025年儿子问我最动听的旋律，我回答上班号声，那是东锅人向智能未来集结的战鼓。'
+  ].join('')
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', '--style', '企业奋斗短片，钢铁工业质感', essay]))
+  const draft = composeDraftAssets(contract)
+
+  assert.equal(contract.contentType, 'enterprise_documentary')
+  assert.match(draft.directorScript, /东锅人因上班号声/)
+  assert.match(JSON.stringify(draft.characters), /东锅人/)
+  assert.match(JSON.stringify(draft.characters), /上班号声/)
+  assert.match(JSON.stringify(draft.characters), /东方锅炉车间/)
+  assert.doesNotMatch(JSON.stringify(draft), /不可能|失去的人|半步踏入/)
+  assert.match(draft.shotlist[0].action, /建立精神母题/)
+  assert.match(draft.shotlist.at(-1).action, /传承到新一代/)
+  assert.doesNotMatch(draft.shotlist.at(-1).action, /技术难题逼近失败边缘/)
+  assert.equal(draft.shotlist.length, 14)
+})
+
+test('folklore fantasy draft preserves the protagonist, ritual object, monster, and twist', async () => {
+  const source = [
+    '莫川躺在床上正要睡觉，又听见祭祖幻听。',
+    '他怒喝之后，一枚双耳三足香炉悬浮而起，青烟扑面。',
+    '烟雾中，他看见古祠堂、神龛、老人和青年正在求祖庇佑。',
+    '老人说黄皮子讨封被坏了道行，陈家要遭灾。',
+    '白烟涌入祠堂，黄不语探首而入，要取青年性命填补道行。',
+    '老人绝望呼喊列祖列宗，供香青烟钻入莫川口鼻。',
+    '莫川忽然感到飨食香火，解人灾殃。',
+    '闪电照亮神龛，黄不语惊问他是不是陈家老祖。',
+    '莫川低头发现自己飘在牌位上，透明无影，疑似成了鬼。'
+  ].join('')
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', '--style', '民俗玄幻惊悚，古祠堂，香火烟雾', source]))
+  const draft = composeDraftAssets(contract)
+  const serialized = JSON.stringify(draft)
+
+  assert.equal(contract.contentType, 'novel_excerpt')
+  assert.match(draft.directorScript, /莫川/)
+  assert.match(serialized, /双耳三足香炉/)
+  assert.match(serialized, /黄不语/)
+  assert.match(serialized, /陈家老祖/)
+  assert.doesNotMatch(serialized, /主角锚点：老人|identity_anchor":"老人/)
+  assert.match(draft.shotlist[0].action, /祭祖幻听/)
+  assert.match(draft.shotlist.at(-1).action, /牌位上发现自己成了透明鬼影/)
+})
+
 test('cli --draft writes a production-valid run', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-draft-'))
   try {

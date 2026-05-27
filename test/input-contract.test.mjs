@@ -26,6 +26,14 @@ test('defaults to anime-style image-safe storyboard packs', async () => {
   assert.equal(contract.target.storyboardCount, 7)
 })
 
+test('classifies enterprise documentary essays separately from novels', async () => {
+  const source = '号声里的奋斗密码。1996年夏，我从东锅技校毕业，成为东方锅炉轻容分厂电焊工。师傅说最好听的是上班号声。2011年燃烧器车间攻坚海外项目，东锅人提前交付。2025年儿子问我最动听的旋律。'
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', source]))
+
+  assert.equal(contract.contentType, 'enterprise_documentary')
+  assert.match(contract.title, /enterprise_documentary/)
+})
+
 test('defaults to Jimeng and rejects non-Jimeng video platforms', async () => {
   const contract = await createInputContract(parseArgs(['雨夜里，女孩在巷口停下脚步。']))
 

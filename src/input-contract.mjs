@@ -247,6 +247,9 @@ function inferContentType(sourceText) {
   if (/分镜|镜头|景别|运镜|shot/i.test(text)) return 'rough_shotlist'
   if (/广告|卖点|产品|品牌|转化|投放|campaign/i.test(text)) return 'ad_brief'
   if (/旁白|口播|主播|voiceover|script/i.test(text)) return 'voiceover_script'
+  if (/(企业|工厂|车间|技校|电焊工|焊枪|焊花|师傅|劳模|项目|攻坚|制造基地|高质量|转型|传承|奋斗|号声|上班号|下班号|东锅|东方锅炉|锅炉)/u.test(text)) {
+    return 'enterprise_documentary'
+  }
   if (/第[一二三四五六七八九十0-9]+章|小说|她|他|雨夜|巷口|抬头|沉默|chapter/i.test(text)) return 'novel_excerpt'
   return 'story_material'
 }
