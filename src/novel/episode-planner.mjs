@@ -16,11 +16,14 @@ export async function planNovelEpisodes({ runDir, episodeMinutes = 2 }) {
   await mkdir(episodesDir, { recursive: true })
 
   const adaptationPlanPath = join(episodesDir, 'adaptation-plan.md')
+  const adaptationPlanJsonPath = join(episodesDir, 'adaptation-plan.json')
   await writeFile(adaptationPlanPath, `${composeAdaptationPlan({ episodes, episodeMinutes })}\n`, 'utf8')
+  await writeFile(adaptationPlanJsonPath, `${JSON.stringify(composeAdaptationPlanJson({ episodes, episodeMinutes }), null, 2)}\n`, 'utf8')
   await updatePlannedEpisodeCount(runDir, episodes.length)
 
   return {
     adaptationPlanPath,
+    adaptationPlanJsonPath,
     episodes,
     warnings: episodes.flatMap((episode) => episode.warnings)
   }
@@ -234,6 +237,24 @@ function composeAdaptationPlan({ episodes, episodeMinutes }) {
   }
 
   return lines.join('\n')
+}
+
+function composeAdaptationPlanJson({ episodes, episodeMinutes }) {
+  return {
+    schemaVersion: 1,
+    episodeMinutes,
+    episodes: episodes.map((episode) => ({
+      episodeId: episode.episodeId,
+      title: episode.title,
+      episodeMinutes: episode.episodeMinutes,
+      goal: episode.goal,
+      includedChapters: episode.includedChapters,
+      requiredCharacters: episode.requiredCharacters,
+      endingHook: episode.endingHook,
+      beats: episode.beats,
+      warnings: episode.warnings
+    }))
+  }
 }
 
 function formatIncludedChapters(chapters) {

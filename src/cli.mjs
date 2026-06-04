@@ -23,6 +23,7 @@ import { validateChapterSummary } from './novel/summary-schema.mjs'
 import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
 import { buildSeriesBible } from './novel/bible-builder.mjs'
 import { planNovelEpisodes } from './novel/episode-planner.mjs'
+import { exportNovelEpisode } from './novel/episode-exporter.mjs'
 
 function usage() {
   return [
@@ -33,6 +34,7 @@ function usage() {
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
     '  node src/cli.mjs novel build-bible --run <project-dir>',
     '  node src/cli.mjs novel plan-episodes --run <project-dir> [--episode-minutes <number>]',
+    '  node src/cli.mjs novel episode --run <project-dir> --episode <number> [--out <episode-dir>] [--episode-minutes <number>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -259,6 +261,39 @@ async function planNovelProjectEpisodes(argv) {
   }
 }
 
+async function exportNovelProjectEpisode(argv) {
+  const options = parseNovelFlagArgs(argv, {
+    command: 'episode',
+    required: ['--run'],
+    allowed: ['--run', '--episode', '--out', '--episode-minutes']
+  })
+  const episodeNumber = options.episode === undefined ? 1 : Number(options.episode)
+  if (!Number.isInteger(episodeNumber) || episodeNumber < 1) {
+    throw new Error('--episode must be a positive integer')
+  }
+  const episodeMinutes = options['episode-minutes'] === undefined ? undefined : Number(options['episode-minutes'])
+  if (episodeMinutes !== undefined && (!Number.isFinite(episodeMinutes) || episodeMinutes <= 0)) {
+    throw new Error('--episode-minutes must be a positive number')
+  }
+
+  const runDir = resolve(options.run)
+  const outDir = options.out
+    ? resolve(options.out)
+    : join(runDir, 'episodes', `episode-${String(episodeNumber).padStart(4, '0')}`)
+  const result = await exportNovelEpisode({
+    runDir,
+    episodeNumber,
+    outDir,
+    episodeMinutes
+  })
+
+  console.log('Cine Make exported novel episode:')
+  console.log(`- episode input: ${result.episodeInputPath}`)
+  console.log(`- deliverable: ${result.deliverablePath}`)
+  console.log(`- storyboard images: ${dirname(result.storyboardImagesReadmePath)}`)
+  console.log(`- jimeng feed cards: ${result.feedCardsPath}`)
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -330,7 +365,7 @@ async function runNovelCommand(argv) {
     'accept-summary': () => acceptNovelSummary(args),
     'build-bible': () => buildNovelBible(args),
     'plan-episodes': () => planNovelProjectEpisodes(args),
-    episode: () => failUnimplementedNovelCommand('episode')
+    episode: () => exportNovelProjectEpisode(args)
   }
 
   if (!subcommand || !Object.hasOwn(commands, subcommand)) {
@@ -338,10 +373,6 @@ async function runNovelCommand(argv) {
   }
 
   await commands[subcommand]()
-}
-
-function failUnimplementedNovelCommand(command) {
-  throw new Error(`novel ${command} is not implemented yet`)
 }
 
 async function writeDraftProductionAssets({ outDir, contract }) {

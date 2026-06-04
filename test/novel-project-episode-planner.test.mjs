@@ -17,6 +17,7 @@ test('plans deterministic project episodes from accepted summaries', async () =>
     const result = await planNovelEpisodes({ runDir: workspace, episodeMinutes: 1 })
 
     assert.equal(result.adaptationPlanPath, path.join(workspace, 'episodes', 'adaptation-plan.md'))
+    assert.equal(result.adaptationPlanJsonPath, path.join(workspace, 'episodes', 'adaptation-plan.json'))
     assert.equal(result.episodes.length, 3)
     assert.deepEqual(
       result.episodes.map((episode) => episode.includedChapters.map((chapter) => chapter.chapterId)),
@@ -54,6 +55,13 @@ test('plans deterministic project episodes from accepted summaries', async () =>
     assert.match(adaptationPlan, /- Ending hook: 胶片是谁寄来的？/)
     assert.ok(adaptationPlan.indexOf('chapter-0001') < adaptationPlan.indexOf('chapter-0002'))
     assert.ok(adaptationPlan.indexOf('chapter-0002') < adaptationPlan.indexOf('chapter-0003'))
+
+    const adaptationPlanJson = JSON.parse(await readFile(result.adaptationPlanJsonPath, 'utf8'))
+    assert.deepEqual(adaptationPlanJson, {
+      schemaVersion: 1,
+      episodeMinutes: 1,
+      episodes: result.episodes
+    })
 
     const project = JSON.parse(await readFile(path.join(workspace, 'project.json'), 'utf8'))
     assert.equal(project.counts.plannedEpisodes, 3)
