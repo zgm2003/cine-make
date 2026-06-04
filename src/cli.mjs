@@ -24,6 +24,7 @@ import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
 import { buildSeriesBible } from './novel/bible-builder.mjs'
 import { planNovelEpisodes } from './novel/episode-planner.mjs'
 import { exportNovelEpisode } from './novel/episode-exporter.mjs'
+import { updateProjectContinuity } from './novel/continuity-manager.mjs'
 
 function usage() {
   return [
@@ -286,12 +287,19 @@ async function exportNovelProjectEpisode(argv) {
     outDir,
     episodeMinutes
   })
+  const continuity = await updateProjectContinuity({
+    runDir,
+    episodeId: result.episodePackage.episode.episodeId,
+    episodePackage: result.episodePackage
+  })
 
   console.log('Cine Make exported novel episode:')
   console.log(`- episode input: ${result.episodeInputPath}`)
   console.log(`- deliverable: ${result.deliverablePath}`)
   console.log(`- storyboard images: ${dirname(result.storyboardImagesReadmePath)}`)
   console.log(`- jimeng feed cards: ${result.feedCardsPath}`)
+  console.log(`- continuity log: ${continuity.logPath}`)
+  console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }
 
 async function findProjectChapter(projectDir, chapterId) {
