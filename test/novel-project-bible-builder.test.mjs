@@ -117,6 +117,51 @@ test('novel build-bible CLI requires --run and prints output paths', async () =>
   }
 })
 
+test('rejects accepted summary files whose names do not match chapterId', async () => {
+  const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-novel-bible-mismatch-'))
+  try {
+    const summariesDir = path.join(workspace, 'summaries')
+    await mkdir(summariesDir, { recursive: true })
+    await writeFile(
+      path.join(summariesDir, 'copy.summary.json'),
+      `${JSON.stringify(chapterSummary({ chapterId: 'chapter-0001' }), null, 2)}\n`,
+      'utf8'
+    )
+
+    await assert.rejects(
+      buildSeriesBible({ runDir: workspace }),
+      /Summary filename mismatch: copy\.summary\.json must be chapter-0001\.summary\.json/
+    )
+  } finally {
+    await rm(workspace, { recursive: true, force: true })
+  }
+})
+
+test('rejects duplicate chapterIds before composing bible outputs', async () => {
+  const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-novel-bible-duplicate-'))
+  try {
+    const summariesDir = path.join(workspace, 'summaries')
+    await mkdir(summariesDir, { recursive: true })
+    await writeFile(
+      path.join(summariesDir, 'chapter-0001.summary.json'),
+      `${JSON.stringify(chapterSummary({ chapterId: 'chapter-0001', title: '第一版' }), null, 2)}\n`,
+      'utf8'
+    )
+    await writeFile(
+      path.join(summariesDir, 'duplicate.summary.json'),
+      `${JSON.stringify(chapterSummary({ chapterId: 'chapter-0001', title: '第二版' }), null, 2)}\n`,
+      'utf8'
+    )
+
+    await assert.rejects(
+      buildSeriesBible({ runDir: workspace }),
+      /Duplicate chapterId in accepted summaries: chapter-0001 appears in chapter-0001\.summary\.json, duplicate\.summary\.json/
+    )
+  } finally {
+    await rm(workspace, { recursive: true, force: true })
+  }
+})
+
 async function writeAcceptedSummaries(projectDir) {
   const summariesDir = path.join(projectDir, 'summaries')
   await mkdir(summariesDir, { recursive: true })

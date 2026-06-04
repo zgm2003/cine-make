@@ -68,11 +68,38 @@ async function readAcceptedSummaries(runDir) {
     summaries.push({ ...summary, acceptedFile: file })
   }
 
+  rejectDuplicateChapterIds(summaries)
+  rejectNonCanonicalSummaryFiles(summaries)
+
   return summaries.sort(compareSummaries)
 }
 
 function compareSummaries(left, right) {
   return left.chapterId.localeCompare(right.chapterId, 'en') || left.acceptedFile.localeCompare(right.acceptedFile, 'en')
+}
+
+function rejectDuplicateChapterIds(summaries) {
+  const filesByChapterId = new Map()
+  for (const summary of summaries) {
+    const files = filesByChapterId.get(summary.chapterId) ?? []
+    files.push(summary.acceptedFile)
+    filesByChapterId.set(summary.chapterId, files)
+  }
+
+  for (const [chapterId, files] of filesByChapterId) {
+    if (files.length > 1) {
+      throw new Error(`Duplicate chapterId in accepted summaries: ${chapterId} appears in ${files.sort().join(', ')}`)
+    }
+  }
+}
+
+function rejectNonCanonicalSummaryFiles(summaries) {
+  for (const summary of summaries) {
+    const expectedFile = `${summary.chapterId}.summary.json`
+    if (summary.acceptedFile !== expectedFile) {
+      throw new Error(`Summary filename mismatch: ${summary.acceptedFile} must be ${expectedFile}`)
+    }
+  }
 }
 
 function composeSeriesBible({ summaries, warnings }) {
