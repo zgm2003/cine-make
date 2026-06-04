@@ -22,6 +22,7 @@ import { createNovelProject } from './novel/project-writer.mjs'
 import { validateChapterSummary } from './novel/summary-schema.mjs'
 import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
 import { buildSeriesBible } from './novel/bible-builder.mjs'
+import { planNovelEpisodes } from './novel/episode-planner.mjs'
 
 function usage() {
   return [
@@ -31,6 +32,7 @@ function usage() {
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
     '  node src/cli.mjs novel build-bible --run <project-dir>',
+    '  node src/cli.mjs novel plan-episodes --run <project-dir> [--episode-minutes <number>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -233,6 +235,30 @@ async function buildNovelBible(argv) {
   }
 }
 
+async function planNovelProjectEpisodes(argv) {
+  const options = parseNovelFlagArgs(argv, {
+    command: 'plan-episodes',
+    required: ['--run'],
+    allowed: ['--run', '--episode-minutes']
+  })
+  const episodeMinutes = options['episode-minutes'] === undefined ? 2 : Number(options['episode-minutes'])
+  if (!Number.isFinite(episodeMinutes) || episodeMinutes <= 0) {
+    throw new Error('--episode-minutes must be a positive number')
+  }
+
+  const result = await planNovelEpisodes({
+    runDir: resolve(options.run),
+    episodeMinutes
+  })
+
+  console.log('Cine Make planned novel episodes:')
+  console.log(`- adaptation plan: ${result.adaptationPlanPath}`)
+  console.log(`- episodes: ${result.episodes.length}`)
+  if (result.warnings.length) {
+    console.log(`- warnings: ${result.warnings.length}`)
+  }
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -303,7 +329,7 @@ async function runNovelCommand(argv) {
     task: () => printNovelTaskPrompt(args),
     'accept-summary': () => acceptNovelSummary(args),
     'build-bible': () => buildNovelBible(args),
-    'plan-episodes': () => failUnimplementedNovelCommand('plan-episodes'),
+    'plan-episodes': () => planNovelProjectEpisodes(args),
     episode: () => failUnimplementedNovelCommand('episode')
   }
 
