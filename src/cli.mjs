@@ -25,6 +25,7 @@ import { buildSeriesBible } from './novel/bible-builder.mjs'
 import { planNovelEpisodes } from './novel/episode-planner.mjs'
 import { exportNovelEpisode } from './novel/episode-exporter.mjs'
 import { updateProjectContinuity } from './novel/continuity-manager.mjs'
+import { planVisualBible } from './novel/visual-bible-planner.mjs'
 
 function usage() {
   return [
@@ -34,6 +35,7 @@ function usage() {
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
     '  node src/cli.mjs novel build-bible --run <project-dir>',
+    '  node src/cli.mjs novel visual-bible --run <project-dir> [--max-s-tier <number>]',
     '  node src/cli.mjs novel plan-episodes --run <project-dir> [--episode-minutes <number>]',
     '  node src/cli.mjs novel episode --run <project-dir> --episode <number> [--out <episode-dir>] [--episode-minutes <number>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
@@ -262,6 +264,28 @@ async function planNovelProjectEpisodes(argv) {
   }
 }
 
+async function planNovelProjectVisualBible(argv) {
+  const options = parseNovelFlagArgs(argv, {
+    command: 'visual-bible',
+    required: ['--run'],
+    allowed: ['--run', '--max-s-tier']
+  })
+  const maxSTier = options['max-s-tier'] === undefined ? 4 : Number(options['max-s-tier'])
+  if (!Number.isInteger(maxSTier) || maxSTier < 1) {
+    throw new Error('--max-s-tier must be a positive integer')
+  }
+
+  const result = await planVisualBible({
+    runDir: resolve(options.run),
+    maxSTier
+  })
+
+  console.log('Cine Make planned visual bible:')
+  console.log(`- character reference plan: ${result.referencePlanPath}`)
+  console.log(`- tri-view prompts: ${result.triviewPromptsPath}`)
+  console.log(`- warnings: ${result.warnings.length}`)
+}
+
 async function exportNovelProjectEpisode(argv) {
   const options = parseNovelFlagArgs(argv, {
     command: 'episode',
@@ -372,6 +396,7 @@ async function runNovelCommand(argv) {
     task: () => printNovelTaskPrompt(args),
     'accept-summary': () => acceptNovelSummary(args),
     'build-bible': () => buildNovelBible(args),
+    'visual-bible': () => planNovelProjectVisualBible(args),
     'plan-episodes': () => planNovelProjectEpisodes(args),
     episode: () => exportNovelProjectEpisode(args)
   }
