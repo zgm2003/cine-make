@@ -21,6 +21,7 @@ import { writeVideoTaskArtifacts } from './video-task-writer.mjs'
 import { createNovelProject } from './novel/project-writer.mjs'
 import { validateChapterSummary } from './novel/summary-schema.mjs'
 import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
+import { buildSeriesBible } from './novel/bible-builder.mjs'
 
 function usage() {
   return [
@@ -29,6 +30,7 @@ function usage() {
     '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
+    '  node src/cli.mjs novel build-bible --run <project-dir>',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -212,6 +214,25 @@ async function acceptNovelSummary(argv) {
   console.log(`Cine Make accepted chapter summary: ${acceptedPath}`)
 }
 
+async function buildNovelBible(argv) {
+  const options = parseNovelFlagArgs(argv, {
+    command: 'build-bible',
+    required: ['--run'],
+    allowed: ['--run']
+  })
+  const result = await buildSeriesBible({ runDir: resolve(options.run) })
+
+  console.log('Cine Make built novel series bible:')
+  console.log(`- series bible: ${result.seriesBiblePath}`)
+  console.log(`- characters: ${result.charactersPath}`)
+  console.log(`- locations: ${result.locationsPath}`)
+  console.log(`- timeline: ${result.timelinePath}`)
+  console.log(`- counts: ${result.counts.summaries} summaries, ${result.counts.characters} characters, ${result.counts.locations} locations`)
+  if (result.counts.warnings) {
+    console.log(`- warnings: ${result.counts.warnings}`)
+  }
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -281,7 +302,7 @@ async function runNovelCommand(argv) {
     },
     task: () => printNovelTaskPrompt(args),
     'accept-summary': () => acceptNovelSummary(args),
-    'build-bible': () => failUnimplementedNovelCommand('build-bible'),
+    'build-bible': () => buildNovelBible(args),
     'plan-episodes': () => failUnimplementedNovelCommand('plan-episodes'),
     episode: () => failUnimplementedNovelCommand('episode')
   }
