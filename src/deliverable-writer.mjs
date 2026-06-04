@@ -155,11 +155,14 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
   const lastShot = draft.shotlist[draft.shotlist.length - 1]
   const subject = mainCharacter?.identity_anchor ?? '主角'
   const isEnterpriseDocumentary = contract.contentType === 'enterprise_documentary'
+  const durationNote = contract.target.durationSource === 'explicit'
+    ? `按用户指定的 ${contract.target.durationSeconds}s`
+    : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
 
   return [
     isEnterpriseDocumentary
-      ? `我们在做什么：把原始纪实/企业稿浓缩成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 主题短片草稿；30秒只抓精神主线，不机械铺完整原文。`
-      : `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；默认完整保留剧情，长故事按视频工具上限拆成多个投喂段。`,
+      ? `我们在做什么：把原始纪实/企业稿做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 主题短片草稿；${durationNote}，抓精神主线，不机械铺完整原文。`
+      : `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；${durationNote}，完整保留剧情，每波按视频工具上限拆成 15s 以内投喂段。`,
     '',
     isEnterpriseDocumentary
       ? `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入主题，最后落到“${shotPurpose(lastShot)}”的传承画面上。`
@@ -172,7 +175,9 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
 function composeStoryFlow({ contract, shotlist }) {
   const labels = contract.contentType === 'enterprise_documentary'
     ? ['记忆钩子', '入厂锻造', '创业溯源', '攻坚突破', '传承收束']
-    : ['开场', '异常出现', '真相靠近', '情绪推进', '悬念收束']
+    : contract.contentType === 'cultivation_transmigration'
+      ? ['坊市传言', '魂穿判定', '机缘堵死', '筑基焦虑', '导航反转']
+      : ['开场', '异常出现', '真相靠近', '情绪推进', '悬念收束']
   return pickStoryFlowShots(shotlist).map((shot, index) => {
     return `${index + 1}. ${labels[index] ?? '剧情节点'}：${shotPurpose(shot)}`
   })
@@ -478,7 +483,7 @@ export function composeDeliverable({ contract, draft }) {
     '',
     '## 视频工具投喂包',
     '',
-    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。30 秒成片会自动拆成多个片段，最后再剪到一起。`,
+    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
     '',
     '到即梦里，每一段只做两件事：',
     '',

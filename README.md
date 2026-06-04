@@ -89,7 +89,7 @@ $cine-make ...
 ```text
 $cine-make
 
-Turn the following story fragment into a 30-second vertical AI short-drama draft.
+Turn the following story fragment into a vertical AI short-drama draft.
 Style: anime / non-live-action, cinematic suspense, cold color palette, restrained acting.
 
 Story fragment:
@@ -111,7 +111,7 @@ Generate the character reference, scene reference, start/end control frames, and
 $cine-make
 
 Use this character image to lock the heroine's face, hair, clothing, and mood.
-Turn the following story into a 30-second vertical AI short-drama image-output package.
+Turn the following story into a vertical AI short-drama image-output package.
 
 Character image:
 C:\Users\you\Desktop\refs\hero.png
@@ -129,7 +129,6 @@ Users do not need to specify a video platform. Cine Make outputs Jimeng feed car
 ```bash
 cine-make --mode draft \
   --out .cine-make-runs/demo \
-  --duration 30s \
   --aspect 9:16 \
   --style "anime, non-live-action, cinematic suspense, cold palette, restrained acting" \
   "At 3 a.m., a delivery rider enters an abandoned hospital..."
@@ -140,7 +139,6 @@ cine-make --mode draft \
 ```bash
 cine-make --mode visual \
   --out .cine-make-runs/demo-visual \
-  --duration 30s \
   --aspect 9:16 \
   --style "anime, non-live-action, cinematic suspense, cold palette" \
   --character-image refs/hero.png \

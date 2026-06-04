@@ -146,7 +146,7 @@ npx --registry=https://registry.npmjs.org/ cine-make install-skill
 ```text
 $cine-make
 
-把下面小说片段做成 30 秒竖屏 AI 漫剧草稿。
+把下面小说片段做成竖屏 AI 漫剧草稿。
 风格：动漫二次元、非真人写实、电影感悬疑、冷色调、克制表演。
 
 小说片段：
@@ -170,7 +170,7 @@ $cine-make
 用这张人物图锁定女主的脸、发型、服装和气质。
 用这张场景图锁定雨夜街道和霓虹氛围。
 用这张风格图锁定整体色调。
-把下面剧情做成 30 秒竖屏 AI 漫剧出图包。
+把下面剧情做成竖屏 AI 漫剧出图包。
 
 人物图：
 C:\Users\you\Desktop\refs\hero.png

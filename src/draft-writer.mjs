@@ -465,6 +465,174 @@ const FOLKLORE_FANTASY_BLUEPRINTS = [
   }
 ]
 
+const CULTIVATION_TRANSMIGRATION_BLUEPRINTS = [
+  {
+    label: 'market rumor',
+    sourceNote: '坊市凉亭听闻越国六派大败',
+    purpose: '祁瑾在人群中听见魔道入侵与越国六派大败，脸色沉下去',
+    performance: '表面站稳，眼神却瞬间失焦，手指攥紧衣袖',
+    shotSize: 'wide establishing shot',
+    lens: '28mm market-wide lens',
+    camera: 'slow push through cultivator crowd',
+    composition: '坊市凉亭、人群、法器摊位形成压迫纵深，祁瑾被挤在画面中心偏下',
+    blocking: '周围修士交谈不停，祁瑾站在人群里慢慢停止呼吸'
+  },
+  {
+    label: 'late arrival',
+    sourceNote: '意识到自己来晚了',
+    purpose: '祁瑾意识到自己穿越时间太晚，掌天瓶机缘可能已经错过',
+    performance: '眼神发空，嘴角压住荒唐感，额角微跳',
+    shotSize: 'tight close-up',
+    lens: '75mm inner-panic lens',
+    camera: 'slow eye-level push-in',
+    composition: '祁瑾面部占据画面，背景传言声被压成虚化人影',
+    blocking: '祁瑾没有说话，只是微微后退半步'
+  },
+  {
+    label: 'soul crossing',
+    sourceNote: '魂穿同名修仙者',
+    purpose: '用病榻闪回交代祁瑾魂穿到同名修仙者身上',
+    performance: '从濒死虚弱切到陌生灵魂睁眼，恐惧被理性压住',
+    shotSize: 'medium flashback shot',
+    lens: '35mm memory lens',
+    camera: 'match cut from market face to sickbed eyes',
+    composition: '病榻、药碗、旧家族屋梁和醒来的眼睛形成记忆叠化',
+    blocking: '祁瑾从床上撑起，手掌试探性掐出微弱灵光'
+  },
+  {
+    label: 'world recognition',
+    sourceNote: '判定凡人修仙世界',
+    purpose: '祁瑾把天南、越国六派、黄枫谷等线索拼成凡人修仙世界',
+    performance: '兴奋和忧心同时浮上眼底，呼吸变快又被压住',
+    shotSize: 'insert-medium hybrid',
+    lens: '60mm clue-board lens',
+    camera: 'slow slide across map and jade slips',
+    composition: '元武国地图、越国边境、黄枫谷名字和祁瑾指尖同框',
+    blocking: '祁瑾把几个情报竹简推到一起，指尖停在越国方向'
+  },
+  {
+    label: 'bottle ambition',
+    sourceNote: '觊觎掌天瓶与升仙令',
+    purpose: '祁瑾决定寻找掌天瓶与升仙令，赌一把逆天机缘',
+    performance: '贪念不是狂笑，而是低垂眼神里的冷静算计',
+    shotSize: 'low close-up',
+    lens: '50mm ambition lens',
+    camera: 'push from clenched hand to eyes',
+    composition: '手中灵石、地图边角和眼神形成三角构图',
+    blocking: '祁瑾把地图折起收进袖中，转身走向越国边境'
+  },
+  {
+    label: 'border blocked',
+    sourceNote: '越国边境得知魔道已入侵',
+    purpose: '越国边境消息击碎计划，祁瑾练气九层不敢入境送死',
+    performance: '烦躁压成一口冷气，脚步停在边境线外',
+    shotSize: 'wide border shot',
+    lens: '32mm border-pressure lens',
+    camera: 'slow dolly backward from border road',
+    composition: '边境雾气、远处遁光和祁瑾孤立身影形成危险尺度',
+    blocking: '祁瑾刚迈出的脚收回，避开远处魔道遁光'
+  },
+  {
+    label: 'second plan',
+    sourceNote: '退而求其次想去乱星海',
+    purpose: '祁瑾改谋乱星海，希望靠低阶修士资源重新发育',
+    performance: '眼神重新聚焦，但不再轻松',
+    shotSize: 'medium planning shot',
+    lens: '40mm tactical lens',
+    camera: 'locked frame with small push',
+    composition: '乱星海传闻、筑基丹字样和坊市令牌压在桌面上',
+    blocking: '祁瑾把越国路线划掉，又在乱星海方向圈出红线'
+  },
+  {
+    label: 'hanli missed',
+    sourceNote: '韩立可能已经传送走',
+    purpose: '祁瑾推断韩立已传送乱星海，偷袭掌天瓶的机会彻底变小',
+    performance: '嫉妒和懊恼在脸上闪过，马上变成苦笑',
+    shotSize: 'reflection close-up',
+    lens: '50mm reflected-regret lens',
+    camera: 'parallel slide from map reflection to face',
+    composition: '水面倒影里浮出传送阵缺角意象，祁瑾脸在另一侧压暗',
+    blocking: '祁瑾用指节敲在传送阵标记上，动作停住'
+  },
+  {
+    label: 'family ceiling',
+    sourceNote: '祁氏小家族与筑基初期太上长老',
+    purpose: '祁瑾看清自身家族上限：小家族、老筑基、资源不足',
+    performance: '现实感压下野心，肩线微沉',
+    shotSize: 'wide interior shot',
+    lens: '28mm clan-room lens',
+    camera: 'slow lateral slide past ancestral tablets',
+    composition: '祁氏厅堂、老旧法器、太上长老空座和祁瑾同框',
+    blocking: '祁瑾站在家族门槛外，没走进去，只看了一眼'
+  },
+  {
+    label: 'blocked fortunes',
+    sourceNote: '练气机缘和乱星海机缘都被堵死',
+    purpose: '掌天瓶、噬金虫、金雷竹、风雷翅等机缘像远处光点一样够不着',
+    performance: '嫉妒快要失控，但仍压成低声咬牙',
+    shotSize: 'symbolic montage shot',
+    lens: '65mm unreachable-treasure lens',
+    camera: 'slow rack focus across unreachable lights',
+    composition: '几枚远处宝光被虚化屏障隔开，祁瑾手掌停在屏障前',
+    blocking: '祁瑾伸手却碰不到宝光，手指在空气中攥空'
+  },
+  {
+    label: 'foundation anxiety',
+    sourceNote: '担心不筑基就会老死',
+    purpose: '祁瑾把生死压力压缩成筑基丹三个字',
+    performance: '烦躁变成真正恐惧，喉结轻动',
+    shotSize: 'tight portrait shot',
+    lens: '85mm mortality lens',
+    camera: 'slow push from throat to eyes',
+    composition: '暗下来的坊市灯火、祁瑾侧脸和一张寿元符纸同框',
+    blocking: '祁瑾低头喃喃，手指无意识揉皱符纸'
+  },
+  {
+    label: 'pill question',
+    sourceNote: '喃喃筑基丹上哪找',
+    purpose: '祁瑾脱口问出筑基丹上哪找，心魔边缘被一句话点燃',
+    performance: '声音很轻，眼神却近乎失控',
+    shotSize: 'medium close-up',
+    lens: '50mm mutter lens',
+    camera: 'locked frame with subtle tremor',
+    composition: '祁瑾独坐凉亭边缘，人群声远去，画面留出大片空白',
+    blocking: '祁瑾扶住栏杆，低声重复筑基丹'
+  },
+  {
+    label: 'system ping',
+    sourceNote: '叮，筑基丹距离提示',
+    purpose: '叮声切入，筑基丹距离提示一条条浮现',
+    performance: '祁瑾猛然抬眼，从崩溃边缘被拉回现实',
+    shotSize: 'insert shot',
+    lens: '70mm interface-detail lens',
+    camera: 'snap focus from lips to floating text',
+    composition: '半透明金色文字浮在祁瑾眼前，坊市背景瞬间静音',
+    blocking: '祁瑾的手停在半空，第一条距离提示亮起'
+  },
+  {
+    label: 'moving targets',
+    sourceNote: '多个筑基丹距离移动中',
+    purpose: '多个筑基丹目标在神识视野中亮起，最近路线开始生成',
+    performance: '震惊转成狂喜前的克制，眼睛慢慢亮起来',
+    shotSize: 'wide supernatural-interface shot',
+    lens: '24mm route-map lens',
+    camera: 'spiral pull-back from face into route overlay',
+    composition: '元武国地形、多个光点和祁瑾所在坊市叠成导航界面',
+    blocking: '祁瑾缓缓转身，视线跟随最近的七十五公里光点'
+  },
+  {
+    label: 'turn around',
+    sourceNote: '已选择最近路线，请掉头',
+    purpose: '导航提示让祁瑾从绝望转向行动，故事落在掉头追丹的钩子上',
+    performance: '嘴角几乎压不住，脚步已经先于理智转向',
+    shotSize: 'wide final frame',
+    lens: '28mm final-route lens',
+    camera: 'slow pull-back from turning body to market road',
+    composition: '祁瑾、坊市出口、金色路线箭头和远处灵光形成明确前进方向',
+    blocking: '祁瑾在凉亭外猛然掉头，衣摆带起风，尾帧停在路线箭头上'
+  }
+]
+
 function stripSourcePrefix(sourceText) {
   return sourceText.replace(/^(小说片段|粗剧本|广告短片|广告文案|剧情|剧本)[:：]\s*/u, '').trim()
 }
@@ -494,8 +662,14 @@ function enterpriseBeatLibrary(sourceText) {
   return selected.length ? selected : splitBeats(sourceText)
 }
 
+function isCultivationTransmigrationText(sourceText) {
+  return /(筑基丹|掌天瓶|练气|筑基|结丹|元婴|坊市|黄枫谷|乱星海|韩立|神兵门|天星宗|元武国|魔道|灵根|传送阵|噬金虫|金雷竹|风雷翅)/u.test(stripSourcePrefix(sourceText))
+}
+
 function isFolkloreFantasyText(sourceText) {
-  return /(黄皮|黄不语|讨封|香炉|神龛|祠堂|牌位|列祖列宗|祖宗|老祖|香火|供香|飨食|鬼|精怪|妖|仙家)/u.test(stripSourcePrefix(sourceText))
+  const text = stripSourcePrefix(sourceText)
+  if (isCultivationTransmigrationText(text)) return false
+  return /(黄皮|黄不语|讨封|香炉|神龛|祠堂|牌位|列祖列宗|祖宗|老祖|香火|供香|飨食|鬼|精怪|妖)/u.test(text)
 }
 
 function firstMatch(text, patterns, fallback) {
@@ -599,6 +773,28 @@ function inferFolkloreFantasyAnchors(contract) {
   }
 }
 
+function inferCultivationTransmigrationAnchors(contract) {
+  const text = stripSourcePrefix(contract.sourceText)
+  const protagonist = firstIncluded(text, ['祁瑾'], firstMatch(text, [
+    /([\u4e00-\u9fa5]{2,4})(?=站在人群|感觉自己|不自觉|喃喃|几乎|意识到)/u
+  ], '祁瑾'))
+  const keyObject = firstIncluded(text, ['筑基丹', '掌天瓶', '升仙令', '传送阵'], '筑基丹')
+  const location = firstIncluded(text, ['神兵门坊市', '坊市凉亭', '神兵门', '元武国', '越国边境'], '神兵门坊市')
+  const storySignal = firstIncluded(text, ['已为你选择最近路线', '筑基丹，距离七十五公里', '距离七十五公里', '叮', '导航'], '筑基丹导航提示')
+  const lostFigure = firstIncluded(text, ['韩立', '掌天瓶', '乱星海', '黄枫谷'], '韩立与掌天瓶机缘')
+
+  return {
+    strategy: 'cultivation_transmigration',
+    protagonist,
+    lostFigure,
+    keyObject,
+    location,
+    impossibleSign: storySignal,
+    visualStyle: contract.target.style,
+    aspectRatio: contract.target.aspectRatio
+  }
+}
+
 function distributeDurations(totalSeconds, count) {
   const segmentCount = Math.max(1, Math.ceil(totalSeconds / 15))
   const shotsPerSegment = Math.ceil(count / segmentCount)
@@ -665,6 +861,12 @@ function selectFolkloreFantasyBlueprints(count) {
   return Array.from({ length: count }, (_, index) => FOLKLORE_FANTASY_BLUEPRINTS[Math.floor(index * FOLKLORE_FANTASY_BLUEPRINTS.length / count)])
 }
 
+function selectCultivationTransmigrationBlueprints(count) {
+  if (count === 7) return [0, 2, 4, 6, 9, 12, 14].map((index) => CULTIVATION_TRANSMIGRATION_BLUEPRINTS[index])
+  if (count === 14) return CULTIVATION_TRANSMIGRATION_BLUEPRINTS.slice(0, 14)
+  return Array.from({ length: count }, (_, index) => CULTIVATION_TRANSMIGRATION_BLUEPRINTS[Math.floor(index * CULTIVATION_TRANSMIGRATION_BLUEPRINTS.length / count)])
+}
+
 function selectBlueprints(count) {
   if (count === 7) return [0, 1, 3, 6, 8, 9, 12].map((index) => SHOT_BLUEPRINTS[index])
   if (count === 14) return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14].map((index) => SHOT_BLUEPRINTS[index])
@@ -673,12 +875,13 @@ function selectBlueprints(count) {
 
 function selectBlueprintsForContract(contract, count) {
   if (contract.contentType === 'enterprise_documentary') return selectEnterpriseBlueprints(count)
+  if (contract.contentType === 'cultivation_transmigration' || isCultivationTransmigrationText(contract.sourceText)) return selectCultivationTransmigrationBlueprints(count)
   if (isFolkloreFantasyText(contract.sourceText)) return selectFolkloreFantasyBlueprints(count)
   return selectBlueprints(count)
 }
 
 function composeImagePrompt({ anchors, blueprint, action, index }) {
-  const signalLabel = anchors.strategy === 'enterprise_documentary' || anchors.strategy === 'folklore_fantasy' ? 'story signal' : 'impossible sign'
+  const signalLabel = ['enterprise_documentary', 'folklore_fantasy', 'cultivation_transmigration'].includes(anchors.strategy) ? 'story signal' : 'impossible sign'
   return [
     `${anchors.visualStyle} AI short-drama storyboard keyframe, single still image`,
     `preset lock: protagonist ${anchors.protagonist}; location ${anchors.location}; key object ${anchors.keyObject}; ${signalLabel} ${anchors.impossibleSign}`,
@@ -704,6 +907,8 @@ function composeImagePrompt({ anchors, blueprint, action, index }) {
 export function composeDraftAssets(contract) {
   const anchors = contract.contentType === 'enterprise_documentary'
     ? inferEnterpriseAnchors(contract)
+    : contract.contentType === 'cultivation_transmigration' || isCultivationTransmigrationText(contract.sourceText)
+      ? inferCultivationTransmigrationAnchors(contract)
     : isFolkloreFantasyText(contract.sourceText)
       ? inferFolkloreFantasyAnchors(contract)
     : inferAnchors(contract)
@@ -717,6 +922,8 @@ export function composeDraftAssets(contract) {
   const shotlist = selectedBlueprints.map((blueprint, index) => {
     const beat = anchors.strategy === 'enterprise_documentary'
       ? blueprint.sourceNote
+      : anchors.strategy === 'cultivation_transmigration'
+        ? blueprint.sourceNote
       : anchors.strategy === 'folklore_fantasy'
         ? blueprint.sourceNote
       : visibleBeat(beats, index)
@@ -727,6 +934,8 @@ export function composeDraftAssets(contract) {
       scene: anchors.location,
       subject: anchors.strategy === 'enterprise_documentary'
         ? (index < Math.floor(count * 0.8) ? anchors.protagonist : `${anchors.protagonist} and next generation`)
+        : anchors.strategy === 'cultivation_transmigration'
+          ? (index < Math.floor(count * 0.75) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
         : anchors.strategy === 'folklore_fantasy'
           ? (index < Math.floor(count * 0.75) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
         : (index < Math.floor(count * 0.7) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`),
@@ -739,12 +948,16 @@ export function composeDraftAssets(contract) {
       blocking: blueprint.blocking,
       lighting: anchors.strategy === 'enterprise_documentary'
         ? `${anchors.visualStyle}; practical workshop light, welding flare, dawn factory atmosphere`
+        : anchors.strategy === 'cultivation_transmigration'
+          ? `${anchors.visualStyle}; market lanterns, jade-slip glow, golden route overlay, restrained xianxia atmosphere`
         : anchors.strategy === 'folklore_fantasy'
           ? `${anchors.visualStyle}; incense smoke, candlelight, lightning through carved windows, shrine shadows`
         : `${anchors.visualStyle}; motivated by the impossible sign and practical location light`,
       dialogue_or_voiceover: index === Math.floor(count / 2)
         ? (anchors.strategy === 'enterprise_documentary'
             ? `旁白：上班号声不是结束的提醒，而是出发的战鼓。`
+            : anchors.strategy === 'cultivation_transmigration'
+              ? `旁白：筑基丹，距离七十五公里。已为你选择最近路线。`
             : anchors.strategy === 'folklore_fantasy'
               ? `旁白：飨食香火，解人灾殃。`
               : `${anchors.lostFigure}的声音或信号进入场景。`)
@@ -768,6 +981,9 @@ export function composeDraftAssets(contract) {
 }
 
 function composeDirectorScript({ contract, anchors, beats }) {
+  const durationPolicy = contract.target.durationSource === 'explicit'
+    ? `按用户指定的 ${contract.target.durationSeconds}s 取舍剧情`
+    : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
   const beatLines = beats.map((beat, index) => {
     return [
       `## Beat ${index + 1}`,
@@ -775,9 +991,9 @@ function composeDirectorScript({ contract, anchors, beats }) {
       `${beat}`,
       '',
       anchors.strategy === 'enterprise_documentary'
-        ? `导演处理：让${anchors.protagonist}始终具体地站在${anchors.location}和${anchors.organization ?? '工厂'}的真实劳动场景里。围绕${anchors.keyObject}、焊花、图纸、工位灯和代际问答，把散文里的精神主题压缩成可见动作。30秒只抓精神主线，不机械铺完整原文。`
+        ? `导演处理：让${anchors.protagonist}始终具体地站在${anchors.location}和${anchors.organization ?? '工厂'}的真实劳动场景里。围绕${anchors.keyObject}、焊花、图纸、工位灯和代际问答，把散文里的精神主题压缩成可见动作。${durationPolicy}，不机械铺完整原文。`
         : anchors.strategy === 'folklore_fantasy'
-          ? `导演处理：让${anchors.protagonist}始终被${anchors.keyObject}和${anchors.location}牵引。30秒只抓民俗主线：幻听祭祖、香炉显界、祠堂求救、${anchors.lostFigure}逼命、香火入身、老祖显影、发现鬼身。`
+          ? `导演处理：让${anchors.protagonist}始终被${anchors.keyObject}和${anchors.location}牵引。${durationPolicy}，民俗主线必须覆盖：幻听祭祖、香炉显界、祠堂求救、${anchors.lostFigure}逼命、香火入身、老祖显影、发现鬼身。`
         : `导演处理：让${anchors.protagonist}始终具体地站在${anchors.location}里。围绕${anchors.keyObject}和${anchors.impossibleSign}把抽象信息变成可见动作。情绪转折必须通过呼吸、视线、手部紧张和走位读出来，不靠旁白解释。`
     ].join('\n')
   })
@@ -789,6 +1005,8 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '',
     anchors.strategy === 'enterprise_documentary'
       ? `${anchors.protagonist}因${anchors.keyObject}回望${anchors.organization ?? '企业'}三代人的劳动记忆，在焊花与攻坚中听懂奋斗的分量。`
+      : anchors.strategy === 'cultivation_transmigration'
+        ? `${anchors.protagonist}在${anchors.location}听见越国六派大败，确认自己错过掌天瓶与乱星海机缘，崩溃追问筑基丹时被${anchors.impossibleSign}重新点燃行动。`
       : anchors.strategy === 'folklore_fantasy'
         ? `${anchors.protagonist}因${anchors.keyObject}看见${anchors.location}，被陈家香火牵到${anchors.lostFigure}讨命现场，最后发现自己成了陈家老祖鬼影。`
       : `${anchors.protagonist}因${anchors.impossibleSign}进入${anchors.location}，一段与${anchors.lostFigure}有关的旧伤被重新打开。`,
@@ -797,6 +1015,8 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '',
     anchors.strategy === 'enterprise_documentary'
       ? `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制真实：把企业精神落到劳动动作、工具、车间节奏和代际凝视上，不靠口号和大段旁白。`
+      : anchors.strategy === 'cultivation_transmigration'
+        ? `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要把大段内心吐槽外化成坊市反应、地图推演、机缘幻象和导航界面，不把修仙设定念成说明书。`
       : anchors.strategy === 'folklore_fantasy'
         ? `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制压迫：香火、青烟、牌位、神龛和怪物体量承担恐怖，不靠乱加血腥和跳吓。`
       : `目标：${contract.target.durationSeconds}s，${contract.target.aspectRatio}，${contract.target.style}。整体要克制：异常现象是真实的，但表演必须落在人身上，不靠解释和大喊大叫。`,
@@ -806,19 +1026,24 @@ function composeDirectorScript({ contract, anchors, beats }) {
     '- 把心理活动外化为眼神、呼吸、手部紧张、停顿、走位或对关键物的反应。',
     anchors.strategy === 'enterprise_documentary'
       ? '- 重要节点独立成镜：童年号声、入厂、师傅点题、创业溯源、攻坚难题、工艺突破、提前交付、代际传承。'
+      : anchors.strategy === 'cultivation_transmigration'
+        ? '- 重要节点独立成镜：坊市传言、魂穿判定、凡人世界确认、掌天瓶野心、越国封路、乱星海错失、家族上限、筑基焦虑、导航觉醒。'
       : anchors.strategy === 'folklore_fantasy'
         ? '- 重要节点独立成镜：幻听、香炉、祠堂重叠、讨封因果、黄不语入场、香火入身、老祖显影、鬼身揭示。'
       : '- 线索、惊吓、反转和门槛选择要独立成镜，不把爆点和过渡动作混成一镜。',
     '- 每个镜头只推进一个信息或情绪变化，保持原始剧情顺序和连续性。',
-    anchors.strategy === 'enterprise_documentary' ? '- 纪实散文只提炼30秒精神主线：记忆钩子、入厂、师傅点题、创业溯源、攻坚突破、代际传承。' : '',
-    anchors.strategy === 'folklore_fantasy' ? '- 长开篇只提炼30秒民俗主线，不把前半段幻听解释铺满整个短片。' : '',
+    anchors.strategy === 'enterprise_documentary' ? `- 纪实散文按目标时长提炼精神主线：记忆钩子、入厂、师傅点题、创业溯源、攻坚突破、代际传承。` : '',
+    anchors.strategy === 'cultivation_transmigration' ? `- 修仙穿越开篇按目标时长保留主线：来晚了、机缘堵死、筑基焦虑、系统导航反转。` : '',
+    anchors.strategy === 'folklore_fantasy' ? `- 长开篇按目标时长拆民俗主线，不把前半段幻听解释铺满整个短片。` : '',
     '',
     ...beatLines,
     '',
     '## Ending principle',
     '',
     anchors.strategy === 'enterprise_documentary'
-      ? `结束在${anchors.keyObject}成为新一代出发信号的画面上。不要把全文讲完，要让30秒短片完成“听见号声 -> 投入劳动 -> 传承使命”的闭环。`
+      ? `结束在${anchors.keyObject}成为新一代出发信号的画面上。不要机械复述全文，要让目标时长内完成“听见号声 -> 投入劳动 -> 传承使命”的闭环。`
+      : anchors.strategy === 'cultivation_transmigration'
+        ? `结束在${anchors.protagonist}按${anchors.impossibleSign}掉头追向最近筑基丹的动作上。不要提前解释系统来源，把钩子留给下一段夺丹。`
       : anchors.strategy === 'folklore_fantasy'
         ? `结束在${anchors.protagonist}发现自己无影透明、${anchors.lostFigure}重新逼近的压迫尾帧上。保留下一段对抗，不提前解决危机。`
       : `结束在“门槛选择”上。不要过度解释${anchors.lostFigure}，给外部视频合成保留悬念。`
@@ -847,6 +1072,31 @@ function composeCharacters(anchors) {
         performance_anchor: 'quiet transmission of values; no melodramatic speeching',
         preset_policy: `Keep ${anchors.mentor ?? '师傅'} and family roles clearly separated from ${anchors.protagonist}.`,
         continuity_notes: `Use ${anchors.lostFigure} to show the value chain: family memory, craft discipline, and next-generation handoff.`
+      }
+    ]
+  }
+
+  if (anchors.strategy === 'cultivation_transmigration') {
+    return [
+      {
+        id: 'protagonist',
+        role: 'transmigrated cultivator protagonist',
+        identity_anchor: anchors.protagonist,
+        costume_anchor: `低阶修仙家族弟子衣袍、储物袋、旧玉简，符合${anchors.visualStyle}`,
+        prop_anchor: anchors.keyObject,
+        performance_anchor: 'black-humor panic under strict restraint; greed, fear, and calculation shown through eyes, hands, and route-following movement',
+        preset_policy: `Treat ${anchors.protagonist} as the only main subject. Do not replace him with Han Li, market bystanders, or system UI.`,
+        continuity_notes: `Keep ${anchors.protagonist}, ${anchors.location}, ${anchors.keyObject}, jade slips, map, and golden navigation overlay stable across all shots.`
+      },
+      {
+        id: 'missed_fortune',
+        role: 'off-screen fortune pressure',
+        identity_anchor: anchors.lostFigure,
+        costume_anchor: 'only appear as map marks, rumors, silhouettes, or symbolic treasure glints unless the source directly shows them',
+        prop_anchor: anchors.impossibleSign,
+        performance_anchor: 'unreachable opportunity and route-guidance pressure',
+        preset_policy: `Do not make ${anchors.lostFigure} the protagonist. It is a pressure source and objective anchor.`,
+        continuity_notes: `Use ${anchors.impossibleSign} as the turning-point visual cue that converts despair into action.`
       }
     ]
   }
@@ -1098,8 +1348,10 @@ function composeContinuityReview({ anchors, shotlist }) {
     '- Do not let generated images invent extra characters, readable fake text, or unrelated props.',
     anchors.strategy === 'enterprise_documentary'
       ? '- Do not turn the documentary into a suspense plot; keep the conflict in labor, craft, deadline pressure, and generational transmission.'
+      : anchors.strategy === 'cultivation_transmigration'
+        ? `- Do not turn this into folklore horror; keep ${anchors.protagonist}, the cultivation market, missed fortunes, and the ${anchors.keyObject} route system as the central arc.`
       : anchors.strategy === 'folklore_fantasy'
-        ? `- Do not let the praying elder replace ${anchors.protagonist}; the 30-second arc must reach ${anchors.lostFigure}, the ancestor reveal, and the ghost-body twist.`
+        ? `- Do not let the praying elder replace ${anchors.protagonist}; the target-duration arc must reach ${anchors.lostFigure}, the ancestor reveal, and the ghost-body twist.`
       : `- Keep ${anchors.lostFigure} visually restrained unless the user explicitly asks for a full reveal.`,
     `- Keep ${anchors.protagonist} identity stable across all shots.`,
     '- Codex does not render the final video; final synthesis belongs to the external video tool.'

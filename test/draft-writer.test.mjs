@@ -98,6 +98,31 @@ test('folklore fantasy draft preserves the protagonist, ritual object, monster, 
   assert.match(draft.shotlist.at(-1).action, /牌位上发现自己成了透明鬼影/)
 })
 
+test('cultivation transmigration draft keeps Qijin, cultivation fortunes, and pill navigation', async () => {
+  const source = [
+    '元武国，神兵门坊市。',
+    '祁瑾站在人群之中，听见越国六派被魔道大败，黄枫谷已经金蝉脱壳。',
+    '他一个月前魂穿到同名同姓的祁氏修仙者身上，练气九层，三灵根。',
+    '祁瑾判定自己穿越到了凡人修仙世界，原本想去找掌天瓶和升仙令。',
+    '可魔道已经入侵，韩立大概率已经传送乱星海，掌天瓶、噬金虫、金雷竹和风雷翅都够不着了。',
+    '祁氏只是神兵门下小家族，太上长老也不过筑基初期。',
+    '祁瑾越想越气，喃喃道：筑基丹，上哪去找啊。',
+    '叮！筑基丹，距离七十五公里。已为你选择最近路线，请在合适的位置掉头。'
+  ].join('')
+  const contract = await createInputContract(parseArgs(['--duration', '45s', '--aspect', '9:16', '--style', '国风修仙，坊市危机，黑色幽默', source]))
+  const draft = composeDraftAssets(contract)
+  const serialized = JSON.stringify(draft)
+
+  assert.equal(contract.contentType, 'cultivation_transmigration')
+  assert.match(draft.directorScript, /祁瑾/)
+  assert.match(serialized, /掌天瓶/)
+  assert.match(serialized, /筑基丹/)
+  assert.match(serialized, /最近路线/)
+  assert.doesNotMatch(serialized, /莫川|黄不语|双耳三足香炉|陈家老祖/)
+  assert.match(draft.shotlist[0].action, /魔道入侵与越国六派大败|越国六派大败/)
+  assert.match(draft.shotlist.at(-1).action, /掉头追丹|最近筑基丹|路线箭头/)
+})
+
 test('cli --draft writes a production-valid run', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-draft-'))
   try {

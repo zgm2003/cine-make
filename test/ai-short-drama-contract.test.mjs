@@ -18,6 +18,25 @@ const hospitalSource = [
   '他慢慢把弹珠放回护士站，电梯门在身后打开，里面亮着温暖的白光。'
 ].join('')
 
+const longFolkloreSource = [
+  '莫川躺在床上正要睡觉，又听见祭祖幻听。',
+  '他怒喝之后，一枚双耳三足香炉悬浮而起，青烟扑面。',
+  '烟雾中，他看见古祠堂、神龛、老人和青年正在求祖庇佑。',
+  '青年冲进祠堂说黄皮子要来了，老人却舍不得祖业和薄田。',
+  '老人责怪儿子惹了黄皮讨封，青年委屈说随了它自己就会死。',
+  '祖宗有言，黄皮讨封，像人人亡，像神神衰。',
+  '阴风吹入祠堂，白烟弥漫，供香和烛火都被压低。',
+  '黄不语从烟里探首而出，状如肿胀豺狼，尖喙獠牙。',
+  '它说自己修仙甲子有余，却被青年坏了仙基和道行。',
+  '老人愿意修庙供奉，黄不语却只要青年性命填补道行。',
+  '老人绝望呼喊列祖列宗，供香青烟钻入莫川口鼻。',
+  '莫川忽然感到飨食香火，解人灾殃。',
+  '黄不语猛然昂首，看向神龛牌位，惊疑不定。',
+  '闪电照亮神龛，青烟里浮出不辨形体的峥嵘鬼影。',
+  '黄不语问他是不是陈家老祖，莫川低头发现自己飘在牌位上。',
+  '他身体透明，腰部以下若有若无，旁边烛火照不出他的影子。'
+].join('\n')
+
 test('visual mode produces the AI-short-drama image package contract', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-ai-package-'))
   try {
@@ -143,6 +162,37 @@ test('30 second output splits into two feed cards and reuses previous end frame 
   }
 })
 
+test('long source without explicit duration creates multiple feed cards capped at 15 seconds', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-ai-long-plot-'))
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'draft',
+      '--out',
+      out,
+      '--aspect',
+      '9:16',
+      longFolkloreSource
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.match(deliverable, /时长：45s|时长：60s|时长：75s|时长：90s|时长：105s|时长：120s|时长：135s|时长：150s|时长：165s|时长：180s/)
+    const segmentDurations = allSegmentDurations(deliverable)
+    assert.ok(segmentDurations.length > 2)
+    assert.ok(segmentDurations.every((seconds) => seconds <= 15), segmentDurations.join(','))
+    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
+    assert.match(deliverable, /每波按视频工具上限拆成 15s 以内投喂段/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
 test('deliverable does not expose AI meta commentary in the user handoff', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-clean-handoff-'))
   try {
@@ -211,7 +261,7 @@ test('enterprise documentary deliverable uses theme-film labels instead of suspe
     const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
 
     assert.match(deliverable, /AI 主题短片草稿/)
-    assert.match(deliverable, /30秒只抓精神主线/)
+    assert.match(deliverable, /按用户指定的 30s，抓精神主线/)
     assert.match(deliverable, /记忆钩子/)
     assert.match(deliverable, /攻坚突破/)
     assert.match(deliverable, /传承收束/)
@@ -226,5 +276,11 @@ test('enterprise documentary deliverable uses theme-film labels instead of suspe
 function allSegmentReferenceCounts(deliverable) {
   const matches = [...deliverable.matchAll(/上传参考图\s+(\d+)\s+张以内/g)]
   assert.ok(matches.length, 'missing segment reference counts')
+  return matches.map((match) => Number(match[1]))
+}
+
+function allSegmentDurations(deliverable) {
+  const matches = [...deliverable.matchAll(/### 第 \d+ 段：[^（]+（(\d+)s，上传参考图/g)]
+  assert.ok(matches.length, 'missing segment durations')
   return matches.map((match) => Number(match[1]))
 }

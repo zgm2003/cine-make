@@ -62,7 +62,7 @@ Users should speak naturally. Do not make them repeat internal product rules.
 Good user prompts:
 
 ```text
-$cine-make 把这段小说做成30秒竖屏AI漫剧草稿：……
+$cine-make 把这段小说做成竖屏AI漫剧草稿：……
 ```
 
 ```text
@@ -70,7 +70,7 @@ $cine-make 这个草稿可以，继续进入出图模式，生成首尾控制帧
 ```
 
 ```text
-$cine-make 用这张人物图锁定女主，把下面剧情做成30秒竖屏AI漫剧出图包：……
+$cine-make 用这张人物图锁定女主，把下面剧情做成竖屏AI漫剧出图包：……
 ```
 
 Do not require prompts like:
@@ -99,8 +99,9 @@ When triggered by a story-to-video-preproduction request:
 1. Identify the source material: novel excerpt, rough script, ad brief, shotlist, or voiceover script.
 2. Run the compiler in draft mode first:
    ```bash
-   node src/cli.mjs --mode draft --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> "<source material>"
+   node src/cli.mjs --mode draft --out <run-dir> --aspect <ratio> --style <style> "<source material>"
    ```
+   Omit `--duration` unless the user explicitly asks for a fixed total length. The compiler infers total duration from plot density and keeps every Jimeng feed card at 15 seconds or less.
    Normal runs must leave the run root with only the user-facing package: `deliverable.md` and `storyboard-images/`.
    Use `--emit-internal` only when debugging the compiler itself.
    The compiler targets Jimeng. Do not pass other platforms.
@@ -116,7 +117,7 @@ When triggered by a story-to-video-preproduction request:
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
 4. If the user approves the draft and wants images, run image-output mode (`--mode visual`):
    ```bash
-   node src/cli.mjs --mode visual --out <run-dir> --duration <seconds> --aspect <ratio> --style <style> [--character-image <path>] "<source material>"
+   node src/cli.mjs --mode visual --out <run-dir> --aspect <ratio> --style <style> [--character-image <path>] "<source material>"
    ```
 5. In image-output mode, generate still images with `$imagegen` in this order:
    - `storyboard-images/character-reference.png` only if no character image was provided;

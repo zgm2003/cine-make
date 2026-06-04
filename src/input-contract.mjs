@@ -5,6 +5,11 @@ const VALID_PLATFORMS = new Set(['jimeng'])
 const DEFAULT_STYLE = '动漫二次元，非真人写实，电影感短剧，克制表演'
 const ANIME_STYLE_MARKERS = /(动漫|二次元|anime|manga|非真人写实)/i
 const MAX_VISUAL_REFERENCE_IMAGES = 12
+const DEFAULT_MIN_DURATION_SECONDS = 30
+const MAX_DURATION_SECONDS = 180
+const VIDEO_SEGMENT_SECONDS = 15
+const DEFAULT_SHOTS_PER_SEGMENT = 7
+const MAX_SHOTS = Math.ceil(MAX_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
   ['visual', 'visual'],
@@ -36,12 +41,12 @@ function slugify(value) {
 }
 
 function parseSeconds(value) {
-  if (typeof value !== 'string' || !value.trim()) return 30
+  if (typeof value !== 'string' || !value.trim()) return DEFAULT_MIN_DURATION_SECONDS
   const match = value.trim().match(/^(\d+)(s|sec|secs|second|seconds|秒)?$/i)
   if (!match) throw new Error(`Invalid duration: ${value}`)
   const seconds = Number(match[1])
-  if (!Number.isInteger(seconds) || seconds < 4 || seconds > 180) {
-    throw new Error('duration must be an integer between 4 and 180 seconds')
+  if (!Number.isInteger(seconds) || seconds < 4 || seconds > MAX_DURATION_SECONDS) {
+    throw new Error(`duration must be an integer between 4 and ${MAX_DURATION_SECONDS} seconds`)
   }
   return seconds
 }
@@ -66,7 +71,8 @@ export function parseArgs(argv) {
     id: null,
     input: null,
     title: null,
-    duration: '30s',
+    duration: null,
+    durationExplicit: false,
     aspect: '9:16',
     style: DEFAULT_STYLE,
     platform: 'jimeng',
@@ -133,6 +139,7 @@ export function parseArgs(argv) {
       index += 1
       if (!argv[index]) throw new Error('--duration requires a value')
       options.duration = argv[index]
+      options.durationExplicit = true
       continue
     }
 
@@ -250,13 +257,69 @@ function inferContentType(sourceText) {
   if (/(企业|工厂|车间|技校|电焊工|焊枪|焊花|师傅|劳模|项目|攻坚|制造基地|高质量|转型|传承|奋斗|号声|上班号|下班号|东锅|东方锅炉|锅炉)/u.test(text)) {
     return 'enterprise_documentary'
   }
+  if (/(筑基丹|掌天瓶|练气|筑基|结丹|元婴|坊市|黄枫谷|乱星海|韩立|神兵门|天星宗|元武国|魔道|灵根|传送阵|噬金虫|金雷竹|风雷翅)/u.test(text)) {
+    return 'cultivation_transmigration'
+  }
+  if (/(黄皮子|黄皮|讨封|香炉|神龛|祠堂|香火|牌位|老祖|精怪|飨食|供香)/u.test(text)) return 'novel_excerpt'
   if (/第[一二三四五六七八九十0-9]+章|小说|她|他|雨夜|巷口|抬头|沉默|chapter/i.test(text)) return 'novel_excerpt'
   return 'story_material'
 }
 
 function defaultShotCount(seconds) {
-  const segmentCount = Math.ceil(seconds / 15)
-  return Math.min(30, segmentCount * 7)
+  const segmentCount = Math.ceil(seconds / VIDEO_SEGMENT_SECONDS)
+  return Math.min(MAX_SHOTS, segmentCount * DEFAULT_SHOTS_PER_SEGMENT)
+}
+
+function countMatches(value, pattern) {
+  return [...value.matchAll(pattern)].length
+}
+
+function narrativeUnits(sourceText) {
+  return sourceText.replace(/\s+/g, '').length
+}
+
+function narrativeSentenceFragments(sourceText) {
+  return sourceText
+    .split(/[。！？!?；;]+|\n+/u)
+    .map((part) => part.trim())
+    .filter((part) => narrativeUnits(part) >= 6)
+}
+
+function inferPlotShotCount(sourceText, contentType) {
+  const units = narrativeUnits(sourceText)
+  const sentenceFragments = narrativeSentenceFragments(sourceText)
+  const sentenceCount = sentenceFragments.length
+  const substantiveSentenceCount = sentenceFragments.filter((part) => narrativeUnits(part) >= 12).length
+  const dialogueCount = countMatches(sourceText, /[“"][^”"]{2,120}[”"]/gu)
+  const eventCueCount = countMatches(sourceText, /(忽然|突然|倏然|只见|不料|不想|此时|随着|须臾|猛然|原来|终于|后来|结果|可是|但是|竟|却|最后)/gu)
+
+  if (contentType === 'enterprise_documentary') {
+    return Math.ceil(Math.max(
+      14,
+      units / 180,
+      sentenceCount * 0.35,
+      dialogueCount * 0.55,
+      eventCueCount * 0.35
+    ))
+  }
+
+  return Math.ceil(Math.max(
+    14,
+    units / 160,
+    14 + Math.max(0, substantiveSentenceCount - 12) * 0.22,
+    14 + Math.max(0, dialogueCount - 4) * 0.6,
+    14 + Math.max(0, eventCueCount - 6) * 0.45
+  ))
+}
+
+function inferTargetSizing({ sourceText, contentType }) {
+  const estimatedShots = Math.min(MAX_SHOTS, inferPlotShotCount(sourceText, contentType))
+  const segmentCount = Math.ceil(estimatedShots / DEFAULT_SHOTS_PER_SEGMENT)
+  const seconds = segmentCount * VIDEO_SEGMENT_SECONDS
+  return {
+    durationSeconds: Math.max(DEFAULT_MIN_DURATION_SECONDS, Math.min(MAX_DURATION_SECONDS, seconds)),
+    shotCount: estimatedShots
+  }
 }
 
 function normalizeStyle(value) {
@@ -281,7 +344,9 @@ export async function createInputContract(options) {
 
   if (!sourceText) throw new Error('Cine Make requires source story material from --input or inline text')
 
-  const seconds = parseSeconds(options.duration)
+  const contentType = inferContentType(sourceText)
+  const inferredSizing = inferTargetSizing({ sourceText, contentType })
+  const seconds = options.durationExplicit ? parseSeconds(options.duration) : inferredSizing.durationSeconds
   const aspectRatio = options.aspect || '9:16'
   if (!VALID_ASPECTS.has(aspectRatio)) throw new Error(`Unsupported aspect ratio: ${aspectRatio}`)
 
@@ -294,9 +359,11 @@ export async function createInputContract(options) {
     throw new Error(`visual references must include at most ${MAX_VISUAL_REFERENCE_IMAGES} images`)
   }
 
-  const shotCount = clampInteger(options.shots, defaultShotCount(seconds), 4, 30, 'shots')
-  const storyboardCount = clampInteger(options.storyboards, shotCount, 4, 30, 'storyboards')
-  const title = options.title || `${inferContentType(sourceText)}-${slugify(sourceText)}`
+  const minimumShotCount = Math.max(4, Math.ceil(seconds / VIDEO_SEGMENT_SECONDS))
+  const fallbackShotCount = options.durationExplicit ? defaultShotCount(seconds) : inferredSizing.shotCount
+  const shotCount = clampInteger(options.shots, fallbackShotCount, minimumShotCount, MAX_SHOTS, 'shots')
+  const storyboardCount = clampInteger(options.storyboards, shotCount, shotCount, MAX_SHOTS, 'storyboards')
+  const title = options.title || `${contentType}-${slugify(sourceText)}`
   const visualReferences = {
     characterImages: [...(options.visualReferences?.characterImages ?? [])],
     sceneImages: [...(options.visualReferences?.sceneImages ?? [])],
@@ -309,9 +376,10 @@ export async function createInputContract(options) {
     title,
     slug: slugify(title),
     sourceText,
-    contentType: inferContentType(sourceText),
+    contentType,
     target: {
       durationSeconds: seconds,
+      durationSource: options.durationExplicit ? 'explicit' : 'inferred_from_source',
       aspectRatio,
       style: normalizeStyle(options.style),
       platform: targetPlatform,
