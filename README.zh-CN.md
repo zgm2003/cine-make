@@ -14,7 +14,7 @@ Cine Make **不生成 MP4**。它只负责故事拆解、连续性锁定、静�
 
 ## 用户最终拿到什么
 
-正常运行只交付两项：
+普通短片和小说片段运行只交付两项：
 
 ```text
 deliverable.md
@@ -43,9 +43,9 @@ segment-01-end.png
 segment-02-end.png
 ```
 
-分镜可以保持密度，但每段投喂即梦时上传参考图必须控制在 12 张以内。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
+分镜可以保持密度，但每段即梦投喂卡只有 12 个参考素材额度，总数覆盖图片、视频和音频。每上传一张图、一个视频或一段音频都会消耗一个素材位。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
 
-内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。
+普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 
 ## 两种模式
 
@@ -124,6 +124,8 @@ C:\Users\you\Desktop\refs\hero.png
 
 ## CLI 用法
 
+默认视觉风格是 `anime / 二次元 / 非真人写实`，也就是动漫二次元、非真人写实。
+
 ### 草稿模式
 
 ```bash
@@ -157,6 +159,31 @@ cine-make --mode visual \
 
 这些都不是必填项。
 
+### 长篇小说项目模式
+
+整本小说或很大的 `.txt` 文件使用项目模式。不要把整本小说塞进一次上下文；先导入项目，再按章节任务做有边界的摘要，确认摘要后生成系列 bible、规划视觉 bible，最后按集导出现有 Cine Make 草稿交付物。
+
+```bash
+cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
+cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run .cine-make-runs/my-novel
+cine-make novel visual-bible --run .cine-make-runs/my-novel
+cine-make novel plan-episodes --run .cine-make-runs/my-novel
+cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+```
+
+Novel Studio MVP 不自动生成图片，只规划视觉参考；必须在视觉 bible 确认后，才显式使用 `$imagegen`。
+
+单集导出包包含：
+
+```text
+episode-input.md
+deliverable.md
+storyboard-images/
+jimeng-feed-cards.json
+```
+
 ### 调试文件
 
 ```bash
@@ -176,7 +203,7 @@ cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容
 用户只看 `deliverable.md`：
 
 1. 按 `出图清单` 用 `$imagegen` 生成或确认主角、场景、首帧、尾帧和 `Sxx.png`；
-2. 到 `视频工具投喂包`，每段上传列出的图片，确保每段不超过 12 张；
+2. 到 `视频工具投喂包`，每段上传列出的素材，确保每段不超过 12 个参考素材位，图片、视频和音频都算在同一个额度里；
 3. 复制该段提示词；
 4. 在即梦里生成片段；
 5. 多段结果外部剪辑拼接，后一段首帧必须等于前一段尾帧。

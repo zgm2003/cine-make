@@ -1,0 +1,36 @@
+# Novel Project Mode
+
+Use this reference for whole novels and large `.txt` sources. Short excerpts, scripts, ad briefs, and small story fragments stay on the normal draft -> visual flow in `SKILL.md`.
+
+## Core rule
+
+Never paste the whole source into context. Ingest the file, then work from bounded chapter tasks and accepted summaries.
+
+## Command sequence
+
+```bash
+cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
+cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run .cine-make-runs/my-novel
+cine-make novel visual-bible --run .cine-make-runs/my-novel
+cine-make novel plan-episodes --run .cine-make-runs/my-novel
+cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+```
+
+## Workflow
+
+1. Ingest the novel file into a project workspace. Keep the original source in the workspace; do not copy the source into chat.
+2. For each generated chapter task, ask the model to summarize only that chapter span. Save the result as JSON.
+3. Accept validated chapter summaries with `novel accept-summary`.
+4. Build the series bible after enough summaries are accepted. The bible is the continuity source for characters, settings, arcs, and adaptation rules.
+5. Run visual-bible planning after bible planning. It produces reference plans and prompts; it does not generate images.
+6. Generate S/A character references only after the bible and visual bible are reviewed. Use explicit `$imagegen` only after approval.
+7. Plan episodes from the bible, then export one episode at a time into the existing Cine Make draft artifacts.
+
+## Visual and Jimeng policy
+
+- Default style: anime / 二次元 / 非真人写实.
+- Novel Studio MVP does not generate images automatically. It plans visual references; `$imagegen` is explicit after visual bible approval.
+- Each Jimeng feed card has a 12-reference-material budget total. Images, videos, and audio all consume material slots.
+- Reuse continuity hooks between exported episodes instead of recreating identities from raw text.

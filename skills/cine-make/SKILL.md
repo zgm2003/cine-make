@@ -1,12 +1,9 @@
 ---
 name: cine-make
 description: >-
-  Use when a developer wants to turn novels, rough scripts, ad briefs, or story
-  material into a compact AI short-drama pre-production deliverable, with a
-  fast draft mode, an optional image-output mode, optional character/scene
-  reference images, and Jimeng video-model prompts. Use for AI
-  video workflows where Codex prepares still images and prompts but does not
-  render MP4 video.
+  Use when a developer wants to turn novel excerpts, whole novels, rough
+  scripts, ad briefs, or story material into AI short-drama pre-production
+  assets for Codex-assisted anime/Jimeng video workflows.
 ---
 
 # Cine Make
@@ -32,7 +29,8 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Use image generation only for still images: references, keyframes, storyboards.
 - Cine Make is Codex-only for still images: use `$imagegen`, not external image APIs or API-key workflows.
 - The default visual style is anime/二次元 and explicitly non-live-action / 非真人写实.
-- User-facing output is only `deliverable.md` plus `storyboard-images/`.
+- For normal short-script and excerpt draft/visual runs, user-facing output is only `deliverable.md` plus `storyboard-images/`.
+- Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages; see `references/novel-project-mode.md`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
@@ -40,7 +38,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the `出图清单` and concise `视频工具投喂包`.
 - `精简分镜` is mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly which images to upload and which prompt text to copy.
-- Treat external AI video generation as a short Jimeng feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, and each feed card may upload at most 12 reference images total.
+- Treat external AI video generation as a short Jimeng feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, and each feed card has a 12-reference-material budget across images, videos, and audio.
 - For multi-card outputs, the previous card's end frame is the next card's start frame. Do not generate a separate new start frame that breaks continuity.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
@@ -54,6 +52,13 @@ Use only these two user-facing modes. In CLI/internal contracts the second mode 
 | `visual` / 出图模式 | draft is approved; user wants references/keyframes for video tools | yes, still images only when image generation is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
 Do not invent extra user modes. Keep internal/debug artifacts internal.
+
+## Source-size routing
+
+- Short story fragments, scripts, ad briefs, shotlists, and pasted excerpts use the existing draft -> visual flow below.
+- A whole novel or large `.txt` file uses novel project mode. Read `references/novel-project-mode.md` before operating it.
+- Never paste the whole source into context. Use the project tasks to summarize bounded chapters and build the bible from accepted summaries.
+- Generate S/A character references only after bible planning and visual-bible planning; do not create identity assets from raw unsummarized source.
 
 ## Natural-language UX
 
@@ -135,7 +140,7 @@ When triggered by a story-to-video-preproduction request:
 - A good image prompt asks for one storyboard/keyframe still, not motion.
 - For Cine Make specifically, if the user explicitly asks for image generation, use `$imagegen` directly and copy the generated still images into `storyboard-images/`.
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
-- Each video-tool feed card must keep uploaded reference images at or under 12 total.
+- Each video-tool feed card must keep uploaded reference materials at or under 12 total across images, videos, and audio.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
@@ -147,6 +152,7 @@ When triggered by a story-to-video-preproduction request:
 ## Built-in references
 
 - `references/director-prompts.md`: director rewrite, performance, shot planning, storyboard image prompt, and continuity prompt patterns.
+- `references/novel-project-mode.md`: whole-novel / large `.txt` project workflow.
 - `references/output-contract.md`: user-facing and internal artifact names.
 - `references/platform-limits.md`: safe behavior for unknown or changing video-model limits.
 

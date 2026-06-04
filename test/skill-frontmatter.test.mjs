@@ -13,5 +13,6 @@ test('cine-make skill uses YAML-safe block description', async () => {
   assert.match(frontmatter, /^name: cine-make$/m)
   assert.match(frontmatter, /^description: >-$/m)
   assert.doesNotMatch(frontmatter, /^description: .*assets:/m)
+  assert.match(frontmatter, /Use when/)
+  assert.doesNotMatch(frontmatter, /fast draft mode|optional image-output mode|optional character\/scene reference images/i)
 })
-

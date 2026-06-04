@@ -35,7 +35,7 @@ No artifact may claim final MP4 generation.
 
 Video-tool feed pack:
 
-- default to dense storyboards, but split Jimeng feed cards so each card uploads at most 12 reference images total;
+- default to dense storyboards, but split Jimeng feed cards so each card uploads at most 12 reference materials total across images, videos, and audio;
 - split longer videos into multiple cards for later external editing/stitching;
 - each feed card must state uploaded images, start frame, end frame, subject lock, short action order, camera language, and negative constraints;
 - each later feed card must explicitly state `上一段尾帧 = 本段首帧`;

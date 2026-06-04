@@ -60,13 +60,13 @@ function segmentEndFrameName(segmentIndex) {
 }
 
 const MAX_VIDEO_SEGMENT_SECONDS = 15
-const MAX_REFERENCE_IMAGES_PER_SEGMENT = 12
+const MAX_REFERENCE_MATERIALS_PER_SEGMENT = 12
 const MAX_VIDEO_SEGMENT_SHOTS = 8
 const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
 
 function maxStoryboardImagesPerSegment(contract) {
   const fixedFrameCount = 2
-  const referenceCapacity = MAX_REFERENCE_IMAGES_PER_SEGMENT - fixedFrameCount
+  const referenceCapacity = MAX_REFERENCE_MATERIALS_PER_SEGMENT - fixedFrameCount
   const preferredReferenceCount = Math.min(visualUploadLines(contract).length, 2)
   return Math.max(1, referenceCapacity - preferredReferenceCount)
 }
@@ -319,7 +319,7 @@ function visualUploadLines(contract) {
 }
 
 function segmentUploadLines({ contract, segment }) {
-  const availableReferenceSlots = Math.max(0, MAX_REFERENCE_IMAGES_PER_SEGMENT - 2 - segment.length)
+  const availableReferenceSlots = Math.max(0, MAX_REFERENCE_MATERIALS_PER_SEGMENT - 2 - segment.length)
   return visualUploadLines(contract).slice(0, availableReferenceSlots)
 }
 
@@ -409,7 +409,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
       `- 尾帧：\`${endFrame}\``
     ]
     return [
-      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，上传参考图 ${uploadLines.length} 张以内）`,
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，参考素材位 ${uploadLines.length} 个）`,
       '',
       bridgeLine,
       '',
@@ -476,14 +476,14 @@ export function composeDeliverable({ contract, draft }) {
     '## 出图清单',
     '',
     mode === 'visual'
-      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段投喂即梦时，上传图片控制在 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张以内。`
+      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段即梦投喂卡最多 ${MAX_REFERENCE_MATERIALS_PER_SEGMENT} 个参考素材位，图片、视频和音频都占用同一个素材额度。`
       : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
     '',
     '## 视频工具投喂包',
     '',
-    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s，并且每段上传参考图不超过 ${MAX_REFERENCE_IMAGES_PER_SEGMENT} 张。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
+    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s；每段即梦投喂卡最多 ${MAX_REFERENCE_MATERIALS_PER_SEGMENT} 个参考素材位，图片、视频和音频都占用同一个素材额度。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
     '',
     '到即梦里，每一段只做两件事：',
     '',

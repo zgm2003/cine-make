@@ -274,13 +274,15 @@ test('enterprise documentary deliverable uses theme-film labels instead of suspe
 })
 
 function allSegmentReferenceCounts(deliverable) {
-  const matches = [...deliverable.matchAll(/上传参考图\s+(\d+)\s+张以内/g)]
-  assert.ok(matches.length, 'missing segment reference counts')
+  assert.doesNotMatch(deliverable, /上传参考图\s+\d+\s+张以内/)
+  assert.doesNotMatch(deliverable, /上传图片控制在\s+\d+\s+张以内/)
+  const matches = [...deliverable.matchAll(/参考素材位\s+(\d+)\s+个/g)]
+  assert.ok(matches.length, 'missing segment material-slot counts')
   return matches.map((match) => Number(match[1]))
 }
 
 function allSegmentDurations(deliverable) {
-  const matches = [...deliverable.matchAll(/### 第 \d+ 段：[^（]+（(\d+)s，上传参考图/g)]
+  const matches = [...deliverable.matchAll(/### 第 \d+ 段：[^（]+（(\d+)s，参考素材位/g)]
   assert.ok(matches.length, 'missing segment durations')
   return matches.map((match) => Number(match[1]))
 }

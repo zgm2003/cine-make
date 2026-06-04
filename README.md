@@ -14,7 +14,7 @@ Cine Make does **not** render MP4 videos. It handles story decomposition, contin
 
 ## What the user gets
 
-A normal run exposes only:
+For normal short-script and excerpt runs, the user-facing package exposes only:
 
 ```text
 deliverable.md
@@ -43,9 +43,9 @@ segment-01-end.png
 segment-02-end.png
 ```
 
-Storyboard density can stay high, but each Jimeng feed card must upload at most 12 reference images total. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+Storyboard density can stay high, but each Jimeng feed card has a 12-reference-material budget total across images, videos, and audio. Every uploaded image, video, or audio reference consumes one material slot. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
-Internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files.
+For normal short-script and excerpt runs, internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files from those runs. Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages.
 
 ## Modes
 
@@ -124,6 +124,8 @@ Users do not need to specify a video platform. Cine Make outputs Jimeng feed car
 
 ## CLI usage
 
+Default visual style is `anime / 二次元 / 非真人写实`.
+
 ### Draft mode
 
 ```bash
@@ -155,6 +157,31 @@ cine-make --mode visual \
 
 These inputs are optional.
 
+### Whole-novel project mode
+
+Use project mode for a whole novel or a large `.txt` file. It keeps the source out of one prompt, summarizes bounded chapter tasks, builds a series bible, plans visual references, and exports one episode at a time.
+
+```bash
+cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
+cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run .cine-make-runs/my-novel
+cine-make novel visual-bible --run .cine-make-runs/my-novel
+cine-make novel plan-episodes --run .cine-make-runs/my-novel
+cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+```
+
+Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
+
+An exported novel episode package contains:
+
+```text
+episode-input.md
+deliverable.md
+storyboard-images/
+jimeng-feed-cards.json
+```
+
 ### Debug artifacts
 
 ```bash
@@ -174,7 +201,7 @@ Do not expose `.cine-make-internal/` to normal users.
 Use `deliverable.md` directly:
 
 1. Generate or confirm the character, scene, start-frame, end-frame, and `Sxx.png` images listed in the image-output checklist with `$imagegen`.
-2. For each video feed card, upload the listed images and keep each card at or under 12 images.
+2. For each video feed card, upload the listed materials and keep each card at or under 12 reference materials total across images, videos, and audio.
 3. Copy the feed-card prompt.
 4. Generate the clip in the external video tool.
 5. Stitch multiple clips externally; every later card must start from the previous card's end frame.

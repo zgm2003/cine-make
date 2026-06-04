@@ -25,13 +25,13 @@ AI 视频生成不是从“写一句提示词”开始的。
 -> 故事全流程
 -> 精简分镜
 -> $imagegen 静态参考图 / 首尾帧 / 分镜关键帧
--> 每段 12 张以内的视频投喂卡
+-> 每段 12 个参考素材位以内的视频投喂卡
 -> 外部视频工具生成视频
 ```
 
 Cine Make 把这条链路整理成一个可复用的工作流。
 
-用户不需要理解内部 agent 怎么协作。正常情况下，最终只看用户交付包：
+用户不需要理解内部 agent 怎么协作。普通短片和小说片段运行，最终只看用户交付包：
 
 ```text
 deliverable.md
@@ -124,7 +124,7 @@ Cine Make 只保留两个模式。
 - 场景参考图；
 - 每段首尾帧控制图；
 - `S01.png` ... `Sxx.png` 分镜关键帧；
-- 每段上传 12 张以内的即梦投喂卡。
+- 每段上传 12 个参考素材位以内的即梦投喂卡。
 
 图片生成只走 Codex `$imagegen`。Cine Make 是给 Codex 用的 skill，不要求外部图片 API，也不需要额外图片密钥。
 
@@ -188,32 +188,47 @@ C:\Users\you\Desktop\refs\style.png
 用户不需要指定平台。  
 默认只输出即梦投喂格式，不再做多平台适配。
 
+默认视觉风格是 `anime / 二次元 / 非真人写实`，也就是动漫二次元、非真人写实。
+
+整本小说或很大的 `.txt` 文件不要直接塞进一次上下文。Novel Studio MVP 使用项目模式：
+
+```bash
+cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
+cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run .cine-make-runs/my-novel
+cine-make novel visual-bible --run .cine-make-runs/my-novel
+cine-make novel plan-episodes --run .cine-make-runs/my-novel
+cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+```
+
+这里的 `novel visual-bible` 只规划视觉参考，不自动生成图片；必须在视觉 bible 确认后，才显式使用 `$imagegen`。即梦投喂卡的 12-reference-material budget 是 12 个参考素材位总额，图片、视频和音频都会消耗这个额度，不是图片额度之外再额外加其它素材。
+
 ---
 
-## 最关键的设计：逐镜视频任务卡
+## 最关键的设计：单集投喂包
 
 很多工具的问题不是“没有提示词”，而是用户不知道下一步到底该干嘛。
 
-所以 Cine Make 会在 `episodes/<episode>/video-tasks/Sxx.md` 里生成一个很直白的任务：
+普通短片和小说片段运行会直接交付：
 
 ```text
-episode-01/S01（3-6s，一个可见动作）
-
-start_frame: storyboard-images/S01-start.png
-end_frame: storyboard-images/S01-end.png
-
-motion: 只让主角完成这一条动作变化
-must_keep: 同一张脸、服装、道具、场景光线
-avoid: 不要字幕、不要换脸、不要新增角色
+deliverable.md
+storyboard-images/
 ```
 
-用户最终给视频工具的不是一整个项目文件夹，而是：
+Novel Studio 会暴露项目工作区产物和单集导出包。每个导出的单集包会包含：
 
 ```text
-每一条任务 = start frame + end frame + 3-6 秒运动提示
+episode-input.md
+deliverable.md
+storyboard-images/
+jimeng-feed-cards.json
 ```
 
-这比单纯输出一堆分镜、prompt、JSON 更接近真实使用场景。
+其中 `episode-input.md` 是这一集从小说 bible 和分集计划整理出的改编输入；`deliverable.md` 是给用户阅读和复制的主交付物；`storyboard-images/` 放图片计划或已确认图片；`jimeng-feed-cards.json` 是机器可读的即梦投喂卡列表，记录每张卡的素材、提示词和 12 个参考素材位预算。
+
+用户实际喂给即梦时，先看 `deliverable.md` 里的中文说明，再用 `jimeng-feed-cards.json` 核对每张卡的素材清单和提示词。这样既保留人工可读交付物，也保留可检查、可自动化的结构化投喂卡。
 
 ---
 
@@ -238,7 +253,7 @@ Cine Make 的定位是：**AI 视频前期制片工厂**。
 npm 包：
 
 ```text
-cine-make@0.0.2
+cine-make@0.0.5
 ```
 
 安装：
@@ -256,10 +271,11 @@ npm test
 目前测试覆盖：
 
 - 两种模式；
-- 用户最终看到 `deliverable.md + continuity-bible.json + episodes/`；
+- 普通短片运行最终看到 `deliverable.md + storyboard-images/`；
+- Novel Studio 会暴露项目工作区产物和单集导出包：`episode-input.md`、`deliverable.md`、`storyboard-images/`、`jimeng-feed-cards.json`；
 - 可选人物图、场景图、风格图输入；
 - `deliverable.md` 的顺序；
-- 逐镜视频任务卡；
+- 即梦投喂卡；
 - skill frontmatter；
 - npm package 内容。
 
