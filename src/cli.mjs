@@ -18,11 +18,13 @@ import { composeDraftAssets } from './draft-writer.mjs'
 import { composeDeliverable, composeStoryboardImagesReadme } from './deliverable-writer.mjs'
 import { createEpisodePlan } from './episode-planner.mjs'
 import { writeVideoTaskArtifacts } from './video-task-writer.mjs'
+import { createNovelProject } from './novel/project-writer.mjs'
 
 function usage() {
   return [
     'Usage:',
     '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <jimeng>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
+    '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -81,6 +83,85 @@ async function validateOneRun(options) {
   const result = await validateRunDirectory({ runDir, stage: options.stage })
   console.log(formatValidationResult(result))
   if (!result.ok) process.exitCode = 1
+}
+
+function parseNovelIngestArgs(argv) {
+  const options = {
+    inputPath: null,
+    outDir: null,
+    title: null,
+    style: null,
+    targetChunkChars: undefined
+  }
+
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+
+    if (arg === '--input') {
+      index += 1
+      if (!argv[index]) throw new Error('novel ingest requires --input <file>')
+      options.inputPath = argv[index]
+      continue
+    }
+
+    if (arg === '--out') {
+      index += 1
+      if (!argv[index]) throw new Error('novel ingest requires --out <dir>')
+      options.outDir = argv[index]
+      continue
+    }
+
+    if (arg === '--title') {
+      index += 1
+      if (!argv[index]) throw new Error('--title requires text')
+      options.title = argv[index]
+      continue
+    }
+
+    if (arg === '--style') {
+      index += 1
+      if (!argv[index]) throw new Error('--style requires text')
+      options.style = argv[index]
+      continue
+    }
+
+    if (arg === '--target-chunk-chars') {
+      index += 1
+      if (!argv[index]) throw new Error('--target-chunk-chars requires a number')
+      const value = Number(argv[index])
+      if (!Number.isInteger(value) || value < 1) {
+        throw new Error('--target-chunk-chars must be a positive integer')
+      }
+      options.targetChunkChars = value
+      continue
+    }
+
+    throw new Error(`Unknown argument for novel ingest: ${arg}`)
+  }
+
+  if (!options.inputPath) throw new Error('novel ingest requires --input <file>')
+  if (!options.outDir) throw new Error('novel ingest requires --out <dir>')
+  return options
+}
+
+async function runNovelCommand(argv) {
+  const subcommand = argv[0]
+  if (subcommand !== 'ingest') {
+    throw new Error(`Unknown novel command: ${subcommand ?? '(missing)'}. Supported now: novel ingest`)
+  }
+
+  const options = parseNovelIngestArgs(argv.slice(1))
+  const result = await createNovelProject({
+    ...options,
+    inputPath: resolve(options.inputPath),
+    outDir: resolve(options.outDir)
+  })
+
+  console.log('Cine Make novel project ready:')
+  console.log(`- project: ${result.projectPath}`)
+  console.log(`- tasks: ${join(result.outDir, 'tasks')}`)
+  console.log(`- chapters: ${result.counts.chapters}`)
+  console.log('- next: assign the chapter summary tasks, then continue with later novel workflow commands')
 }
 
 async function writeDraftProductionAssets({ outDir, contract }) {
@@ -153,6 +234,12 @@ async function writeRunArtifacts({ outDir, contract, emitInternal = false }) {
 async function main() {
   const currentFile = fileURLToPath(import.meta.url)
   const cineMakeRoot = resolve(dirname(currentFile), '..')
+
+  if (process.argv[2] === 'novel') {
+    await runNovelCommand(process.argv.slice(3))
+    return
+  }
+
   const options = parseArgs(process.argv.slice(2))
 
   if (options.help) {
