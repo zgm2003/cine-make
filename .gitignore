@@ -1,5 +1,5 @@
 node_modules/
+.worktrees/
 .cine-make-runs/
 .DS_Store
 *.log
-
