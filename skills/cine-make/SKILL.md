@@ -18,6 +18,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - preserve long source stories by splitting them into feed cards instead of compressing them into one teaser;
 - generate storyboard/keyframe prompts and, in image-output mode (`visual` internally), still images into `storyboard-images/`;
 - package concrete Jimeng feed cards for external AI video generation;
+- export whole-novel episode packages into a text-only Canvas import zip when the user runs the Canvas system;
 - preserve continuity instead of relying on random video generation.
 
 ## Product boundary
@@ -31,6 +32,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - The default visual style is anime/二次元 and explicitly non-live-action / 非真人写实.
 - For normal short-script and excerpt draft/visual runs, user-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages; see `references/novel-project-mode.md`.
+- Whole-novel Canvas export is a handoff adapter only: it writes `canvas-manifest.json` and `canvas-project.zip`; it does not generate images, videos, media files, or a web UI.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.

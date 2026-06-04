@@ -16,6 +16,7 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 ## Workflow
@@ -27,6 +28,20 @@ cine-make novel episode --run .cine-make-runs/my-novel --episode 1
 5. Run visual-bible planning after bible planning. It produces reference plans and prompts; it does not generate images.
 6. Generate S/A character references only after the bible and visual bible are reviewed. Use explicit `$imagegen` only after approval.
 7. Plan episodes from the bible, then export one episode at a time into the existing Cine Make draft artifacts.
+8. If the user uses the Canvas system, export the episode package with `novel canvas` and import `canvas-project.zip` through the Canvas `导入画布` button.
+
+## Canvas handoff
+
+`novel canvas` writes two files into the episode directory:
+
+```text
+canvas-manifest.json
+canvas-project.zip
+```
+
+- `canvas-manifest.json` is Cine Make's renderer-neutral director handoff. It keeps semantic roles, continuity, warnings, and Jimeng material-budget notes.
+- `canvas-project.zip` is the current Canvas import adapter. It contains `projects.json` with text-only nodes and no media files.
+- Do not treat this as image or video generation. Canvas remains the downstream editing and generation workspace.
 
 ## Visual and Jimeng policy
 

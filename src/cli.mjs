@@ -24,6 +24,7 @@ import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
 import { buildSeriesBible } from './novel/bible-builder.mjs'
 import { planNovelEpisodes } from './novel/episode-planner.mjs'
 import { exportNovelEpisode } from './novel/episode-exporter.mjs'
+import { exportNovelCanvas } from './novel/canvas-exporter.mjs'
 import { updateProjectContinuity } from './novel/continuity-manager.mjs'
 import { planVisualBible } from './novel/visual-bible-planner.mjs'
 
@@ -38,6 +39,7 @@ function usage() {
     '  node src/cli.mjs novel visual-bible --run <project-dir> [--max-s-tier <number>]',
     '  node src/cli.mjs novel plan-episodes --run <project-dir> [--episode-minutes <number>]',
     '  node src/cli.mjs novel episode --run <project-dir> --episode <number> [--out <episode-dir>] [--episode-minutes <number>]',
+    '  node src/cli.mjs novel canvas --run <project-dir> --episode <number> [--out <episode-dir>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
@@ -326,6 +328,29 @@ async function exportNovelProjectEpisode(argv) {
   console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }
 
+async function exportNovelProjectCanvas(argv) {
+  const options = parseNovelFlagArgs(argv, {
+    command: 'canvas',
+    required: ['--run', '--episode'],
+    allowed: ['--run', '--episode', '--out']
+  })
+  const episodeNumber = Number(options.episode)
+  if (!Number.isInteger(episodeNumber) || episodeNumber < 1) {
+    throw new Error('--episode must be a positive integer')
+  }
+
+  const result = await exportNovelCanvas({
+    runDir: resolve(options.run),
+    episodeNumber,
+    outDir: options.out ? resolve(options.out) : undefined
+  })
+
+  console.log('Cine Make exported canvas project:')
+  console.log(`- manifest: ${result.manifestPath}`)
+  console.log(`- canvas zip: ${result.zipPath}`)
+  if (result.warnings.length) console.log(`- warnings: ${result.warnings.length}`)
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -398,11 +423,12 @@ async function runNovelCommand(argv) {
     'build-bible': () => buildNovelBible(args),
     'visual-bible': () => planNovelProjectVisualBible(args),
     'plan-episodes': () => planNovelProjectEpisodes(args),
-    episode: () => exportNovelProjectEpisode(args)
+    episode: () => exportNovelProjectEpisode(args),
+    canvas: () => exportNovelProjectCanvas(args)
   }
 
   if (!subcommand || !Object.hasOwn(commands, subcommand)) {
-    throw new Error(`Unknown novel command: ${subcommand ?? '(missing)'}. Supported now: novel ingest, novel task, novel accept-summary`)
+    throw new Error(`Unknown novel command: ${subcommand ?? '(missing)'}. Supported now: novel ingest, novel task, novel accept-summary, novel build-bible, novel visual-bible, novel plan-episodes, novel episode, novel canvas`)
   }
 
   await commands[subcommand]()

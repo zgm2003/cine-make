@@ -200,6 +200,7 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 这里的 `novel visual-bible` 只规划视觉参考，不自动生成图片；必须在视觉 bible 确认后，才显式使用 `$imagegen`。即梦投喂卡的 12-reference-material budget 是 12 个参考素材位总额，图片、视频和音频都会消耗这个额度，不是图片额度之外再额外加其它素材。
@@ -229,6 +230,14 @@ jimeng-feed-cards.json
 其中 `episode-input.md` 是这一集从小说 bible 和分集计划整理出的改编输入；`deliverable.md` 是给用户阅读和复制的主交付物；`storyboard-images/` 放图片计划或已确认图片；`jimeng-feed-cards.json` 是机器可读的即梦投喂卡列表，记录每张卡的素材、提示词和 12 个参考素材位预算。
 
 用户实际喂给即梦时，先看 `deliverable.md` 里的中文说明，再用 `jimeng-feed-cards.json` 核对每张卡的素材清单和提示词。这样既保留人工可读交付物，也保留可检查、可自动化的结构化投喂卡。
+
+如果用户还有 Canvas 系统，可以在单集包生成后运行：
+
+```bash
+cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
+```
+
+它会在同一个单集目录下生成 `canvas-manifest.json` 和 `canvas-project.zip`。前者是 Cine Make 的导演语义交接文件；后者是 Canvas 可直接导入的文字画布包。这样 Cine Make 负责上游故事、分镜、连续性和投喂卡，Canvas 负责下游可视化编辑、出图、视频生成和人工迭代。
 
 ---
 

@@ -171,6 +171,7 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 Novel Studio MVP 不自动生成图片，只规划视觉参考；必须在视觉 bible 确认后，才显式使用 `$imagegen`。
@@ -183,6 +184,15 @@ deliverable.md
 storyboard-images/
 jimeng-feed-cards.json
 ```
+
+如果用户同时使用 Canvas 系统，可以继续运行 `novel canvas`，得到：
+
+```text
+canvas-manifest.json
+canvas-project.zip
+```
+
+`canvas-manifest.json` 是 Cine Make 自己的导演语义交接文件；`canvas-project.zip` 是只含文字节点的 Canvas 导入包，可以在 Canvas 里点击 `导入画布` 使用。它不生成图片、不生成视频，也不打包媒体文件。
 
 ### 调试文件
 

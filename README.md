@@ -169,6 +169,7 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
@@ -181,6 +182,15 @@ deliverable.md
 storyboard-images/
 jimeng-feed-cards.json
 ```
+
+For users who also run the Canvas system, `novel canvas` creates:
+
+```text
+canvas-manifest.json
+canvas-project.zip
+```
+
+`canvas-manifest.json` is Cine Make's semantic director handoff. `canvas-project.zip` is a text-only `projects.json` package that can be imported through the Canvas `导入画布` button. It does not generate images, videos, or media files.
 
 ### Debug artifacts
 
