@@ -81,7 +81,7 @@ test('writes bounded chapter summary prompts with default style context', async 
   }
 })
 
-test('removes stale managed chapter, chunk, and task files when rerun', async () => {
+test('removes stale source-derived project artifacts when rerun', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-novel-rerun-'))
   const inputPath = path.join(workspace, 'story.txt')
   const outDir = path.join(workspace, 'project')
@@ -90,6 +90,11 @@ test('removes stale managed chapter, chunk, and task files when rerun', async ()
 
   await writeFile(inputPath, firstSource, 'utf8')
   await createNovelProject({ inputPath, outDir })
+  await writeFile(path.join(outDir, 'summaries', 'chapter-0001.summary.json'), '{"stale": true}\n', 'utf8')
+  await writeFile(path.join(outDir, 'bible', 'series-bible.md'), '# stale bible\n', 'utf8')
+  await writeFile(path.join(outDir, 'visual-bible', 'character-reference-plan.md'), '# stale visual bible\n', 'utf8')
+  await writeFile(path.join(outDir, 'episodes', 'adaptation-plan.json'), '{"stale": true}\n', 'utf8')
+  await writeFile(path.join(outDir, 'continuity', 'continuity-log.md'), '# stale continuity\n', 'utf8')
 
   await writeFile(inputPath, secondSource, 'utf8')
   await createNovelProject({ inputPath, outDir })
@@ -101,8 +106,13 @@ test('removes stale managed chapter, chunk, and task files when rerun', async ()
   await assert.rejects(access(path.join(outDir, 'chapters', 'chapter-0002.txt')), { code: 'ENOENT' })
   await assert.rejects(access(path.join(outDir, 'chunks', 'chunk-000002.json')), { code: 'ENOENT' })
   await assert.rejects(access(path.join(outDir, 'tasks', 'summarize-chapter-0002.md')), { code: 'ENOENT' })
+  await assert.rejects(access(path.join(outDir, 'summaries', 'chapter-0001.summary.json')), { code: 'ENOENT' })
+  await assert.rejects(access(path.join(outDir, 'bible', 'series-bible.md')), { code: 'ENOENT' })
+  await assert.rejects(access(path.join(outDir, 'visual-bible', 'character-reference-plan.md')), { code: 'ENOENT' })
+  await assert.rejects(access(path.join(outDir, 'episodes', 'adaptation-plan.json')), { code: 'ENOENT' })
+  await assert.rejects(access(path.join(outDir, 'continuity', 'continuity-log.md')), { code: 'ENOENT' })
 
-  for (const dirname of ['source', 'chapters', 'chunks', 'tasks', 'summaries', 'bible', 'episodes', 'continuity']) {
+  for (const dirname of ['source', 'chapters', 'chunks', 'tasks', 'summaries', 'bible', 'visual-bible', 'episodes', 'continuity']) {
     assert.equal((await stat(path.join(outDir, dirname))).isDirectory(), true)
   }
 })

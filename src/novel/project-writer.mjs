@@ -11,6 +11,7 @@ const PROJECT_DIRS = [
   'tasks',
   'summaries',
   'bible',
+  'visual-bible',
   'episodes',
   'continuity'
 ]
@@ -161,6 +162,11 @@ async function clearManagedProjectArtifacts(outDir) {
   await removeMatchingFiles(path.join(outDir, 'chapters'), /^chapter-\d{4}\.txt$/u)
   await removeMatchingFiles(path.join(outDir, 'chunks'), /^chunk-\d{6}\.json$/u)
   await removeMatchingFiles(path.join(outDir, 'tasks'), /^summarize-chapter-\d{4}\.md$/u)
+  await rm(path.join(outDir, 'summaries'), { recursive: true, force: true })
+  await rm(path.join(outDir, 'bible'), { recursive: true, force: true })
+  await rm(path.join(outDir, 'visual-bible'), { recursive: true, force: true })
+  await rm(path.join(outDir, 'episodes'), { recursive: true, force: true })
+  await rm(path.join(outDir, 'continuity'), { recursive: true, force: true })
 }
 
 async function removeMatchingFiles(dirPath, pattern) {
