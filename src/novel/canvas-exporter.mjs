@@ -9,9 +9,12 @@ const MAX_REFERENCE_MATERIALS = 12
 const DEFAULT_STYLE = 'anime / 二次元 / 非真人写实'
 const TEXT_NODE_WIDTH = 420
 const TEXT_NODE_HEIGHT = 280
+const IMAGE_NODE_WIDTH = 340
+const IMAGE_NODE_HEIGHT = 240
 const GAP_X = 80
 const GAP_Y = 120
 const ROW_HEIGHT = TEXT_NODE_HEIGHT + GAP_Y
+const CANVAS_IMAGE_GENERATION_ROLES = new Set(['character_card', 'scene_card', 'shot_card'])
 
 export async function exportNovelCanvas({ runDir, episodeNumber, outDir } = {}) {
   if (!runDir) throw new Error('novel canvas requires --run <project-dir>')
@@ -439,30 +442,21 @@ function addConnections({ nodes, connections, characters, locations, shotNodes, 
 
 function buildCanvasExport(manifest) {
   const now = new Date().toISOString()
+  const canvasNodes = manifest.nodes.flatMap((node) => toCanvasNode(node, manifest))
+  const canvasNodeIds = new Set(canvasNodes.map((node) => node.id))
   const project = {
     id: `cine-make-${manifest.project.episodeId}`,
     title: `Cine Make - ${manifest.episode.title}`,
     createdAt: now,
     updatedAt: now,
-    nodes: manifest.nodes.map((node) => ({
-      id: node.id,
-      type: 'text',
-      title: node.title,
-      position: node.position,
-      width: node.width,
-      height: node.height,
-      metadata: {
-        content: node.role === 'export_warning' ? `# 导出警告\n\n${node.content}` : node.content,
-        status: 'success',
-        fontSize: 14,
-        generationMode: 'text'
-      }
-    })),
-    connections: manifest.connections.map((connection) => ({
-      id: connection.id,
-      fromNodeId: connection.fromNodeId,
-      toNodeId: connection.toNodeId
-    })),
+    nodes: canvasNodes,
+    connections: manifest.connections
+      .filter((connection) => canvasNodeIds.has(connection.fromNodeId) && canvasNodeIds.has(connection.toNodeId))
+      .map((connection) => ({
+        id: connection.id,
+        fromNodeId: connection.fromNodeId,
+        toNodeId: connection.toNodeId
+      })),
     chatSessions: [],
     activeChatId: null,
     backgroundMode: 'lines',
@@ -476,6 +470,73 @@ function buildCanvasExport(manifest) {
     exportedAt: now,
     projects: [{ project, files: [] }]
   }
+}
+
+function toCanvasNode(node, manifest) {
+  if (CANVAS_IMAGE_GENERATION_ROLES.has(node.role)) return [toCanvasImageNode(node, manifest)]
+  if (node.role === 'export_warning') return [toCanvasWarningNode(node)]
+  return []
+}
+
+function toCanvasImageNode(node, manifest) {
+  return {
+    id: node.id,
+    type: 'image',
+    title: node.title,
+    position: node.position,
+    width: IMAGE_NODE_WIDTH,
+    height: IMAGE_NODE_HEIGHT,
+    metadata: {
+      content: '',
+      prompt: composeCanvasImagePrompt(node, manifest),
+      status: 'idle',
+      generationMode: 'image',
+      generationType: 'generation',
+      size: '9:16',
+      quality: 'auto',
+      count: 1
+    }
+  }
+}
+
+function toCanvasWarningNode(node) {
+  return {
+    id: node.id,
+    type: 'text',
+    title: node.title,
+    position: node.position,
+    width: node.width,
+    height: node.height,
+    metadata: {
+      content: `# 导出警告\n\n${node.content}`,
+      status: 'success',
+      fontSize: 14,
+      generationMode: 'text'
+    }
+  }
+}
+
+function composeCanvasImagePrompt(node, manifest) {
+  const roleInstruction = {
+    character_card: '任务：生成角色设定图，锁定人物外观、服装、气质和可复用视觉锚点。',
+    scene_card: '任务：生成场景参考图，锁定空间结构、光线、材质和连续性状态。',
+    shot_card: '任务：生成分镜关键帧，画面必须服务该镜头的剧情节拍、景别、机位、构图和表演。'
+  }[node.role]
+
+  return [
+    '文生图任务：生成一张可直接作为 AI 漫剧前期参考的静态图片，不是文字卡片。',
+    roleInstruction,
+    `节点：${node.title}`,
+    `默认风格：${manifest.project.defaultStyle || DEFAULT_STYLE}`,
+    `本集：${manifest.episode.title}`,
+    `结尾钩子：${manifest.episode.hook || '无'}`,
+    '',
+    '画面信息：',
+    node.content.trim(),
+    '',
+    '统一要求：动漫二次元、非真人写实、电影感构图、主体清晰、可作为后续视频生成参考。',
+    '负面约束：不要生成海报文字、字幕、水印、UI、logo；不要引入未列出人物、地点或后续剧情；不要改变既有角色视觉锚点。'
+  ].filter((line) => line !== undefined && line !== null).join('\n')
 }
 
 function normalizeEpisodeBeats(episode) {

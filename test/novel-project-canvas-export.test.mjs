@@ -10,7 +10,7 @@ import { exportNovelCanvas } from '../src/novel/canvas-exporter.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-test('exports a semantic manifest and text-only canvas zip from an episode package', async () => {
+test('exports a semantic manifest and image-generation canvas zip from an episode package', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-canvas-export-'))
   try {
     await writeCanvasProject(workspace)
@@ -61,23 +61,31 @@ test('exports a semantic manifest and text-only canvas zip from an episode packa
     assert.equal(item.project.showImageInfo, false)
     assert.deepEqual(item.project.viewport, { x: 0, y: 0, k: 1 })
 
-    assert.ok(item.project.nodes.length >= 6)
+    assert.ok(item.project.nodes.length >= 5)
+    assert.deepEqual([...new Set(item.project.nodes.map((node) => node.type))], ['image'])
+
+    const byId = new Map(item.project.nodes.map((node) => [node.id, node]))
+    assertCanvasImageNode(byId.get('character-lin-xia'), /林夏/u, /红围巾/u)
+    assertCanvasImageNode(byId.get('scene-jiu-ying-yuan'), /旧影院/u, /冷色|低照度|灰尘/u)
+    assertCanvasImageNode(byId.get('shot-001'), /镜头 S01/u, /林夏进入旧影院/u)
+    assertCanvasImageNode(byId.get('shot-002'), /镜头 S02/u, /父亲留下的座位号/u)
+    assert.equal(byId.has('overview'), false)
+    assert.equal(byId.has('continuity'), false)
+    assert.equal(byId.has('feed-card-001'), false)
+
     for (const node of item.project.nodes) {
-      assert.equal(node.type, 'text')
       assert.equal(typeof node.id, 'string')
       assert.equal(typeof node.title, 'string')
       assert.equal(typeof node.position.x, 'number')
       assert.equal(typeof node.position.y, 'number')
-      assert.equal(typeof node.metadata.content, 'string')
-      assert.equal(node.metadata.status, 'success')
-      assert.equal(node.metadata.fontSize, 14)
-      assert.equal(node.metadata.generationMode, 'text')
       assert.equal(Object.hasOwn(node, 'role'), false)
     }
 
     assert.ok(item.project.connections.length > 0)
     for (const connection of item.project.connections) {
       assert.deepEqual(Object.keys(connection).sort(), ['fromNodeId', 'id', 'toNodeId'])
+      assert.equal(byId.has(connection.fromNodeId), true)
+      assert.equal(byId.has(connection.toNodeId), true)
     }
   } finally {
     await rm(workspace, { recursive: true, force: true })
@@ -110,7 +118,7 @@ test('CLI fails clearly when the episode package is missing', async () => {
   }
 })
 
-test('missing jimeng feed cards creates warning text instead of failing', async () => {
+test('missing jimeng feed cards creates a warning while canvas remains image-generation tasks', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-canvas-export-no-feed-'))
   try {
     await writeCanvasProject(workspace, { writeFeedCards: false })
@@ -127,7 +135,18 @@ test('missing jimeng feed cards creates warning text instead of failing', async 
     assert.ok(manifest.nodes.some((node) => node.role === 'jimeng_feed_card' && /视频工具投喂包/u.test(node.content)))
 
     const projectsJson = await readProjectsJsonFromZip(result.zipPath)
-    const content = projectsJson.projects[0].project.nodes.map((node) => node.metadata.content).join('\n')
+    const nodes = projectsJson.projects[0].project.nodes
+    assert.ok(nodes.some((node) => node.type === 'image'))
+    for (const node of nodes.filter((candidate) => candidate.type === 'image')) {
+      assertCanvasImageNode(node)
+    }
+
+    const textNodes = nodes.filter((node) => node.type === 'text')
+    assert.equal(textNodes.length, 1)
+    assert.equal(textNodes[0].id, 'warnings')
+    assert.equal(textNodes[0].metadata.status, 'success')
+    assert.equal(textNodes[0].metadata.generationMode, 'text')
+    const content = textNodes.map((node) => node.metadata.content).join('\n')
     assert.match(content, /导出警告/u)
     assert.match(content, /jimeng-feed-cards\.json/u)
   } finally {
@@ -282,6 +301,24 @@ async function writeCanvasProject(projectDir, { writeEpisodePackage = true, writ
       'utf8'
     )
   }
+}
+
+function assertCanvasImageNode(node, ...promptPatterns) {
+  assert.ok(node, 'expected canvas image node to exist')
+  assert.equal(node.type, 'image')
+  assert.equal(node.metadata.content, '')
+  assert.equal(node.metadata.status, 'idle')
+  assert.equal(node.metadata.generationMode, 'image')
+  assert.equal(node.metadata.generationType, 'generation')
+  assert.equal(node.metadata.size, '9:16')
+  assert.equal(node.metadata.quality, 'auto')
+  assert.equal(node.metadata.count, 1)
+  assert.equal(typeof node.metadata.prompt, 'string')
+  assert.ok(node.metadata.prompt.length > 0)
+  for (const pattern of promptPatterns) {
+    assert.match(node.metadata.prompt, pattern)
+  }
+  assert.equal(Object.hasOwn(node, 'role'), false)
 }
 
 function chapterSummary() {
