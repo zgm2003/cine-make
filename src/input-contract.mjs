@@ -252,6 +252,9 @@ export function parseArgs(argv) {
 
 function inferContentType(sourceText) {
   const text = sourceText.trim()
+  if (/第[一二三四五六七八九十0-9]+集剧本|角色设定|^\[场景/mu.test(text) && /\[场景|▲\s*【(?:画面|音效)】/u.test(text)) {
+    return 'short_drama_script'
+  }
   if (/分镜|镜头|景别|运镜|shot/i.test(text)) return 'rough_shotlist'
   if (/广告|卖点|产品|品牌|转化|投放|campaign/i.test(text)) return 'ad_brief'
   if (/旁白|口播|主播|voiceover|script/i.test(text)) return 'voiceover_script'

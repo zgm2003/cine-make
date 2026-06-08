@@ -12,6 +12,45 @@ import { validateRunDirectory } from '../src/run-validator.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const source = '小说片段：凌晨四点，退役潜水员周祁回到废弃海洋馆。主水箱里没有水，却传来鲸鱼的低鸣。他发现玻璃内侧贴着一张女儿小时候画的蓝鲸，画纸没有被水泡烂。远处的检修门自动打开，门后是一片真实的深海光。'
+const isolatedMansionScript = [
+  '漫剧概念设定：《孤岛碎忆》',
+  '核心创意：主角醒来发现自己置身于一栋暴风雨中的孤岛别墅，他只有10分钟短期记忆。事实上，所有人都是他分裂出来的人格。',
+  '角色设定（漫剧画风建议：暗黑、重度阴影）',
+  '林默（男主角）：私家侦探。冷静、神经质。',
+  '安娜（女性）：心理医生，知性、冷静。一直试图“帮”林默找回记忆。',
+  '雷队（中年男）：脾气暴躁的暴风雪山庄式警探。',
+  '阿杰（青年男）：胆小、唯唯诺诺的瘸子，右脚有残疾。',
+  '第一集剧本：【分崩离析的10分钟】',
+  '[场景：孤岛别墅 - 客厅 - 夜]',
+  '▲ 【画面】 窗外暴雨倾盆，一道闪电划过，照亮昏暗的客厅。',
+  '▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。',
+  '▲ 【音效】 惊雷声，紧接着是林默急促的呼吸声。',
+  '林默（内心独白）：',
+  '“我是谁？这是哪？该死……我的头好痛。记忆又在消失……”',
+  '▲ 【画面】 林默急切地拉开衣袖。他的手臂上用小刀歪歪扭扭地刻着一行字：【我的记忆只有10分钟。凶手在他们中间。】',
+  '▲ 【画面】 镜头拉开，客厅里还有另外三个人。',
+  '雷队正拿着枪，警惕地守在门口。',
+  '安娜正在给林默倒热水，眼神充满担忧。',
+  '阿杰（瘸子）蜷缩在角落里，瑟瑟发抖。',
+  '雷队（咬牙切齿）：',
+  '“林默，你终于醒了。刚刚停电的5分钟里，老张被杀了。现在死无对证。”',
+  '安娜（温柔安抚）：',
+  '“雷队，别逼他。林默的‘失忆症’又犯了。林默，看着我，你还记得你来这座岛是干什么的吗？”',
+  '▲ 【画面】 林默痛苦地捂住头，无数碎片画面闪过：警徽、带血的解剖刀、一座叫“圣路易斯”的精神病院大门。',
+  '林默（沙哑）：',
+  '“我是……来查案的。有人举报这里有非法活体实验……”',
+  '▲ 【画面】 角落里的瘸子阿杰突然冷笑了一声。所有人的目光看向他。',
+  '阿杰（声音颤抖，但眼神诡异）：',
+  '“查案？林侦探，你别装了。其实你早就知道凶手是谁对不对？那个人……那个叫‘凯撒’的幕后黑手，就在这间屋子里！”',
+  '▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。',
+  '▲ 【画面】 林默眼神瞬间空洞。下一秒，他再次惊恐地看着自己的血手，仿佛第一天来到这里。',
+  '林默（惊恐）：',
+  '“你们……是谁？！”',
+  '-------------------------以下为个人总结---------------------------------',
+  '人物主要有：林默、安娜、雷队、阿杰',
+  '场景主要有：孤岛别墅、夜晚',
+  '主要元素内容：手机、茶壶、枪、警徽、带血的解剖刀'
+].join('\n')
 
 test('composeDraftAssets creates production assets from a story contract', async () => {
   const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', '--platform', 'jimeng', source]))
@@ -87,6 +126,37 @@ test('composeDraftAssets ignores role preamble and extracts isolated-mansion epi
   assert.match(serialized, /手机10分钟倒计时/)
   assert.doesNotMatch(draft.shotlist[0].action, /角色设定|男主角/)
   assert.match(draft.shotlist.at(-1).action, /你们.*是谁|00:10:00|时间到/)
+  assert.equal(draft.shotlist.some((shot) => /源剧情：[“”"'\s]+$/u.test(shot.action)), false)
+})
+
+test('composeDraftAssets extracts isolated-mansion cast into cinematic character reference profiles', async () => {
+  const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', isolatedMansionScript]))
+  const draft = composeDraftAssets(contract)
+  const names = draft.characters.map((character) => character.identity_anchor)
+  const serialized = JSON.stringify(draft)
+
+  assert.equal(contract.contentType, 'short_drama_script')
+  assert.deepEqual(names, ['林默', '安娜', '雷队', '阿杰'])
+  assert.match(serialized, /character-linmo\.png/)
+  assert.match(serialized, /character-anna\.png/)
+  assert.match(serialized, /character-leidui\.png/)
+  assert.match(serialized, /character-ajie\.png/)
+  assert.match(serialized, /上方预留干净信息栏/)
+  assert.match(serialized, /character turnaround/)
+  assert.match(serialized, /prop reference/)
+  assert.match(serialized, /anime, manga, cartoon/)
+  assert.equal(draft.shotlist.some((shot) => /个人总结|人物主要有|主要元素内容/u.test(shot.action)), false)
+  assert.match(draft.shotlist[0].action, /窗外暴雨倾盆|暴雨/)
+  assert.doesNotMatch(draft.shotlist[0].action, /^注意到不该出现的信号/)
+  assert.equal(draft.shotlist.some((shot) => /空间调度|镜头方向/u.test(shot.action)), false)
+
+  const groupReveal = draft.shotlist.find((shot) => shot.characters?.length === 4)
+  assert.match(groupReveal.blocking, /林默.*安娜.*雷队.*阿杰/u)
+
+  const leiShot = draft.shotlist.find((shot) => shot.characters?.includes('雷队') && !shot.characters?.includes('林默'))
+  assert.match(leiShot.blocking, /雷队.*门口/u)
+  assert.match(leiShot.image_prompt, /character locks: 雷队/u)
+  assert.doesNotMatch(leiShot.image_prompt, /preset lock: protagonist .*林默/u)
 })
 
 test('enterprise documentary draft condenses long essays into a 30 second theme film', async () => {

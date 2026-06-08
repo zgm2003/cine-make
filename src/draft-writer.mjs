@@ -1,3 +1,5 @@
+import { extractScriptProfile, isScriptProfileUseful, stripPersonalSummary } from './script-profile.mjs'
+
 const SHOT_BLUEPRINTS = [
   {
     label: 'threshold call',
@@ -638,7 +640,7 @@ function stripSourcePrefix(sourceText) {
 }
 
 function filmableBeatText(sourceText) {
-  let cleaned = stripSourcePrefix(sourceText)
+  let cleaned = stripSourcePrefix(stripPersonalSummary(sourceText))
   const episodeStart = cleaned.search(/第一集剧本|第[一二三四五六七八九十0-9]+集剧本/u)
   if (episodeStart !== -1) cleaned = cleaned.slice(episodeStart)
   cleaned = cleaned.replace(/^第[一二三四五六七八九十0-9]+集剧本[^\n]*\n?/u, '')
@@ -647,12 +649,63 @@ function filmableBeatText(sourceText) {
   return cleaned.trim()
 }
 
+function beatVisibleLength(value) {
+  return String(value).replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/gu, '').length
+}
+
+function normalizeScriptBeat(value) {
+  return String(value)
+    .replace(/^▲\s*【[^】]+】\s*/u, '')
+    .replace(/^【[^】]+】\s*/u, '')
+    .replace(/\s+/g, ' ')
+    .replace(/^[“”"'\s]+|[“”"'\s]+$/gu, '')
+    .trim()
+}
+
+function scriptLineBeats(cleaned) {
+  const lines = cleaned.split(/\n+/u).map((line) => line.trim()).filter(Boolean)
+  const beats = []
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index]
+    if (/^(第[一二三四五六七八九十0-9]+集剧本|角色设定|\[场景)/u.test(line)) continue
+
+    const visual = line.match(/^▲\s*【(?:画面|音效)】\s*(.+)$/u)
+    if (visual) {
+      beats.push(normalizeScriptBeat(visual[1]))
+      continue
+    }
+
+    const inlineDialogue = line.match(/^([^：:]{1,24})[：:]\s*(.+)$/u)
+    if (inlineDialogue) {
+      beats.push(normalizeScriptBeat(`${inlineDialogue[1]}：${inlineDialogue[2]}`))
+      continue
+    }
+
+    const speakerOnly = line.match(/^([^：:]{1,24})[：:]$/u)
+    if (speakerOnly && index + 1 < lines.length) {
+      const dialogue = normalizeScriptBeat(lines[index + 1])
+      if (dialogue) beats.push(normalizeScriptBeat(`${speakerOnly[1]}：${dialogue}`))
+      index += 1
+      continue
+    }
+
+    beats.push(normalizeScriptBeat(line))
+  }
+
+  return beats.filter((beat) => beatVisibleLength(beat) >= 4)
+}
+
 function splitBeats(sourceText) {
   const cleaned = filmableBeatText(sourceText)
+  const lineBeats = scriptLineBeats(cleaned)
+  if (lineBeats.length >= 3) return lineBeats
+
   const beats = cleaned
     .split(/[。！？!?；;]\s*/u)
     .map((part) => part.trim())
-    .filter(Boolean)
+    .map(normalizeScriptBeat)
+    .filter((beat) => beatVisibleLength(beat) >= 4)
   return beats.length ? beats : [cleaned]
 }
 
@@ -847,8 +900,7 @@ function shotId(index) {
 
 function spreadIndex({ index, count, length }) {
   if (length <= 1 || count <= 1) return 0
-  if (count <= length) return Math.round(index * (length - 1) / (count - 1))
-  return index % length
+  return Math.round(index * (length - 1) / (count - 1))
 }
 
 function spreadPick(items, count) {
@@ -857,6 +909,107 @@ function spreadPick(items, count) {
 
 function visibleBeat(beats, index, count) {
   return beats[spreadIndex({ index, count, length: beats.length })]
+}
+
+function visibleProfileBeat(profile, index, count) {
+  return profile.beats[spreadIndex({ index, count, length: profile.beats.length })]
+}
+
+function scriptActionText(beat) {
+  return String(beat?.visualAction ?? beat ?? '').replace(/\s+/g, ' ').trim()
+}
+
+function scriptCharacterLabel(characters = [], fallback = '主体') {
+  return characters.length ? characters.join('、') : fallback
+}
+
+function scriptBlocking({ action, characters = [], blueprint, anchors }) {
+  const subject = scriptCharacterLabel(characters, anchors.protagonist)
+
+  if (/阿杰.*冷笑|瘸子阿杰突然冷笑|所有人的目光看向他/u.test(action)) {
+    return '阿杰仍在背光角落低位，冷笑先从嘴角出现，林默、安娜、雷队的视线从三个方向压向他'
+  }
+  if (/另外三个人|三个人|众人|所有人/u.test(action)) {
+    return '林默从沙发前景抬头，安娜靠茶几倒水，雷队堵在门口持枪，阿杰缩在背光角落，四个位置形成客厅四角压力'
+  }
+  if (/雷队.*(终于醒了|死无对证|咬牙切齿)/u.test(action)) {
+    return '雷队从门口向林默压近半步，出口仍被他身体挡住，林默被困在沙发和茶几之间不能后退'
+  }
+  if (/雷队.*(枪|门口)|拿着枪|守在门口/u.test(action)) {
+    return '雷队站在客厅门口挡住出口，枪口压低但手贴枪身，林默留在沙发侧后方，门外雨光从雷队背后切进来'
+  }
+  if (/安娜.*(别逼他|看着我|失忆症)/u.test(action)) {
+    return '安娜横插在林默和雷队之间，水杯停在胸前当缓冲，身体朝向林默但眼神余光盯住雷队'
+  }
+  if (/安娜.*倒.*水|热水/u.test(action)) {
+    return '安娜在茶几一侧倾身倒水，热水杯停在她和林默之间，林默半坐半起不接杯，二人中间保留一条危险空隙'
+  }
+  if (/阿杰.*(凯撒|幕后黑手|林侦探)/u.test(action)) {
+    return '阿杰从角落阴影里轻微抬头，拐杖和腿部支架不动，所有人的视线被他牵到房间最暗处'
+  }
+  if (/阿杰|瘸子|蜷缩|瑟瑟发抖/u.test(action)) {
+    return '阿杰缩在背光角落，腿部支架和拐杖贴着地面，身体畏缩但视线绕过林默观察全屋'
+  }
+  if (/手机.*(00:00:00|时间到)|闹钟|倒计时/u.test(action)) {
+    return '倒计时手机压在前景，林默的血手停在手机旁，客厅其他人保持原位不冲上来'
+  }
+  if (/眼神瞬间空洞|仿佛第一天/u.test(action)) {
+    return '林默身体在原位像断电一样停住，眼神失焦后重新抬起血手，其他人保持原位变成陌生轮廓'
+  }
+  if (/惊醒|血手|满是鲜血/u.test(action)) {
+    return '林默从客厅沙发猛然撑起，血手压在膝盖和沙发边，身体朝茶几方向前倾但脚还没站稳'
+  }
+  if (/惊雷声|呼吸声/u.test(action)) {
+    return '雷声压低客厅，镜头贴住林默肩背和血手，沙发、茶几、门口的方位保持不变'
+  }
+  if (/衣袖|手臂|刻着|记忆只有10分钟/u.test(action)) {
+    return '林默坐在沙发边拉开袖口，刀刻文字贴近镜头，其他人暂时只留成背景阴影'
+  }
+  if (/内心独白|我是谁|头好痛|记忆又在消失/u.test(action)) {
+    return '林默坐在沙发边偏离画面中心，身后空客厅压住他，视线在血手、手机和门口之间断裂'
+  }
+  if (/捂住头|碎片画面|精神病院|警徽|解剖刀/u.test(action)) {
+    return '林默弯腰捂头退到沙发旁，警徽和解剖刀以闪回碎片切进画面边缘，现实客厅不改变方位'
+  }
+  if (/查案|非法活体实验/u.test(action)) {
+    return '林默慢慢抬头看向门口和病院线索方向，身体从崩溃坐姿收回到侦探的正面姿态'
+  }
+  if (/你们.*是谁/u.test(action)) {
+    return '林默重置后站在客厅中央偏低位，其他人围在原来的门口、茶几、角落位置，尾帧留出下一轮质问的空间'
+  }
+  if (/暴雨|闪电|客厅/u.test(action)) {
+    return '孤岛别墅客厅全景先建立沙发、门口、角落三点方位，闪电把这三个区域同时照亮'
+  }
+
+  return `${subject}停在可剪接的位置，动作沿既定空间线完成；${blueprint.blocking}`
+}
+
+function scriptPerformance({ action, characters = [], blueprint }) {
+  if (/雷队/u.test(characters.join('')) || /雷队/u.test(action)) return '下颌绷紧，握枪手指发白，眼神不离林默'
+  if (/安娜/u.test(characters.join('')) || /安娜/u.test(action)) return '动作柔和但指尖停顿，眼神担忧又像在隐瞒真相'
+  if (/阿杰/u.test(characters.join('')) || /阿杰/u.test(action)) return '肩膀内扣，嘴角先发抖再压住一点冷笑，眼神从怯懦里漏出算计'
+  if (/惊醒|血|记忆|你们.*是谁/u.test(action)) return '呼吸短促，眼神断片，手指先确认血迹和倒计时再看向别人'
+  return blueprint.performance
+}
+
+function scriptComposition({ action, characters = [], blueprint }) {
+  if (/另外三个人|三个人|众人|所有人/u.test(action)) return '客厅被分成四个清楚方位：沙发前景的林默、茶几旁的安娜、门口的雷队、角落的阿杰，观众一眼能读懂谁堵住出口、谁靠近、谁躲藏'
+  if (/雷队.*(枪|门口)|拿着枪|守在门口/u.test(action)) return '门框竖线压住雷队身体，枪和出口在同一条视线上，林默只留成侧后方受压剪影'
+  if (/安娜.*倒.*水|热水/u.test(action)) return '热水杯位于两人中线，安娜的手在前景，林默的警惕眼神在后景，水汽切开安全和控制的边界'
+  if (/阿杰.*冷笑|阿杰|瘸子|蜷缩/u.test(action)) return '地面线条把视线推到角落低位，拐杖和腿部支架先出现，脸最后进入焦点'
+  if (/手机|闹钟|倒计时/u.test(action)) return '手机屏幕和血手占前景，客厅人物保持背景方位，倒计时成为全场视线中心'
+  if (/暴雨|闪电|客厅/u.test(action)) return '闪电短暂勾出沙发、茶几、门口、角落的空间地图，雨水反光形成冷色纵深'
+  return blueprint.composition
+}
+
+function scriptShotDirection({ beat, characters, blueprint, anchors }) {
+  const action = scriptActionText(beat)
+  return {
+    action,
+    blocking: scriptBlocking({ action, characters, blueprint, anchors }),
+    performance: scriptPerformance({ action, characters, blueprint }),
+    composition: scriptComposition({ action, characters, blueprint })
+  }
 }
 
 function expressionCue(performance) {
@@ -908,31 +1061,38 @@ function selectBlueprintsForContract(contract, count) {
   return selectBlueprints(count)
 }
 
-function composeImagePrompt({ anchors, blueprint, action, index }) {
+function composeImagePrompt({ anchors, blueprint, action, index, characters, blocking, performance, composition }) {
   const signalLabel = ['enterprise_documentary', 'folklore_fantasy', 'cultivation_transmigration'].includes(anchors.strategy) ? 'story signal' : 'impossible sign'
+  const lockLine = characters?.length
+    ? `character locks: ${characters.join('、')}; location ${anchors.location}; key object ${anchors.keyObject}; ${signalLabel} ${anchors.impossibleSign}`
+    : `preset lock: protagonist ${anchors.protagonist}; location ${anchors.location}; key object ${anchors.keyObject}; ${signalLabel} ${anchors.impossibleSign}`
+  const blockingLine = blocking ?? blueprint.blocking
+  const performanceLine = performance ?? blueprint.performance
+  const compositionLine = composition ?? blueprint.composition
   return [
     `${anchors.visualStyle} AI short-drama storyboard keyframe, single still image`,
-    `preset lock: protagonist ${anchors.protagonist}; location ${anchors.location}; key object ${anchors.keyObject}; ${signalLabel} ${anchors.impossibleSign}`,
+    lockLine,
     `shot ${shotId(index)} visible action: ${action}`,
-    `expression: ${expressionCue(blueprint.performance)}`,
-    `body action: ${blueprint.blocking}`,
+    `expression: ${expressionCue(performanceLine)}`,
+    `body action: ${blockingLine}`,
     `secondary animation cue frozen as a still: ${secondaryMotionCue(index)}`,
     `shot size: ${blueprint.shotSize}`,
     `lens: ${blueprint.lens}`,
     `camera language: ${blueprint.camera}`,
-    `composition: ${blueprint.composition}`,
-    `performance: ${blueprint.performance}`,
+    `composition: ${compositionLine}`,
+    `performance: ${performanceLine}`,
     `continuity anchor: same ${anchors.protagonist}, ${anchors.keyObject}, ${anchors.location}, and ${anchors.impossibleSign}; relation to ${anchors.lostFigure} stays restrained`,
     `vertical ${anchors.aspectRatio}`,
     'no text overlay',
     'no watermark',
-    'no extra characters',
+    characters?.length ? 'no extra characters outside listed characters' : 'no extra characters',
     'do not turn the still prompt into a video prompt',
     `shot ${shotId(index)} ${blueprint.label}`
   ].join(', ')
 }
 
 export function composeDraftAssets(contract) {
+  const scriptProfile = extractScriptProfile(contract.sourceText)
   const anchors = contract.contentType === 'enterprise_documentary'
     ? inferEnterpriseAnchors(contract)
     : contract.contentType === 'cultivation_transmigration' || isCultivationTransmigrationText(contract.sourceText)
@@ -940,7 +1100,10 @@ export function composeDraftAssets(contract) {
     : isFolkloreFantasyText(contract.sourceText)
       ? inferFolkloreFantasyAnchors(contract)
     : inferAnchors(contract)
-  const beats = contract.contentType === 'enterprise_documentary'
+  const useScriptProfile = anchors.strategy === 'suspense_drama' && isScriptProfileUseful(scriptProfile)
+  const beats = useScriptProfile
+    ? scriptProfile.beats.map((beat) => beat.visualAction)
+    : contract.contentType === 'enterprise_documentary'
     ? enterpriseBeatLibrary(contract.sourceText)
     : splitBeats(contract.sourceText)
   const count = contract.target.shotCount
@@ -948,32 +1111,46 @@ export function composeDraftAssets(contract) {
   const selectedBlueprints = selectBlueprintsForContract(contract, count)
 
   const shotlist = selectedBlueprints.map((blueprint, index) => {
-    const beat = anchors.strategy === 'enterprise_documentary'
+    const profileBeat = useScriptProfile ? visibleProfileBeat(scriptProfile, index, count) : null
+    const beat = useScriptProfile
+      ? profileBeat.visualAction
+      : anchors.strategy === 'enterprise_documentary'
       ? blueprint.sourceNote
       : anchors.strategy === 'cultivation_transmigration'
         ? blueprint.sourceNote
       : anchors.strategy === 'folklore_fantasy'
         ? blueprint.sourceNote
         : visibleBeat(beats, index, count)
-    const action = `${blueprint.purpose}；源剧情：${beat}`
-    return {
-      shot_id: shotId(index),
-      duration_seconds: durations[index],
-      scene: anchors.location,
-      subject: anchors.strategy === 'enterprise_documentary'
+    const scriptCharacters = profileBeat?.characters?.length ? profileBeat.characters : [anchors.protagonist]
+    const scriptDirection = useScriptProfile
+      ? scriptShotDirection({ beat: profileBeat, characters: scriptCharacters, blueprint, anchors })
+      : null
+    const action = scriptDirection?.action ?? `${blueprint.purpose}；源剧情：${beat}`
+    const performance = scriptDirection?.performance ?? blueprint.performance
+    const blocking = scriptDirection?.blocking ?? blueprint.blocking
+    const composition = scriptDirection?.composition ?? blueprint.composition
+    const subject = useScriptProfile
+      ? scriptCharacters.join('、')
+      : anchors.strategy === 'enterprise_documentary'
         ? (index < Math.floor(count * 0.8) ? anchors.protagonist : `${anchors.protagonist} and next generation`)
         : anchors.strategy === 'cultivation_transmigration'
           ? (index < Math.floor(count * 0.75) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
         : anchors.strategy === 'folklore_fantasy'
           ? (index < Math.floor(count * 0.75) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
-        : (index < Math.floor(count * 0.7) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`),
+        : (index < Math.floor(count * 0.7) ? anchors.protagonist : `${anchors.protagonist} and ${anchors.lostFigure}`)
+    return {
+      shot_id: shotId(index),
+      duration_seconds: durations[index],
+      scene: anchors.location,
+      subject,
+      characters: useScriptProfile ? scriptCharacters : undefined,
       action,
-      performance_detail: blueprint.performance,
+      performance_detail: performance,
       shot_size: blueprint.shotSize,
       lens: blueprint.lens,
       camera_movement: blueprint.camera,
-      composition: `${blueprint.composition}；${anchors.keyObject} 与 ${anchors.impossibleSign} 必须作为稳定视觉锚点`,
-      blocking: blueprint.blocking,
+      composition: `${composition}；${anchors.keyObject} 与 ${anchors.impossibleSign} 必须作为稳定视觉锚点`,
+      blocking,
       lighting: anchors.strategy === 'enterprise_documentary'
         ? `${anchors.visualStyle}; practical workshop light, welding flare, dawn factory atmosphere`
         : anchors.strategy === 'cultivation_transmigration'
@@ -990,15 +1167,24 @@ export function composeDraftAssets(contract) {
               ? `旁白：飨食香火，解人灾殃。`
               : `${anchors.lostFigure}的声音或信号进入场景。`)
         : '',
-      image_prompt: composeImagePrompt({ anchors, blueprint, action, index }),
+      image_prompt: composeImagePrompt({
+        anchors,
+        blueprint,
+        action,
+        index,
+        characters: useScriptProfile ? scriptCharacters : undefined,
+        blocking,
+        performance,
+        composition
+      }),
       continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的 ${anchors.location}、${anchors.protagonist}、${anchors.keyObject} 和 ${anchors.impossibleSign}`,
-      video_prompt_note: `只执行 ${shotId(index)} 的单一可见动作，不合并、不串镜；主运动：${blueprint.purpose}；二级动画：${secondaryMotionCue(index)}；焦点按人物、${anchors.keyObject}、异常信号之间转移；运镜保持 ${blueprint.camera} 和 ${blueprint.lens}`
+      video_prompt_note: `只执行 ${shotId(index)} 的单一可见动作，不合并、不串镜；主运动：${scriptDirection?.action ?? blueprint.purpose}；二级动画：${secondaryMotionCue(index)}；焦点按人物、${anchors.keyObject}、异常信号之间转移；运镜保持 ${blueprint.camera} 和 ${blueprint.lens}`
     }
   })
 
   return {
     directorScript: composeDirectorScript({ contract, anchors, beats }),
-    characters: composeCharacters(anchors),
+    characters: composeCharacters(anchors, useScriptProfile ? scriptProfile : null),
     shotlist,
     storyboardBoard: composeStoryboardBoard(shotlist),
     storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist }),
@@ -1078,7 +1264,9 @@ function composeDirectorScript({ contract, anchors, beats }) {
   ].join('\n')
 }
 
-function composeCharacters(anchors) {
+function composeCharacters(anchors, scriptProfile = null) {
+  if (scriptProfile?.cast?.length) return scriptProfile.cast
+
   if (anchors.strategy === 'enterprise_documentary') {
     return [
       {

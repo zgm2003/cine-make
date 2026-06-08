@@ -18,6 +18,41 @@ const hospitalSource = [
   '他慢慢把弹珠放回护士站，电梯门在身后打开，里面亮着温暖的白光。'
 ].join('')
 
+const isolatedMansionScript = [
+  '漫剧概念设定：《孤岛碎忆》',
+  '核心创意：主角醒来发现自己置身于一栋暴风雨中的孤岛别墅，他只有10分钟短期记忆。事实上，所有人都是他分裂出来的人格。',
+  '角色设定（漫剧画风建议：暗黑、重度阴影）',
+  '林默（男主角）：私家侦探。冷静、神经质。',
+  '安娜（女性）：心理医生，知性、冷静。一直试图“帮”林默找回记忆。',
+  '雷队（中年男）：脾气暴躁的暴风雪山庄式警探。',
+  '阿杰（青年男）：胆小、唯唯诺诺的瘸子，右脚有残疾。',
+  '第一集剧本：【分崩离析的10分钟】',
+  '[场景：孤岛别墅 - 客厅 - 夜]',
+  '▲ 【画面】 窗外暴雨倾盆，一道闪电划过，照亮昏暗的客厅。',
+  '▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。',
+  '▲ 【画面】 林默急切地拉开衣袖。他的手臂上用小刀歪歪扭扭地刻着一行字：【我的记忆只有10分钟。凶手在他们中间。】',
+  '▲ 【画面】 镜头拉开，客厅里还有另外三个人。',
+  '雷队正拿着枪，警惕地守在门口。',
+  '安娜正在给林默倒热水，眼神充满担忧。',
+  '阿杰（瘸子）蜷缩在角落里，瑟瑟发抖。',
+  '雷队（咬牙切齿）：',
+  '“林默，你终于醒了。刚刚停电的5分钟里，老张被杀了。现在死无对证。”',
+  '安娜（温柔安抚）：',
+  '“雷队，别逼他。林默的‘失忆症’又犯了。林默，看着我，你还记得你来这座岛是干什么的吗？”',
+  '▲ 【画面】 林默痛苦地捂住头，无数碎片画面闪过：警徽、带血的解剖刀、一座叫“圣路易斯”的精神病院大门。',
+  '林默（沙哑）：',
+  '“我是……来查案的。有人举报这里有非法活体实验……”',
+  '▲ 【画面】 角落里的瘸子阿杰突然冷笑了一声。所有人的目光看向他。',
+  '阿杰（声音颤抖，但眼神诡异）：',
+  '“查案？林侦探，你别装了。其实你早就知道凶手是谁对不对？那个人……那个叫‘凯撒’的幕后黑手，就在这间屋子里！”',
+  '▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。',
+  '▲ 【画面】 林默眼神瞬间空洞。下一秒，他再次惊恐地看着自己的血手，仿佛第一天来到这里。',
+  '林默（惊恐）：',
+  '“你们……是谁？！”',
+  '-------------------------以下为个人总结---------------------------------',
+  '人物主要有：林默、安娜、雷队、阿杰'
+].join('\n')
+
 const longFolkloreSource = [
   '莫川躺在床上正要睡觉，又听见祭祖幻听。',
   '他怒喝之后，一枚双耳三足香炉悬浮而起，青烟扑面。',
@@ -269,6 +304,58 @@ test('enterprise documentary deliverable uses theme-film labels instead of suspe
     assert.doesNotMatch(deliverable, /悬念点/)
     assert.doesNotMatch(deliverable, /异常出现/)
     assert.doesNotMatch(deliverable, /真相靠近/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('isolated mansion visual deliverable exposes four cinematic character reference prompts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-ai-cast-refs-'))
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'visual',
+      '--out',
+      out,
+      '--duration',
+      '60s',
+      '--aspect',
+      '9:16',
+      isolatedMansionScript
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    const readme = await readFile(join(out, 'storyboard-images', 'README.md'), 'utf8')
+
+    for (const text of [deliverable, readme]) {
+      assert.match(text, /storyboard-images\/character-linmo\.png/)
+      assert.match(text, /storyboard-images\/character-anna\.png/)
+      assert.match(text, /storyboard-images\/character-leidui\.png/)
+      assert.match(text, /storyboard-images\/character-ajie\.png/)
+      assert.doesNotMatch(text, /个人总结|人物主要有/)
+    }
+
+    assert.match(deliverable, /角色名称：林默/)
+    assert.match(deliverable, /角色名称：安娜/)
+    assert.match(deliverable, /角色名称：雷队/)
+    assert.match(deliverable, /角色名称：阿杰/)
+    assert.doesNotMatch(deliverable, /标题：rough_shotlist/)
+    assert.doesNotMatch(deliverable, /成片一句话：[^。\n]+空间调度/)
+    assert.match(deliverable, /\| 镜头 \| 时长 \| 景别 \| 焦段 \| 运镜 \| 空间调度 \| 画面动作 \| 故事板图 \|/)
+    assert.match(deliverable, /林默从沙发前景抬头，安娜靠茶几倒水，雷队堵在门口持枪，阿杰缩在背光角落/)
+    assert.doesNotMatch(deliverable, /按剧本动作/u)
+    assert.match(deliverable, /上方预留干净信息栏/)
+    assert.match(deliverable, /character turnaround/)
+    assert.match(deliverable, /prop reference/)
+    assert.match(deliverable, /anime, manga, cartoon/)
+    assert.match(deliverable, /锁定角色：林默、安娜、雷队、阿杰/u)
+    assert.doesNotMatch(deliverable, /### 主角参考图 -> storyboard-images\/character-reference\.png/)
+    assert.ok(allSegmentUploadImageCounts(deliverable).every((count) => count <= 9))
   } finally {
     await rm(out, { recursive: true, force: true })
   }

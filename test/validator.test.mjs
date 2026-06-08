@@ -48,6 +48,31 @@ test('accepts a clean user-facing package without continuity bible or episode tr
   }
 })
 
+test('reports missing storyboard images listed in the user-facing image queue', async () => {
+  const runDir = await mkdtemp(join(tmpdir(), 'cine-make-missing-images-'))
+  try {
+    await mkdir(join(runDir, 'storyboard-images'), { recursive: true })
+    await writeFile(join(runDir, 'deliverable.md'), '# Cine Make Deliverable\n\n## 交付模式：出图模式\n\nCodex 不生成最终视频。', 'utf8')
+    await writeFile(join(runDir, 'storyboard-images', 'README.md'), [
+      '# Storyboard images',
+      '',
+      '当前模式：出图模式。',
+      '',
+      '- 主角/人物参考图：`storyboard-images/character-linmo.png`',
+      '- AI分镜关键帧：`storyboard-images/S01.png`（S01）',
+      ''
+    ].join('\n'), 'utf8')
+
+    const result = await validateRunDirectory({ runDir, stage: 'production' })
+
+    assert.equal(result.ok, false)
+    assert.match(result.errors.join('\n'), /missing storyboard image: storyboard-images[\\/]character-linmo\.png/)
+    assert.match(result.errors.join('\n'), /missing storyboard image: storyboard-images[\\/]S01\.png/)
+  } finally {
+    await rm(runDir, { recursive: true, force: true })
+  }
+})
+
 test('rejects final video claims in generated assets', async () => {
   const runDir = await mkdtemp(join(tmpdir(), 'cine-make-video-claim-'))
   try {

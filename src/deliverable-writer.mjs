@@ -9,9 +9,13 @@ function modeSummary(mode) {
   return '草稿模式：只定故事、镜头和提示词，不生成图片。'
 }
 
-function visualReferenceLines(contract) {
+function generatedCharacterReferences(characters = []) {
+  return characters.filter((character) => character?.reference_image)
+}
+
+function visualReferenceLines(contract, characters = []) {
   return [
-    ...characterReferenceLines(contract),
+    ...characterReferenceLines(contract, characters),
     ...sceneReferenceLines(contract),
     ...styleReferenceLines(contract)
   ]
@@ -29,10 +33,14 @@ function hasProvidedScene(contract) {
   return Boolean(contract.visualReferences?.sceneImages?.length)
 }
 
-function characterReferenceLines(contract) {
+function characterReferenceLines(contract, characters = []) {
   const paths = contract.visualReferences?.characterImages ?? []
   if (paths.length) {
     return paths.map((path) => `- 主角/人物参考图：\`${path}\``)
+  }
+  const generated = generatedCharacterReferences(characters)
+  if (generated.length) {
+    return generated.map((character) => `- 人物参考图（${character.identity_anchor}）：\`${character.reference_image}\``)
   }
   return ['- 主角/人物参考图：`storyboard-images/character-reference.png`']
 }
@@ -136,7 +144,7 @@ function compactAction(value) {
 }
 
 function shotPurpose(shot) {
-  return compactAction(shot.action).split('；源剧情：')[0]
+  return compactAction(shot.action).split('；源剧情：')[0].split('；空间调度：')[0]
 }
 
 function shotSourceNote(shot) {
@@ -184,12 +192,13 @@ function composeStoryFlow({ contract, shotlist }) {
 
 function composeShotTable(shotlist) {
   return [
-    '| 镜头 | 时长 | 景别 | 焦段 | 运镜 | 画面动作 | 故事板图 |',
-    '| --- | ---: | --- | --- | --- | --- | --- |',
+    '| 镜头 | 时长 | 景别 | 焦段 | 运镜 | 空间调度 | 画面动作 | 故事板图 |',
+    '| --- | ---: | --- | --- | --- | --- | --- | --- |',
     ...shotlist.map((shot) => {
       const sourceNote = shotSourceNote(shot)
       const action = sourceNote ? `${shotPurpose(shot)}；素材节点：${sourceNote}` : compactAction(shot.action)
-      return `| ${shot.shot_id} | ${shot.duration_seconds}s | ${shot.shot_size} | ${shot.lens ?? '按分镜镜头'} | ${shot.camera_movement} | ${action} | \`${storyboardImageName(shot)}\` |`
+      const blocking = compactAction(shot.blocking ?? '按上一镜头位置连续调度')
+      return `| ${shot.shot_id} | ${shot.duration_seconds}s | ${shot.shot_size} | ${shot.lens ?? '按分镜镜头'} | ${shot.camera_movement} | ${blocking} | ${action} | \`${storyboardImageName(shot)}\` |`
     })
   ]
 }
@@ -224,10 +233,10 @@ function composeAIStoryboard(shotlist) {
   ])
 }
 
-function composeImageAssetQueue({ contract, shotlist }) {
+function composeImageAssetQueue({ contract, shotlist, characters = [] }) {
   const segments = segmentShots(shotlist, { maxShots: maxStoryboardImagesPerSegment(contract) })
   const lines = [
-    ...characterReferenceLines(contract),
+    ...characterReferenceLines(contract, characters),
     ...sceneReferenceLines(contract),
     ...styleReferenceLines(contract)
   ]
@@ -245,16 +254,28 @@ function composeImageAssetQueue({ contract, shotlist }) {
   return lines
 }
 
-function composeReferencePromptList({ contract }) {
+function composeReferencePromptList({ contract, characters = [] }) {
   const lines = []
 
   if (!hasProvidedCharacter(contract)) {
-    lines.push(
-      '### 主角参考图 -> storyboard-images/character-reference.png',
-      '',
-      '超写实真人电影质感角色设定图，白底，85mm镜头，4K，角色一致性强。版式：左侧大幅半身/头像特写，右侧三视小图：正面、侧面、背面。显示人物名称和身高，展示核心道具，不显示年龄。同一张脸、同一发型、同一体型、同一服装，毛孔清晰可见，复杂服装刺绣和材质细节清楚。无水印，无字幕，无海报字，无多余人物。',
-      ''
-    )
+    const generated = generatedCharacterReferences(characters)
+    if (generated.length) {
+      for (const character of generated) {
+        lines.push(
+          `### ${character.identity_anchor}角色定妆照 -> ${character.reference_image}`,
+          '',
+          character.reference_prompt,
+          ''
+        )
+      }
+    } else {
+      lines.push(
+        '### 主角参考图 -> storyboard-images/character-reference.png',
+        '',
+        '超写实真人电影质感角色设定图，白底，85mm镜头，4K，角色一致性强。版式：左侧大幅半身/头像特写，右侧三视小图：正面、侧面、背面。显示人物名称和身高，展示核心道具，不显示年龄。同一张脸、同一发型、同一体型、同一服装，毛孔清晰可见，复杂服装刺绣和材质细节清楚。无水印，无字幕，无海报字，无多余人物。',
+        ''
+      )
+    }
   }
 
   if (!hasProvidedScene(contract)) {
@@ -269,17 +290,50 @@ function composeReferencePromptList({ contract }) {
   return lines
 }
 
-function visualUploadLines(contract) {
+function visualUploadLines(contract, characters = []) {
   return [
-    ...characterReferenceLines(contract),
+    ...characterReferenceLines(contract, characters),
     ...sceneReferenceLines(contract),
     ...styleReferenceLines(contract)
   ]
 }
 
-function segmentUploadLines({ contract, segment }) {
+function segmentCharacterReferenceLines({ contract, segment, characters = [] }) {
+  if (contract.visualReferences?.characterImages?.length) return characterReferenceLines(contract, characters)
+  const generated = generatedCharacterReferences(characters)
+  if (!generated.length) return characterReferenceLines(contract, characters)
+
+  const names = segmentCharacterNames({ segment, characters: generated })
+
+  return generated
+    .filter((character) => names.includes(character.identity_anchor))
+    .map((character) => `- 人物参考图（${character.identity_anchor}）：\`${character.reference_image}\``)
+}
+
+function segmentCharacterNames({ segment, characters = [] }) {
+  const names = []
+  for (const shot of segment) {
+    for (const name of shot.characters ?? []) {
+      if (!names.includes(name)) names.push(name)
+    }
+    for (const character of characters) {
+      if (compactAction(shot.action).includes(character.identity_anchor) && !names.includes(character.identity_anchor)) {
+        names.push(character.identity_anchor)
+      }
+    }
+  }
+  if (!names.length && characters[0]) names.push(characters[0].identity_anchor)
+  return names
+}
+
+function segmentUploadLines({ contract, segment, characters = [] }) {
   const availableReferenceSlots = Math.max(0, MAX_UPLOAD_IMAGES_PER_FEED_CARD - 2 - segment.length)
-  return visualUploadLines(contract).slice(0, availableReferenceSlots)
+  const referenceLines = [
+    ...segmentCharacterReferenceLines({ contract, segment, characters }),
+    ...sceneReferenceLines(contract),
+    ...styleReferenceLines(contract)
+  ]
+  return referenceLines.slice(0, availableReferenceSlots)
 }
 
 function composeTimeline(segment) {
@@ -330,10 +384,25 @@ function composeVideoBeatLine({ shot, startSecond }) {
   ].join('')
 }
 
-function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) {
+function composeCharacterLockSentence({ segment, mainCharacter, characters = [] }) {
+  const generated = generatedCharacterReferences(characters)
+  const names = segmentCharacterNames({ segment, characters: generated })
+  const locked = generated.filter((character) => names.includes(character.identity_anchor))
+  if (locked.length) {
+    const namesText = locked.map((character) => character.identity_anchor).join('、')
+    const detailText = locked
+      .map((character) => `${character.identity_anchor}保持${character.costume_anchor}，保留${character.prop_anchor}`)
+      .join('；')
+    return `锁定角色：${namesText}。${detailText}。同一张脸、发型、体型、服装材质和道具不要漂移。`
+  }
+
   const subject = mainCharacter?.identity_anchor ?? segment[0]?.subject ?? '主角'
   const costume = mainCharacter?.costume_anchor ?? '同一套服装'
   const prop = mainCharacter?.prop_anchor ?? '关键道具'
+  return `锁定角色：${subject}。保持同一张脸、发型、体型和服装（${costume}），保留${prop}。`
+}
+
+function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex, characters = [] }) {
   const duration = segmentDuration(segment)
   const shotIds = segment.map((shot) => shot.shot_id).join(' -> ')
   const actions = segment.map((shot) => `${shot.shot_id} ${shotPurpose(shot)}`).join('；')
@@ -347,14 +416,14 @@ function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) 
 
   return [
     `${duration}s / ${contract.target.aspectRatio} / ${contract.target.style}。按精简分镜顺序生成 ${shotIds}：${actions}。`,
-    `锁定${subject}同一张脸、发型、体型和服装（${costume}），保留${prop}。`,
+    composeCharacterLockSentence({ segment, mainCharacter, characters }),
     `镜头按分镜执行：${cameraLanguage}。只表现本段剧情，不跳过、不合并、不串到其他段。`,
     beatLines,
     '不要字幕、水印、跳剪、突然换脸、换服装、乱加角色、乱加道具或超出剧情。'
   ].join('')
 }
 
-function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
+function composeVideoFeedPack({ contract, shotlist, mainCharacter, characters = [] }) {
   const mode = contract.mode ?? 'draft'
   return segmentShots(shotlist, { maxShots: maxStoryboardImagesPerSegment(contract) }).flatMap((segment, index) => {
     const duration = segmentDuration(segment)
@@ -362,7 +431,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
     const endFrame = segmentEndFrameName(index)
     const bridgeLine = index === 0 ? '本段使用独立首帧。' : '上一段尾帧 = 本段首帧。'
     const uploadLines = [
-      ...segmentUploadLines({ contract, segment }),
+      ...segmentUploadLines({ contract, segment, characters }),
       `- 起始帧：\`${startFrame}\``,
       ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
       `- 尾帧：\`${endFrame}\``
@@ -381,7 +450,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
       '',
       '复制提示词：',
       '',
-      composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex: index }),
+      composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex: index, characters }),
       '',
       mode === 'draft'
         ? '状态：草稿模式先不要上传；等出图模式生成这些图片后再用这一段。'
@@ -438,12 +507,12 @@ export function composeDeliverable({ contract, draft }) {
       ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段默认 ${PACED_STORYBOARD_IMAGES_PER_FEED_CARD} 个分镜关键帧，每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`
       : `草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。每段默认 ${PACED_STORYBOARD_IMAGES_PER_FEED_CARD} 个分镜关键帧，每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`,
     '',
-    ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
+    ...composeImageAssetQueue({ contract, shotlist: draft.shotlist, characters: draft.characters }),
     ...(mode === 'visual' ? [
       '',
       '## 参考图提示词',
       '',
-      ...composeReferencePromptList({ contract })
+      ...composeReferencePromptList({ contract, characters: draft.characters })
     ] : []),
     '',
     '## 视频工具投喂包',
@@ -459,10 +528,10 @@ export function composeDeliverable({ contract, draft }) {
       ? '当前是草稿模式：这里只告诉你之后该怎么投喂；先不要生成图片、不要投喂视频工具。'
       : '当前是出图模式：按下面分段上传图片并复制提示词。',
     '',
-    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist, mainCharacter }),
+    ...composeVideoFeedPack({ contract, shotlist: draft.shotlist, mainCharacter, characters: draft.characters }),
     '## 视觉参考',
     '',
-    ...visualReferenceLines(contract),
+    ...visualReferenceLines(contract, draft.characters),
     '',
     '## 连续性注意事项',
     '',
@@ -475,7 +544,7 @@ export function composeDeliverable({ contract, draft }) {
 
 export function composeStoryboardImagesReadme({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
-  const queue = composeImageAssetQueue({ contract, shotlist: draft.shotlist })
+  const queue = composeImageAssetQueue({ contract, shotlist: draft.shotlist, characters: draft.characters })
 
   return [
     '# Storyboard images',
@@ -487,7 +556,7 @@ export function composeStoryboardImagesReadme({ contract, draft }) {
     '',
     '## 用户参考图',
     '',
-    ...visualReferenceLines(contract),
+    ...visualReferenceLines(contract, draft.characters),
     '',
     '## 建议生成顺序',
     '',

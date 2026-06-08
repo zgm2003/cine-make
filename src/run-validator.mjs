@@ -141,6 +141,38 @@ async function directoryExists(path) {
   }
 }
 
+async function readOptionalText(path) {
+  try {
+    return await readFile(path, 'utf8')
+  } catch {
+    return ''
+  }
+}
+
+function isVisualUserFacingPackage({ deliverable, readme }) {
+  if (/真正的视频控制帧按集存放/u.test(readme)) return false
+  return /交付模式：出图模式/u.test(deliverable) || /当前模式：出图模式/u.test(readme)
+}
+
+function storyboardImageReferences(readme) {
+  return [...readme.matchAll(/storyboard-images\/[^`\s)）]+\.png/gu)]
+    .map((match) => match[0].replace(/\//g, '\\'))
+    .filter((value, index, list) => list.indexOf(value) === index)
+}
+
+async function validateStoryboardImageManifest(runDir, errors) {
+  const deliverable = await readOptionalText(join(runDir, 'deliverable.md'))
+  const readmePath = join(runDir, 'storyboard-images', 'README.md')
+  const readme = await readOptionalText(readmePath)
+  if (!readme || !isVisualUserFacingPackage({ deliverable, readme })) return
+
+  for (const relativeImage of storyboardImageReferences(readme)) {
+    if (!existsSync(join(runDir, relativeImage))) {
+      errors.push(`missing storyboard image: ${relativeImage}`)
+    }
+  }
+}
+
 export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
   const errors = []
   const warnings = []
@@ -157,6 +189,8 @@ export async function validateRunDirectory({ runDir, stage = 'skeleton' }) {
       errors.push(`missing required directory: ${directory}`)
     }
   }
+
+  await validateStoryboardImageManifest(runDir, errors)
 
   const biblePath = artifactDir
     ? join(artifactDir, 'continuity-bible.json')
