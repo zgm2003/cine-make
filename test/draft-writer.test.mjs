@@ -46,6 +46,25 @@ test('composeDraftAssets extracts common short-drama anchors', async () => {
   assert.match(draft.storyboardPrompts, /妹妹/)
 })
 
+test('composeDraftAssets extracts isolated-mansion memory thriller anchors', async () => {
+  const memorySource = [
+    '警探林默穿着湿透的深色风衣，在暴风雨孤岛别墅客厅的沙发上猛然惊醒，满手鲜血。',
+    '林默撩开衣袖，手臂上有新鲜刀刻血字，提示他只有10分钟记忆。',
+    '心理医生安娜倒热水，雷队持枪守在门口，瘸子阿杰蜷缩在角落。',
+    '手机10分钟倒计时归零后，林默记忆清空，再次问你们是谁。'
+  ].join('')
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', memorySource]))
+  const draft = composeDraftAssets(contract)
+  const serialized = JSON.stringify(draft)
+
+  assert.match(draft.directorScript, /警探林默/)
+  assert.match(serialized, /孤岛别墅/)
+  assert.match(serialized, /手机10分钟倒计时|10分钟倒计时/)
+  assert.match(serialized, /手臂血字|刀刻血字/)
+  assert.match(serialized, /记忆清空|倒计时归零/)
+  assert.doesNotMatch(serialized, /identity_anchor":"医生正/)
+})
+
 test('enterprise documentary draft condenses long essays into a 30 second theme film', async () => {
   const essay = [
     '号声里的奋斗密码。',
