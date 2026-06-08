@@ -43,9 +43,9 @@ test('cine-make docs describe novel project mode and Jimeng material budget', as
   assert.match(novelReference, /S\/A character references/i)
 
   assert.match(readme, /cine-make novel ingest --input \.\/novel\.txt --out \.cine-make-runs\/my-novel/)
-  assert.match(combinedDocs, /anime \/ 二次元 \/ 非真人写实/)
-  assert.match(combinedDocs, /12-reference-material budget/i)
-  assert.match(combinedDocs, /images, videos, and audio/i)
+  assert.match(combinedDocs, /超写实真人电影质感/)
+  assert.match(combinedDocs, /85mm镜头/)
+  assert.match(combinedDocs, /9 uploaded images|9 张图片/i)
   assert.match(combinedDocs, /novel accept-summary/)
   assert.match(combinedDocs, /novel visual-bible/)
 })
@@ -74,7 +74,7 @@ test('public docs avoid stale novel package and material-budget wording', async 
   assert.match(shareDoc, /Novel Studio 会暴露项目工作区产物和单集导出包/)
 })
 
-test('skill docs use reference-material budget wording consistently', async () => {
+test('skill docs use upload-image budget wording consistently', async () => {
   const skillDir = join(root, 'skills', 'cine-make')
   const referencesDir = join(skillDir, 'references')
   const referenceFiles = await readdir(referencesDir)
@@ -88,10 +88,10 @@ test('skill docs use reference-material budget wording consistently', async () =
   ].join('\n')
   const outputContract = await readFile(join(referencesDir, 'output-contract.md'), 'utf8')
 
-  assert.match(outputContract, /12 reference materials total across images, videos, and audio/)
-  assert.doesNotMatch(skillDocs, /12 images/i)
-  assert.doesNotMatch(skillDocs, /12 reference images/i)
-  assert.doesNotMatch(skillDocs, /reference images total/i)
+  assert.match(outputContract, /at most 9 uploaded images per feed card/i)
+  assert.match(skillDocs, /character, scene, start frame, storyboard keyframes, and end frame/i)
+  assert.doesNotMatch(skillDocs, /12-reference-material budget/i)
+  assert.doesNotMatch(skillDocs, /12 reference materials/i)
 })
 
 test('installed cine-make skill includes novel project mode reference', async () => {

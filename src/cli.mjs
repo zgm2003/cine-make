@@ -47,7 +47,7 @@ function usage() {
     'If --duration is omitted, Cine Make infers total duration from plot density and still splits every video feed card to 15s or less.',
     '',
     'Example:',
-    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --aspect 9:16 --style "动漫二次元，非真人写实，电影感悬疑" "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
+    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --aspect 9:16 --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑" "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
     '  node src/cli.mjs --mode visual --out .cine-make-runs/demo-visual --character-image refs/hero.png "小说片段..."'
   ].join('\n')
 }

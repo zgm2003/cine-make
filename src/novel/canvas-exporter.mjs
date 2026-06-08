@@ -5,8 +5,8 @@ import { createStoredZip } from '../zip-writer.mjs'
 const MANIFEST_KIND = 'cine-make-canvas-manifest'
 const CANVAS_APP = 'infinite-canvas'
 const CANVAS_VERSION = 3
-const MAX_REFERENCE_MATERIALS = 12
-const DEFAULT_STYLE = 'anime / 二次元 / 非真人写实'
+const MAX_UPLOAD_IMAGES = 9
+const DEFAULT_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
 const TEXT_NODE_WIDTH = 420
 const TEXT_NODE_HEIGHT = 280
 const IMAGE_NODE_WIDTH = 340
@@ -280,8 +280,8 @@ function buildCanvasManifest({
     connections,
     materialBudget: {
       renderer: 'jimeng',
-      maxReferenceMaterials: MAX_REFERENCE_MATERIALS,
-      rule: 'Images, videos, and audio share the same material-slot budget.'
+      maxUploadImages: MAX_UPLOAD_IMAGES,
+      rule: 'Each feed card may include at most 9 uploaded images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.'
     },
     warnings
   }
@@ -363,7 +363,7 @@ function buildFeedNodes({ episode, feedCards, deliverableText }) {
         '## 从 deliverable.md 派生的投喂说明',
         extractDeliverableFeedText(deliverableText),
         '',
-        '每段最多 12 个参考素材位，图片、视频和音频共用额度。Cine Make 不自动生成最终视频。'
+        `每段上传图片最多 ${MAX_UPLOAD_IMAGES} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。Cine Make 不自动生成最终视频。`
       ].join('\n')
     })]
   }
@@ -382,7 +382,7 @@ function composeFeedCardContent(card) {
   const materials = Array.isArray(card.materials) ? card.materials : []
   return [
     `- Renderer：${card.renderer || 'jimeng'}`,
-    `- Reference budget：${card.maxReferenceMaterials || MAX_REFERENCE_MATERIALS} total materials across images/videos/audio.`,
+    `- Upload image budget：${card.maxUploadImages || MAX_UPLOAD_IMAGES} uploaded images max per feed card.`,
     '- Materials:',
     ...(materials.length ? materials.map((material) => `  - ${material.ref || ''} ${material.type || 'unknown'} ${material.role || material.label || ''} ${material.path || ''}`) : ['  - none']),
     '',
@@ -518,13 +518,13 @@ function toCanvasWarningNode(node) {
 
 function composeCanvasImagePrompt(node, manifest) {
   const roleInstruction = {
-    character_card: '任务：生成角色设定图，锁定人物外观、服装、气质和可复用视觉锚点。',
+    character_card: '任务：生成白底角色设定图，左侧大幅半身/头像特写，右侧正面、侧面、背面三视小图，显示人物名称、身高和核心道具，不显示年龄。',
     scene_card: '任务：生成场景参考图，锁定空间结构、光线、材质和连续性状态。',
     shot_card: '任务：生成分镜关键帧，画面必须服务该镜头的剧情节拍、景别、机位、构图和表演。'
   }[node.role]
 
   return [
-    '文生图任务：生成一张可直接作为 AI 漫剧前期参考的静态图片，不是文字卡片。',
+    '文生图任务：生成一张可直接作为 AI 短剧前期参考的静态图片，不是文字卡片。',
     roleInstruction,
     `节点：${node.title}`,
     `默认风格：${manifest.project.defaultStyle || DEFAULT_STYLE}`,
@@ -534,7 +534,7 @@ function composeCanvasImagePrompt(node, manifest) {
     '画面信息：',
     node.content.trim(),
     '',
-    '统一要求：动漫二次元、非真人写实、电影感构图、主体清晰、可作为后续视频生成参考。',
+    '统一要求：超写实真人电影质感，85mm镜头，4K，毛孔清晰可见，复杂服装和道具材质细节，电影感构图，主体清晰，可作为后续视频生成参考。',
     '负面约束：不要生成海报文字、字幕、水印、UI、logo；不要引入未列出人物、地点或后续剧情；不要改变既有角色视觉锚点。'
   ].filter((line) => line !== undefined && line !== null).join('\n')
 }

@@ -60,15 +60,13 @@ function segmentEndFrameName(segmentIndex) {
 }
 
 const MAX_VIDEO_SEGMENT_SECONDS = 15
-const MAX_REFERENCE_MATERIALS_PER_SEGMENT = 12
+const MAX_UPLOAD_IMAGES_PER_FEED_CARD = 9
 const MAX_VIDEO_SEGMENT_SHOTS = 8
 const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
 
-function maxStoryboardImagesPerSegment(contract) {
+function maxStoryboardImagesPerSegment() {
   const fixedFrameCount = 2
-  const referenceCapacity = MAX_REFERENCE_MATERIALS_PER_SEGMENT - fixedFrameCount
-  const preferredReferenceCount = Math.min(visualUploadLines(contract).length, 2)
-  return Math.max(1, referenceCapacity - preferredReferenceCount)
+  return Math.max(1, MAX_UPLOAD_IMAGES_PER_FEED_CARD - fixedFrameCount)
 }
 
 function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
@@ -162,7 +160,7 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
   return [
     isEnterpriseDocumentary
       ? `我们在做什么：把原始纪实/企业稿做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 主题短片草稿；${durationNote}，抓精神主线，不机械铺完整原文。`
-      : `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 漫剧方案；${durationNote}，完整保留剧情，每波按视频工具上限拆成 15s 以内投喂段。`,
+      : `我们在做什么：把原始故事做成一个 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的竖屏 AI 短剧方案；${durationNote}，完整保留剧情，每波按视频工具上限拆成 15s 以内投喂段。`,
     '',
     isEnterpriseDocumentary
       ? `成片一句话：${subject}从“${shotPurpose(firstShot)}”进入主题，最后落到“${shotPurpose(lastShot)}”的传承画面上。`
@@ -246,17 +244,14 @@ function composeImageAssetQueue({ contract, shotlist }) {
   return lines
 }
 
-function composeReferencePromptList({ contract, shotlist }) {
-  const segments = segmentShots(shotlist)
+function composeReferencePromptList({ contract }) {
   const lines = []
 
   if (!hasProvidedCharacter(contract)) {
     lines.push(
       '### 主角参考图 -> storyboard-images/character-reference.png',
       '',
-      '```text',
-      'AI short-drama character reference sheet, same protagonist only, front three-quarter portrait, full costume silhouette, clean identity lock, no text, no watermark',
-      '```',
+      '超写实真人电影质感角色设定图，白底，85mm镜头，4K，角色一致性强。版式：左侧大幅半身/头像特写，右侧三视小图：正面、侧面、背面。显示人物名称和身高，展示核心道具，不显示年龄。同一张脸、同一发型、同一体型、同一服装，毛孔清晰可见，复杂服装刺绣和材质细节清楚。无水印，无字幕，无海报字，无多余人物。',
       ''
     )
   }
@@ -265,44 +260,7 @@ function composeReferencePromptList({ contract, shotlist }) {
     lines.push(
       '### 场景图 -> storyboard-images/scene-reference.png',
       '',
-      '```text',
-      'AI short-drama location reference, one stable cinematic environment, fixed screen direction, practical light sources, atmosphere depth, no text, no watermark',
-      '```',
-      ''
-    )
-  }
-
-  for (const [segmentIndex, segment] of segments.entries()) {
-    const startFrame = segmentStartFrameName(segmentIndex)
-    const endFrame = segmentEndFrameName(segmentIndex)
-    const firstShot = segment[0]
-    const lastShot = segment[segment.length - 1]
-
-    if (segmentIndex === 0) {
-      lines.push(
-        `### 第 ${segmentIndex + 1} 段首帧 -> ${startFrame}`,
-        '',
-        '```text',
-        `${firstShot.image_prompt}, START_FRAME, hold identity and location, frame must be easy to continue into ${firstShot.shot_id}`,
-        '```',
-        ''
-      )
-    } else {
-      lines.push(
-        `### 第 ${segmentIndex + 1} 段首帧 -> ${startFrame}`,
-        '',
-        `复用上一段尾帧：\`${startFrame}\`。不要生成新图。`,
-        ''
-      )
-    }
-
-    lines.push(...composeImagePromptList(segment))
-    lines.push(
-      `### 第 ${segmentIndex + 1} 段尾帧 -> ${endFrame}`,
-      '',
-      '```text',
-      `${lastShot.image_prompt}, END_FRAME, stable final pose, keep enough visual continuity for next 15-second segment`,
-      '```',
+      '超写实真人电影质感场景参考图，4K，固定一个可复用电影空间，明确空间结构、实景光源、材质、景深和空气透视；不要字幕、水印、海报字或多余人物。',
       ''
     )
   }
@@ -319,7 +277,7 @@ function visualUploadLines(contract) {
 }
 
 function segmentUploadLines({ contract, segment }) {
-  const availableReferenceSlots = Math.max(0, MAX_REFERENCE_MATERIALS_PER_SEGMENT - 2 - segment.length)
+  const availableReferenceSlots = Math.max(0, MAX_UPLOAD_IMAGES_PER_FEED_CARD - 2 - segment.length)
   return visualUploadLines(contract).slice(0, availableReferenceSlots)
 }
 
@@ -391,7 +349,7 @@ function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex }) 
     `锁定${subject}同一张脸、发型、体型和服装（${costume}），保留${prop}。`,
     `镜头按分镜执行：${cameraLanguage}。只表现本段剧情，不跳过、不合并、不串到其他段。`,
     beatLines,
-    '不要字幕、水印、跳剪、突然换脸、真人写实、换服装、乱加角色、乱加道具或超出剧情。'
+    '不要字幕、水印、跳剪、突然换脸、换服装、乱加角色、乱加道具或超出剧情。'
   ].join('')
 }
 
@@ -409,7 +367,7 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter }) {
       `- 尾帧：\`${endFrame}\``
     ]
     return [
-      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，参考素材位 ${uploadLines.length} 个）`,
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${duration}s，上传图片 ${uploadLines.length} 张）`,
       '',
       bridgeLine,
       '',
@@ -476,14 +434,20 @@ export function composeDeliverable({ contract, draft }) {
     '## 出图清单',
     '',
     mode === 'visual'
-      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段即梦投喂卡最多 ${MAX_REFERENCE_MATERIALS_PER_SEGMENT} 个参考素材位，图片、视频和音频都占用同一个素材额度。`
-      : '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。',
+      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`
+      : `草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`,
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
+    ...(mode === 'visual' ? [
+      '',
+      '## 参考图提示词',
+      '',
+      ...composeReferencePromptList({ contract })
+    ] : []),
     '',
     '## 视频工具投喂包',
     '',
-    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s；每段即梦投喂卡最多 ${MAX_REFERENCE_MATERIALS_PER_SEGMENT} 个参考素材位，图片、视频和音频都占用同一个素材额度。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
+    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s；上传图片控制在 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张以内。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
     '',
     '到即梦里，每一段只做两件事：',
     '',

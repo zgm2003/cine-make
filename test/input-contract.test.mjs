@@ -8,7 +8,7 @@ test('parses a story request into a normalized contract', async () => {
 
   assert.equal(contract.target.durationSeconds, 30)
   assert.equal(contract.target.aspectRatio, '9:16')
-  assert.equal(contract.target.style, 'cinematic，动漫二次元，非真人写实')
+  assert.equal(contract.target.style, 'cinematic，超写实真人电影质感')
   assert.equal(contract.target.platform, 'jimeng')
   assert.equal(contract.target.shotCount, 14)
   assert.equal(contract.target.storyboardCount, 14)
@@ -16,12 +16,14 @@ test('parses a story request into a normalized contract', async () => {
   assert.match(contract.sourceText, /女孩/)
 })
 
-test('defaults to anime-style image-safe storyboard packs', async () => {
+test('defaults to photoreal live-action cinematic storyboard packs', async () => {
   const options = parseArgs(['--duration', '15s', '--aspect', '9:16', '雨夜里，女孩在巷口停下脚步。'])
   const contract = await createInputContract(options)
 
-  assert.match(contract.target.style, /动漫二次元/)
-  assert.match(contract.target.style, /非真人写实/)
+  assert.match(contract.target.style, /超写实真人电影质感/)
+  assert.match(contract.target.style, /85mm镜头/)
+  assert.match(contract.target.style, /4K/)
+  assert.doesNotMatch(contract.target.style, /动漫|二次元|非真人写实|anime/i)
   assert.equal(contract.target.shotCount, 7)
   assert.equal(contract.target.storyboardCount, 7)
 })

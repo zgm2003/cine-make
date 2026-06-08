@@ -32,8 +32,8 @@ test('exports a semantic manifest and image-generation canvas zip from an episod
     assert.equal(manifest.project.episodeId, 'episode-0001')
     assert.equal(manifest.episode.title, '第1集 - 第一章 旧影院')
     assert.equal(manifest.materialBudget.renderer, 'jimeng')
-    assert.equal(manifest.materialBudget.maxReferenceMaterials, 12)
-    assert.match(manifest.materialBudget.rule, /images, videos, and audio/i)
+    assert.equal(manifest.materialBudget.maxUploadImages, 9)
+    assert.match(manifest.materialBudget.rule, /uploaded images/i)
 
     const roles = new Set(manifest.nodes.map((node) => node.role))
     assert.equal(roles.has('episode_overview'), true)
@@ -290,7 +290,7 @@ async function writeCanvasProject(projectDir, { writeEpisodePackage = true, writ
         {
           id: 'episode-0001-jimeng-01',
           renderer: 'jimeng',
-          maxReferenceMaterials: 12,
+          maxUploadImages: 9,
           materials: [
             { ref: '@Image1', type: 'image', role: 'character_lock', path: 'storyboard-images/character-lin-xia.png' },
             { ref: '@Audio1', type: 'audio', role: 'voice_reference', path: 'references/voice.wav' }

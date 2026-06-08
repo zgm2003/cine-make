@@ -48,11 +48,12 @@ test('draft mode exposes only deliverable.md and storyboard-images to users', as
     assert.match(deliverable, /视频工具投喂包/)
     assert.match(deliverable, /最终交付给用户只看这两项/)
     assert.match(deliverable, /storyboard-images\/S01\.png/)
-    assert.match(deliverable, /动漫二次元/)
-    assert.match(deliverable, /每段即梦投喂卡最多\s+\d+\s+个参考素材位/)
-    assert.match(deliverable, /图片、视频和音频都占用同一个素材额度/)
-    assert.doesNotMatch(deliverable, /上传图片控制在\s+\d+\s+张以内/)
-    assert.doesNotMatch(deliverable, /上传参考图\s+\d+\s+张以内/)
+    assert.match(deliverable, /超写实真人电影质感/)
+    assert.doesNotMatch(deliverable, /动漫二次元|非真人写实/)
+    assert.match(deliverable, /每段上传图片最多\s+9\s+张/)
+    assert.match(deliverable, /上传图片控制在\s+9\s+张以内/)
+    assert.doesNotMatch(deliverable, /每段即梦投喂卡最多\s+\d+\s+个参考素材位/)
+    assert.doesNotMatch(deliverable, /图片、视频和音频都占用同一个素材额度/)
     assert.match(deliverable, /即梦/)
     assert.doesNotMatch(deliverable, /FORMAT：/)
     assert.doesNotMatch(deliverable, /主体锁定：/)
@@ -134,6 +135,41 @@ test('visual mode prepares an image-output queue and keeps references optional',
     assert.match(deliverable, /出图模式/)
     assert.doesNotMatch(deliverable, /视觉包模式/)
     assert.doesNotMatch(deliverable, /生产模式/)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('generated character reference prompt is a photoreal white-background tri-view character sheet', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-character-sheet-'))
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'visual', '--out', out, '--duration', '15s', '--aspect', '9:16', source], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    const promptStart = deliverable.indexOf('### 主角参考图 -> storyboard-images/character-reference.png')
+    const promptEnd = deliverable.indexOf('### 场景图 -> storyboard-images/scene-reference.png')
+    assert.ok(promptStart >= 0)
+    assert.ok(promptEnd > promptStart)
+    const characterPrompt = deliverable.slice(promptStart, promptEnd)
+
+    assert.match(characterPrompt, /超写实真人电影质感/)
+    assert.match(characterPrompt, /85mm镜头/)
+    assert.match(characterPrompt, /4K/)
+    assert.match(characterPrompt, /白底/)
+    assert.match(characterPrompt, /正面/)
+    assert.match(characterPrompt, /侧面/)
+    assert.match(characterPrompt, /背面/)
+    assert.match(characterPrompt, /人物名称/)
+    assert.match(characterPrompt, /身高/)
+    assert.match(characterPrompt, /核心道具/)
+    assert.match(characterPrompt, /不显示年龄/)
+    assert.match(characterPrompt, /毛孔清晰/)
+    assert.match(characterPrompt, /服装.*细节/)
+    assert.doesNotMatch(characterPrompt, /动漫|二次元|非真人写实|anime/i)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

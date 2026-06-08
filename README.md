@@ -43,7 +43,7 @@ segment-01-end.png
 segment-02-end.png
 ```
 
-Storyboard density can stay high, but each Jimeng feed card has a 12-reference-material budget total across images, videos, and audio. Every uploaded image, video, or audio reference consumes one material slot. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+Storyboard density can stay high, but each Jimeng feed card can upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
 For normal short-script and excerpt runs, internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files from those runs. Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages.
 
@@ -90,7 +90,7 @@ $cine-make ...
 $cine-make
 
 Turn the following story fragment into a vertical AI short-drama draft.
-Style: anime / non-live-action, cinematic suspense, cold color palette, restrained acting.
+Style: photoreal live-action cinematic, 85mm lens, 4K, cold suspense palette, restrained acting.
 
 Story fragment:
 At 3 a.m., delivery rider Chen Mo delivers his last order to an abandoned hospital. The elevator stops on a non-existent 13th floor. When the doors open, he sees his sister, who disappeared ten years ago, sitting at the nurse station and holding the red marble he lost as a child.
@@ -124,7 +124,7 @@ Users do not need to specify a video platform. Cine Make outputs Jimeng feed car
 
 ## CLI usage
 
-Default visual style is `anime / 二次元 / 非真人写实`.
+Default visual style is `超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性`.
 
 ### Draft mode
 
@@ -132,7 +132,7 @@ Default visual style is `anime / 二次元 / 非真人写实`.
 cine-make --mode draft \
   --out .cine-make-runs/demo \
   --aspect 9:16 \
-  --style "anime, non-live-action, cinematic suspense, cold palette, restrained acting" \
+  --style "photoreal live-action cinematic, 85mm lens, 4K, cold suspense palette, restrained acting" \
   "At 3 a.m., a delivery rider enters an abandoned hospital..."
 ```
 
@@ -142,7 +142,7 @@ cine-make --mode draft \
 cine-make --mode visual \
   --out .cine-make-runs/demo-visual \
   --aspect 9:16 \
-  --style "anime, non-live-action, cinematic suspense, cold palette" \
+  --style "photoreal live-action cinematic, 85mm lens, 4K, cold suspense palette" \
   --character-image refs/hero.png \
   "Story material here..."
 ```
@@ -211,7 +211,7 @@ Do not expose `.cine-make-internal/` to normal users.
 Use `deliverable.md` directly:
 
 1. Generate or confirm the character, scene, start-frame, end-frame, and `Sxx.png` images listed in the image-output checklist with `$imagegen`.
-2. For each video feed card, upload the listed materials and keep each card at or under 12 reference materials total across images, videos, and audio.
+2. For each video feed card, upload the listed images and keep each card at or under 9 uploaded images.
 3. Copy the feed-card prompt.
 4. Generate the clip in the external video tool.
 5. Stitch multiple clips externally; every later card must start from the previous card's end frame.

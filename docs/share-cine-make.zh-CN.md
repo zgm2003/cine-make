@@ -1,4 +1,4 @@
-# Cine Make：把小说片段变成 AI 漫剧前期制片包
+# Cine Make：把小说片段变成真人电影质感 AI 短剧前期制片包
 
 我做了一个 Codex Skill：**Cine Make**。
 
@@ -25,7 +25,7 @@ AI 视频生成不是从“写一句提示词”开始的。
 -> 故事全流程
 -> 精简分镜
 -> $imagegen 静态参考图 / 首尾帧 / 分镜关键帧
--> 每段 12 个参考素材位以内的视频投喂卡
+-> 每段 9 张上传图片以内的视频投喂卡
 -> 外部视频工具生成视频
 ```
 
@@ -124,7 +124,7 @@ Cine Make 只保留两个模式。
 - 场景参考图；
 - 每段首尾帧控制图；
 - `S01.png` ... `Sxx.png` 分镜关键帧；
-- 每段上传 12 个参考素材位以内的即梦投喂卡。
+- 每段上传 9 张图片以内的即梦投喂卡。
 
 图片生成只走 Codex `$imagegen`。Cine Make 是给 Codex 用的 skill，不要求外部图片 API，也不需要额外图片密钥。
 
@@ -146,8 +146,8 @@ npx --registry=https://registry.npmjs.org/ cine-make install-skill
 ```text
 $cine-make
 
-把下面小说片段做成竖屏 AI 漫剧草稿。
-风格：动漫二次元、非真人写实、电影感悬疑、冷色调、克制表演。
+把下面小说片段做成竖屏 AI 短剧草稿。
+风格：超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调，克制表演。
 
 小说片段：
 凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。
@@ -170,7 +170,7 @@ $cine-make
 用这张人物图锁定女主的脸、发型、服装和气质。
 用这张场景图锁定雨夜街道和霓虹氛围。
 用这张风格图锁定整体色调。
-把下面剧情做成竖屏 AI 漫剧出图包。
+把下面剧情做成竖屏 AI 短剧出图包。
 
 人物图：
 C:\Users\you\Desktop\refs\hero.png
@@ -188,7 +188,7 @@ C:\Users\you\Desktop\refs\style.png
 用户不需要指定平台。  
 默认只输出即梦投喂格式，不再做多平台适配。
 
-默认视觉风格是 `anime / 二次元 / 非真人写实`，也就是动漫二次元、非真人写实。
+默认视觉风格是 `超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性`。
 
 整本小说或很大的 `.txt` 文件不要直接塞进一次上下文。Novel Studio MVP 使用项目模式：
 
@@ -203,7 +203,7 @@ cine-make novel episode --run .cine-make-runs/my-novel --episode 1
 cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
-这里的 `novel visual-bible` 只规划视觉参考，不自动生成图片；必须在视觉 bible 确认后，才显式使用 `$imagegen`。即梦投喂卡的 12-reference-material budget 是 12 个参考素材位总额，图片、视频和音频都会消耗这个额度，不是图片额度之外再额外加其它素材。
+这里的 `novel visual-bible` 只规划视觉参考，不自动生成图片；必须在视觉 bible 确认后，才显式使用 `$imagegen`。即梦投喂卡的硬规则是每段最多上传 9 张图片；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。
 
 ---
 
@@ -227,7 +227,7 @@ storyboard-images/
 jimeng-feed-cards.json
 ```
 
-其中 `episode-input.md` 是这一集从小说 bible 和分集计划整理出的改编输入；`deliverable.md` 是给用户阅读和复制的主交付物；`storyboard-images/` 放图片计划或已确认图片；`jimeng-feed-cards.json` 是机器可读的即梦投喂卡列表，记录每张卡的素材、提示词和 12 个参考素材位预算。
+其中 `episode-input.md` 是这一集从小说 bible 和分集计划整理出的改编输入；`deliverable.md` 是给用户阅读和复制的主交付物；`storyboard-images/` 放图片计划或已确认图片；`jimeng-feed-cards.json` 是机器可读的即梦投喂卡列表，记录每张卡的素材、提示词和 9 张上传图片预算。
 
 用户实际喂给即梦时，先看 `deliverable.md` 里的中文说明，再用 `jimeng-feed-cards.json` 核对每张卡的素材清单和提示词。这样既保留人工可读交付物，也保留可检查、可自动化的结构化投喂卡。
 
@@ -306,7 +306,7 @@ npm test
 
 只专注一件事：
 
-> 把故事变成一个用户看得懂、视频工具接得住的 AI 漫剧前期制片包。
+> 把故事变成一个用户看得懂、视频工具接得住的真人电影质感 AI 短剧前期制片包。
 
 如果 AI 视频工具负责“生成画面”，那 Cine Make 负责的就是：
 

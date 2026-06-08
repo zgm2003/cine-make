@@ -59,8 +59,11 @@ test('writes bounded chapter summary prompts with default style context', async 
   const project = JSON.parse(await readFile(path.join(outDir, 'project.json'), 'utf8'))
   const prompt = await readFile(path.join(outDir, 'tasks', 'summarize-chapter-0001.md'), 'utf8')
 
-  assert.equal(project.defaultStyle, 'anime / 二次元 / 非真人写实')
-  assert.match(prompt, /anime \/ 二次元 \/ 非真人写实/)
+  assert.equal(project.defaultStyle, '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性')
+  assert.match(prompt, /超写实真人电影质感/)
+  assert.match(prompt, /85mm镜头/)
+  assert.match(prompt, /4K/)
+  assert.doesNotMatch(prompt, /anime|二次元|非真人写实/i)
   assert.match(prompt, /只属于第一章的线索。/)
   assert.doesNotMatch(prompt, /只属于第二章的秘密。/)
   assert.match(prompt, /output only the Chapter Summary JSON contract/i)

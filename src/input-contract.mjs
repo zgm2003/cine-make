@@ -2,8 +2,8 @@ import { readFile } from 'node:fs/promises'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['jimeng'])
-const DEFAULT_STYLE = '动漫二次元，非真人写实，电影感短剧，克制表演'
-const ANIME_STYLE_MARKERS = /(动漫|二次元|anime|manga|非真人写实)/i
+const DEFAULT_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
+const LIVE_ACTION_STYLE_MARKERS = /(超写实|真人|电影质感|live-action|photoreal|realistic)/i
 const MAX_VISUAL_REFERENCE_IMAGES = 12
 const DEFAULT_MIN_DURATION_SECONDS = 30
 const MAX_DURATION_SECONDS = 180
@@ -324,8 +324,8 @@ function inferTargetSizing({ sourceText, contentType }) {
 
 function normalizeStyle(value) {
   const style = String(value || DEFAULT_STYLE).trim() || DEFAULT_STYLE
-  if (ANIME_STYLE_MARKERS.test(style)) return style
-  return `${style}，动漫二次元，非真人写实`
+  if (LIVE_ACTION_STYLE_MARKERS.test(style)) return style
+  return `${style}，超写实真人电影质感`
 }
 
 function countVisualReferenceImages(options) {

@@ -73,8 +73,8 @@ test('visual mode produces the AI-short-drama image package contract', async () 
       assert.doesNotMatch(text, /episodes\//)
     }
 
-    assert.match(deliverable, /动漫二次元/)
-    assert.match(deliverable, /非真人写实/)
+    assert.match(deliverable, /超写实真人电影质感/)
+    assert.doesNotMatch(deliverable, /动漫二次元|非真人写实/)
     assert.match(deliverable, /## 精简分镜/)
     assert.doesNotMatch(deliverable, /## AI分镜/)
     assert.doesNotMatch(deliverable, /视频生成卡/)
@@ -88,7 +88,7 @@ test('visual mode produces the AI-short-drama image package contract', async () 
     assert.match(deliverable, /二级动画/)
     assert.match(deliverable, /焦点按主体、关键物、异常信号顺序收束/)
     assert.ok(deliverable.split('\n').length <= 180)
-    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
+    assert.ok(allSegmentUploadImageCounts(deliverable).every((count) => count <= 9))
   } finally {
     await rm(out, { recursive: true, force: true })
   }
@@ -149,8 +149,8 @@ test('30 second output splits into two feed cards and reuses previous end frame 
     assert.match(deliverable, /第 1 段/)
     assert.match(deliverable, /第 2 段/)
     assert.match(deliverable, /上一段尾帧 = 本段首帧/)
-    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
-    assert.deepEqual(allSegmentReferenceCounts(deliverable), [11, 11])
+    assert.ok(allSegmentUploadImageCounts(deliverable).every((count) => count <= 9))
+    assert.deepEqual(allSegmentUploadImageCounts(deliverable), [9, 9])
 
     const segmentTwoIndex = deliverable.indexOf('### 第 2 段')
     assert.notEqual(segmentTwoIndex, -1)
@@ -186,7 +186,7 @@ test('long source without explicit duration creates multiple feed cards capped a
     const segmentDurations = allSegmentDurations(deliverable)
     assert.ok(segmentDurations.length > 2)
     assert.ok(segmentDurations.every((seconds) => seconds <= 15), segmentDurations.join(','))
-    assert.ok(allSegmentReferenceCounts(deliverable).every((count) => count <= 12))
+    assert.ok(allSegmentUploadImageCounts(deliverable).every((count) => count <= 9))
     assert.match(deliverable, /每波按视频工具上限拆成 15s 以内投喂段/)
   } finally {
     await rm(out, { recursive: true, force: true })
@@ -273,16 +273,15 @@ test('enterprise documentary deliverable uses theme-film labels instead of suspe
   }
 })
 
-function allSegmentReferenceCounts(deliverable) {
-  assert.doesNotMatch(deliverable, /上传参考图\s+\d+\s+张以内/)
-  assert.doesNotMatch(deliverable, /上传图片控制在\s+\d+\s+张以内/)
-  const matches = [...deliverable.matchAll(/参考素材位\s+(\d+)\s+个/g)]
-  assert.ok(matches.length, 'missing segment material-slot counts')
+function allSegmentUploadImageCounts(deliverable) {
+  assert.match(deliverable, /上传图片控制在\s+9\s+张以内/)
+  const matches = [...deliverable.matchAll(/上传图片\s+(\d+)\s+张/g)]
+  assert.ok(matches.length, 'missing segment upload-image counts')
   return matches.map((match) => Number(match[1]))
 }
 
 function allSegmentDurations(deliverable) {
-  const matches = [...deliverable.matchAll(/### 第 \d+ 段：[^（]+（(\d+)s，参考素材位/g)]
+  const matches = [...deliverable.matchAll(/### 第 \d+ 段：[^（]+（(\d+)s，上传图片/g)]
   assert.ok(matches.length, 'missing segment durations')
   return matches.map((match) => Number(match[1]))
 }

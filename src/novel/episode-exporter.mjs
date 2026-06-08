@@ -5,8 +5,9 @@ import { composeDraftAssets } from '../draft-writer.mjs'
 import { composeDeliverable, composeStoryboardImagesReadme } from '../deliverable-writer.mjs'
 import { planNovelEpisodes } from './episode-planner.mjs'
 
-const FALLBACK_STYLE = '动漫二次元，非真人写实'
+const FALLBACK_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
 const MAX_REFERENCE_MATERIALS = 12
+const MAX_UPLOAD_IMAGES = 9
 const MATERIAL_TYPES = new Set(['image', 'video', 'audio'])
 
 export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, episodeMinutes, referenceMaterials = [] }) {
@@ -319,6 +320,7 @@ function composeJimengFeedCards({ contract, draft, episode, characters, summarie
     id: `${episode.episodeId}-jimeng-${String(index + 1).padStart(2, '0')}`,
     renderer: 'jimeng',
     maxReferenceMaterials: MAX_REFERENCE_MATERIALS,
+    maxUploadImages: MAX_UPLOAD_IMAGES,
     materials,
     prompt: composeJimengPrompt({ episode, refsByType, segmentIndex: index })
   }))
@@ -364,9 +366,13 @@ function buildFallbackMaterials({ episode, characters, summaries, draft }) {
 function capMaterials(materials) {
   const capped = []
   const counters = { image: 0, video: 0, audio: 0 }
+  let imageCount = 0
 
   for (const material of materials) {
-    if (capped.length >= MAX_REFERENCE_MATERIALS) break
+    if (material.type === 'image') {
+      if (imageCount >= MAX_UPLOAD_IMAGES) continue
+      imageCount += 1
+    }
     counters[material.type] += 1
     capped.push({
       ...material,

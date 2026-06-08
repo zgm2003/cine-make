@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { splitNovelText } from './chapter-splitter.mjs'
 
-const DEFAULT_STYLE = 'anime / 二次元 / 非真人写实'
+const DEFAULT_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
 const PROJECT_DIRS = [
   'source',
   'chapters',
@@ -138,7 +138,7 @@ function summaryPrompt({ chapter, defaultStyle }) {
     '- schemaVersion must be 1.',
     `- chapterId must be "${chapter.id}".`,
     `- sourceSpan must include startByte ${chapter.startByte} and endByte ${chapter.endByte}.`,
-    '- Keep adaptationNotes useful for anime / 二次元 / 非真人写实 visual planning unless the project style says otherwise.',
+    '- Keep adaptationNotes useful for photoreal live-action cinematic visual planning: character identity, wardrobe, props, practical locations, lighting, and continuity anchors.',
     '',
     'Chapter text:',
     '',

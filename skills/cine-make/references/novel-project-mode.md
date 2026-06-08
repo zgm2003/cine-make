@@ -39,13 +39,13 @@ canvas-manifest.json
 canvas-project.zip
 ```
 
-- `canvas-manifest.json` is Cine Make's renderer-neutral director handoff. It keeps semantic roles, continuity, warnings, and Jimeng material-budget notes.
+- `canvas-manifest.json` is Cine Make's renderer-neutral director handoff. It keeps semantic roles, continuity, warnings, and Jimeng upload-image budget notes.
 - `canvas-project.zip` is the current Canvas import adapter. It contains `projects.json` with text-only nodes and no media files.
 - Do not treat this as image or video generation. Canvas remains the downstream editing and generation workspace.
 
 ## Visual and Jimeng policy
 
-- Default style: anime / 二次元 / 非真人写实.
+- Default style: 超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性.
 - Novel Studio MVP does not generate images automatically. It plans visual references; `$imagegen` is explicit after visual bible approval.
-- Each Jimeng feed card has a 12-reference-material budget total. Images, videos, and audio all consume material slots.
+- Each Jimeng feed card can upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
 - Reuse continuity hooks between exported episodes instead of recreating identities from raw text.
