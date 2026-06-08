@@ -162,9 +162,13 @@ function composeFilmPreview({ contract, draft, mainCharacter }) {
   const lastShot = draft.shotlist[draft.shotlist.length - 1]
   const subject = mainCharacter?.identity_anchor ?? '主角'
   const isEnterpriseDocumentary = contract.contentType === 'enterprise_documentary'
-  const durationNote = contract.target.durationSource === 'explicit'
-    ? `按用户指定的 ${contract.target.durationSeconds}s`
-    : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
+  const durationNote = contract.target.durationSource === 'script_paced_from_source'
+    ? contract.target.requestedDurationSeconds
+      ? `用户给了 ${contract.target.requestedDurationSeconds}s，但这段剧本自然节奏是 ${contract.target.durationSeconds}s；不新增剧情、不灌水拉长`
+      : `按剧本自然密度拆成 ${contract.target.durationSeconds}s；不新增剧情、不删剧情`
+    : contract.target.durationSource === 'explicit'
+      ? `按用户指定的 ${contract.target.durationSeconds}s`
+      : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
 
   return [
     isEnterpriseDocumentary

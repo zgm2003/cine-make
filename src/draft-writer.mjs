@@ -1,4 +1,4 @@
-import { extractScriptProfile, isScriptProfileUseful, stripPersonalSummary } from './script-profile.mjs'
+import { createScriptShotPlan, extractScriptProfile, isScriptProfileUseful, stripPersonalSummary } from './script-profile.mjs'
 
 const SHOT_BLUEPRINTS = [
   {
@@ -894,6 +894,29 @@ function distributeDurations(totalSeconds, count) {
   return durations
 }
 
+function rebalanceDurations(baseDurations, totalSeconds) {
+  const durations = baseDurations.map((value) => Math.max(1, Math.round(Number(value) || 1)))
+  let current = durations.reduce((total, value) => total + value, 0)
+  let index = durations.length - 1
+
+  while (current > totalSeconds && durations.some((value) => value > 1)) {
+    if (durations[index] > 1) {
+      durations[index] -= 1
+      current -= 1
+    }
+    index = (index - 1 + durations.length) % durations.length
+  }
+
+  index = 0
+  while (current < totalSeconds && durations.length) {
+    durations[index] += 1
+    current += 1
+    index = (index + 1) % durations.length
+  }
+
+  return durations
+}
+
 function shotId(index) {
   return `S${String(index + 1).padStart(2, '0')}`
 }
@@ -913,6 +936,10 @@ function visibleBeat(beats, index, count) {
 
 function visibleProfileBeat(profile, index, count) {
   return profile.beats[spreadIndex({ index, count, length: profile.beats.length })]
+}
+
+function visibleScriptShotPlan(scriptShotPlan, index, count) {
+  return scriptShotPlan[spreadIndex({ index, count, length: scriptShotPlan.length })]
 }
 
 function scriptActionText(beat) {
@@ -1101,17 +1128,22 @@ export function composeDraftAssets(contract) {
       ? inferFolkloreFantasyAnchors(contract)
     : inferAnchors(contract)
   const useScriptProfile = anchors.strategy === 'suspense_drama' && isScriptProfileUseful(scriptProfile)
+  const scriptShotPlan = useScriptProfile ? createScriptShotPlan(scriptProfile) : []
   const beats = useScriptProfile
-    ? scriptProfile.beats.map((beat) => beat.visualAction)
+    ? scriptShotPlan.map((beat) => beat.visualAction)
     : contract.contentType === 'enterprise_documentary'
     ? enterpriseBeatLibrary(contract.sourceText)
     : splitBeats(contract.sourceText)
-  const count = contract.target.shotCount
-  const durations = distributeDurations(contract.target.durationSeconds, count)
+  const count = useScriptProfile
+    ? Math.min(contract.target.shotCount, scriptShotPlan.length)
+    : contract.target.shotCount
+  const durations = useScriptProfile
+    ? rebalanceDurations(scriptShotPlan.slice(0, count).map((shot) => shot.durationSeconds), contract.target.durationSeconds)
+    : distributeDurations(contract.target.durationSeconds, count)
   const selectedBlueprints = selectBlueprintsForContract(contract, count)
 
   const shotlist = selectedBlueprints.map((blueprint, index) => {
-    const profileBeat = useScriptProfile ? visibleProfileBeat(scriptProfile, index, count) : null
+    const profileBeat = useScriptProfile ? visibleScriptShotPlan(scriptShotPlan, index, count) : null
     const beat = useScriptProfile
       ? profileBeat.visualAction
       : anchors.strategy === 'enterprise_documentary'
@@ -1195,9 +1227,11 @@ export function composeDraftAssets(contract) {
 }
 
 function composeDirectorScript({ contract, anchors, beats }) {
-  const durationPolicy = contract.target.durationSource === 'explicit'
-    ? `按用户指定的 ${contract.target.durationSeconds}s 取舍剧情`
-    : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
+  const durationPolicy = contract.target.durationSource === 'script_paced_from_source'
+    ? `按剧本自然密度拆成 ${contract.target.durationSeconds}s，不新增剧情、不删剧情、不为凑时长灌水`
+    : contract.target.durationSource === 'explicit'
+      ? `按用户指定的 ${contract.target.durationSeconds}s 组织节奏，不新增剧情`
+      : `按剧情密度自动拆成 ${contract.target.durationSeconds}s`
   const beatLines = beats.map((beat, index) => {
     return [
       `## Beat ${index + 1}`,

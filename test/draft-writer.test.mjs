@@ -159,6 +159,31 @@ test('composeDraftAssets extracts isolated-mansion cast into cinematic character
   assert.doesNotMatch(leiShot.image_prompt, /preset lock: protagonist .*林默/u)
 })
 
+test('short-drama script uses source-paced duration instead of stretching explicit runtime', async () => {
+  const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', isolatedMansionScript]))
+  const draft = composeDraftAssets(contract)
+  const actions = draft.shotlist.map((shot) => shot.action).join('\n')
+
+  assert.equal(contract.contentType, 'short_drama_script')
+  assert.equal(contract.target.requestedDurationSeconds, 60)
+  assert.equal(contract.target.durationSource, 'script_paced_from_source')
+  assert.ok(contract.target.durationSeconds < 60, `should not pad script to 60s, got ${contract.target.durationSeconds}`)
+  assert.ok(contract.target.durationSeconds >= 40, `should keep enough room for the full scene, got ${contract.target.durationSeconds}`)
+  assert.equal(draft.shotlist.reduce((total, shot) => total + shot.duration_seconds, 0), contract.target.durationSeconds)
+
+  assert.match(actions, /林默猛地从沙发上惊醒/u)
+  assert.match(actions, /手臂上.*记忆只有10分钟/u)
+  assert.match(actions, /镜头拉开，客厅里还有另外三个人/u)
+  assert.match(actions, /雷队.*老张被杀/u)
+  assert.match(actions, /安娜.*失忆症/u)
+  assert.match(actions, /阿杰突然冷笑/u)
+  assert.match(actions, /凯撒/u)
+  assert.match(actions, /00:00:00/u)
+  assert.match(actions, /你们.*是谁/u)
+  assert.equal(draft.shotlist.length, 16)
+  assert.match(draft.shotlist.at(-1).action, /眼神瞬间空洞.*你们.*是谁/u)
+})
+
 test('enterprise documentary draft condenses long essays into a 30 second theme film', async () => {
   const essay = [
     '号声里的奋斗密码。',

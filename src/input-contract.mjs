@@ -1,4 +1,5 @@
 import { readFile } from 'node:fs/promises'
+import { extractScriptProfile, inferScriptProfileSizing } from './script-profile.mjs'
 
 const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['jimeng'])
@@ -317,6 +318,11 @@ function inferPlotShotCount(sourceText, contentType) {
 }
 
 function inferTargetSizing({ sourceText, contentType }) {
+  if (contentType === 'short_drama_script') {
+    const scriptSizing = inferScriptProfileSizing(extractScriptProfile(sourceText))
+    if (scriptSizing) return { ...scriptSizing, source: 'script_profile' }
+  }
+
   const estimatedShots = Math.min(MAX_SHOTS, inferPlotShotCount(sourceText, contentType))
   const segmentCount = Math.ceil(estimatedShots / DEFAULT_SHOTS_PER_SEGMENT)
   const seconds = segmentCount * VIDEO_SEGMENT_SECONDS
@@ -350,7 +356,11 @@ export async function createInputContract(options) {
 
   const contentType = inferContentType(sourceText)
   const inferredSizing = inferTargetSizing({ sourceText, contentType })
-  const seconds = options.durationExplicit ? parseSeconds(options.duration) : inferredSizing.durationSeconds
+  const requestedDurationSeconds = options.durationExplicit ? parseSeconds(options.duration) : null
+  const usesScriptPacing = inferredSizing.source === 'script_profile'
+  const seconds = usesScriptPacing
+    ? Math.max(inferredSizing.shotCount, Math.min(requestedDurationSeconds ?? inferredSizing.durationSeconds, inferredSizing.durationSeconds))
+    : requestedDurationSeconds ?? inferredSizing.durationSeconds
   const aspectRatio = options.aspect || '9:16'
   if (!VALID_ASPECTS.has(aspectRatio)) throw new Error(`Unsupported aspect ratio: ${aspectRatio}`)
 
@@ -364,7 +374,7 @@ export async function createInputContract(options) {
   }
 
   const minimumShotCount = Math.max(4, Math.ceil(seconds / VIDEO_SEGMENT_SECONDS))
-  const fallbackShotCount = options.durationExplicit ? defaultShotCount(seconds) : inferredSizing.shotCount
+  const fallbackShotCount = usesScriptPacing ? inferredSizing.shotCount : options.durationExplicit ? defaultShotCount(seconds) : inferredSizing.shotCount
   const shotCount = clampInteger(options.shots, fallbackShotCount, minimumShotCount, MAX_SHOTS, 'shots')
   const storyboardCount = clampInteger(options.storyboards, shotCount, shotCount, MAX_SHOTS, 'storyboards')
   const title = options.title || `${contentType}-${slugify(sourceText)}`
@@ -383,7 +393,10 @@ export async function createInputContract(options) {
     contentType,
     target: {
       durationSeconds: seconds,
-      durationSource: options.durationExplicit ? 'explicit' : 'inferred_from_source',
+      requestedDurationSeconds: requestedDurationSeconds ?? undefined,
+      durationSource: usesScriptPacing && (!requestedDurationSeconds || requestedDurationSeconds > inferredSizing.durationSeconds)
+        ? 'script_paced_from_source'
+        : options.durationExplicit ? 'explicit' : 'inferred_from_source',
       aspectRatio,
       style: normalizeStyle(options.style),
       platform: targetPlatform,

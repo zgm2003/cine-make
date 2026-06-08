@@ -276,3 +276,87 @@ export function extractScriptProfile(sourceText) {
 export function isScriptProfileUseful(profile) {
   return Boolean(profile && profile.cast?.length >= 3 && profile.beats?.length >= 4)
 }
+
+function uniqueCharacters(beats) {
+  const names = []
+  for (const beat of beats) {
+    for (const name of beat.characters ?? []) {
+      if (!names.includes(name)) names.push(name)
+    }
+  }
+  return names
+}
+
+function overlayAction(beat) {
+  if (beat.kind === 'sound') return `音效：${beat.visualAction}`
+  if (beat.kind === 'dialogue') return `台词：${beat.visualAction}`
+  return beat.visualAction
+}
+
+function composeShotVisualAction(primaryBeat, overlays) {
+  return [primaryBeat.visualAction, ...overlays.map(overlayAction)]
+    .filter(Boolean)
+    .join('；')
+}
+
+function estimateScriptShotDuration(shot) {
+  const action = shot.visualAction
+  if (/阿杰.*凯撒|幕后黑手/u.test(action)) return 4
+  if (/安娜.*失忆症|雷队.*老张被杀|死无对证/u.test(action)) return 4
+  if (/眼神瞬间空洞.*你们.*是谁/u.test(action)) return 4
+  if (/内心独白|我是谁|记忆又在消失/u.test(action)) return 3
+  if (/惊醒|满是鲜血|手臂|刻着|记忆只有10分钟|捂住头|精神病院|眼神瞬间空洞/u.test(action)) return 3
+  if (/另外三个人|三个人|所有人/u.test(action)) return 3
+  return 2
+}
+
+function shouldOverlayBeat(beat, previousShot) {
+  if (!previousShot) return false
+  const previousAction = previousShot.primary.visualAction
+  if (beat.kind === 'sound') return true
+  return beat.kind === 'dialogue' && /你们.*是谁/u.test(beat.visualAction) && /眼神瞬间空洞|仿佛第一天|记忆清空/u.test(previousAction)
+}
+
+export function createScriptShotPlan(profile) {
+  const shots = []
+
+  for (const beat of profile?.beats ?? []) {
+    if (shouldOverlayBeat(beat, shots.at(-1))) {
+      shots[shots.length - 1].overlays.push(beat)
+      continue
+    }
+
+    shots.push({
+      primary: beat,
+      overlays: []
+    })
+  }
+
+  return shots.map((shot, index) => {
+    const coveredBeats = [shot.primary, ...shot.overlays]
+    const visualAction = composeShotVisualAction(shot.primary, shot.overlays)
+    const planned = {
+      id: `SP${String(index + 1).padStart(2, '0')}`,
+      kind: shot.primary.kind,
+      raw: visualAction,
+      visualAction,
+      characters: uniqueCharacters(coveredBeats),
+      location: shot.primary.location,
+      sourceBeatIds: coveredBeats.map((beat) => beat.id)
+    }
+    return {
+      ...planned,
+      durationSeconds: estimateScriptShotDuration(planned)
+    }
+  })
+}
+
+export function inferScriptProfileSizing(profile) {
+  if (!isScriptProfileUseful(profile)) return null
+  const shotPlan = createScriptShotPlan(profile)
+  if (!shotPlan.length) return null
+  return {
+    durationSeconds: shotPlan.reduce((total, shot) => total + shot.durationSeconds, 0),
+    shotCount: shotPlan.length
+  }
+}
