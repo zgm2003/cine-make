@@ -40,7 +40,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the `出图清单` and concise `视频工具投喂包`.
 - `精简分镜` is mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly which images to upload and which prompt text to copy.
-- Treat external AI video generation as a short Jimeng feed-card workflow. Default storyboard density may be 7 shots per 15 seconds, and each feed card may upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
+- Treat external AI video generation as a short Jimeng feed-card workflow. Default storyboard density is about 4 shots per 15 seconds so each clip has room for camera movement, performance, and suspense beats. Each feed card may upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
 - For multi-card outputs, the previous card's end frame is the next card's start frame. Do not generate a separate new start frame that breaks continuity.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
@@ -130,7 +130,7 @@ When triggered by a story-to-video-preproduction request:
    - `storyboard-images/character-reference.png` only if no character image was provided;
    - `storyboard-images/scene-reference.png` only if no scene image was provided;
    - each 15-second segment start frame, e.g. `storyboard-images/segment-01-start.png`;
-   - AI-storyboard keyframes, e.g. `storyboard-images/S01.png` ... `S07.png` for a 15-second card;
+   - AI-storyboard keyframes, e.g. `storyboard-images/S01.png` ... `S04.png` for a 15-second card;
    - each segment end frame, e.g. `storyboard-images/segment-01-end.png`;
    For segment 2 and later, reuse the previous end frame as the new start frame: `segment-01-end.png` is segment 2's start frame.
    Use `$imagegen` directly when the user asks for still images. Do not route image generation through external image APIs.

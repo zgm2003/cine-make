@@ -38,12 +38,12 @@ storyboard-images/
 character-reference.png
 scene-reference.png
 segment-01-start.png
-S01.png ... S07.png
+S01.png ... S04.png
 segment-01-end.png
 segment-02-end.png
 ```
 
-分镜可以保持密度，但每段即梦投喂卡最多上传 9 张图片。角色图、场景图、首帧、分镜关键帧、尾帧都算图片。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
+Cine Make 默认每 15 秒即梦投喂卡约 4 个分镜关键帧，给运镜、表演和悬疑停顿留时间。每段仍然最多上传 9 张图片。角色图、场景图、首帧、分镜关键帧、尾帧都算图片。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
 
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 

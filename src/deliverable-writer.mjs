@@ -61,12 +61,13 @@ function segmentEndFrameName(segmentIndex) {
 
 const MAX_VIDEO_SEGMENT_SECONDS = 15
 const MAX_UPLOAD_IMAGES_PER_FEED_CARD = 9
-const MAX_VIDEO_SEGMENT_SHOTS = 8
+const PACED_STORYBOARD_IMAGES_PER_FEED_CARD = 4
+const MAX_VIDEO_SEGMENT_SHOTS = PACED_STORYBOARD_IMAGES_PER_FEED_CARD
 const MIN_USEFUL_VIDEO_SEGMENT_SECONDS = 6
 
 function maxStoryboardImagesPerSegment() {
   const fixedFrameCount = 2
-  return Math.max(1, MAX_UPLOAD_IMAGES_PER_FEED_CARD - fixedFrameCount)
+  return Math.max(1, Math.min(PACED_STORYBOARD_IMAGES_PER_FEED_CARD, MAX_UPLOAD_IMAGES_PER_FEED_CARD - fixedFrameCount))
 }
 
 function balanceTailSegment(segments, { maxSeconds, maxShots, minSeconds = MIN_USEFUL_VIDEO_SEGMENT_SECONDS }) {
@@ -325,7 +326,7 @@ function composeVideoBeatLine({ shot, startSecond }) {
   return [
     `${shot.shot_id}（${formatSeconds(startSecond)}-${formatSeconds(firstTurn)}s）：起幅稳定，锁定主体位置和${shot.lens ?? '同一镜头系统'}，不要提前泄露下一镜。`,
     `（${formatSeconds(firstTurn)}-${formatSeconds(secondTurn)}s）：${shotPurpose(shot)}；主运动清楚，表情 ${dynamicExpression(shot)}。`,
-    `（${formatSeconds(secondTurn)}-${formatSeconds(endSecond)}s）：${secondaryAnimation(shot)}；焦点按主体、关键物、异常信号顺序收束，尾帧可接下一段。`
+    `（${formatSeconds(secondTurn)}-${formatSeconds(endSecond)}s）：二级动画 ${secondaryAnimation(shot)}；焦点按主体、关键物、异常信号顺序收束，尾帧可接下一段。`
   ].join('')
 }
 
@@ -434,8 +435,8 @@ export function composeDeliverable({ contract, draft }) {
     '## 出图清单',
     '',
     mode === 'visual'
-      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`
-      : `草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`,
+      ? `按这个清单用 Codex \`$imagegen\` 补齐静态图；每段默认 ${PACED_STORYBOARD_IMAGES_PER_FEED_CARD} 个分镜关键帧，每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`
+      : `草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。每段默认 ${PACED_STORYBOARD_IMAGES_PER_FEED_CARD} 个分镜关键帧，每段上传图片最多 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张；角色图、场景图、首帧、分镜关键帧、尾帧都算图片。`,
     '',
     ...composeImageAssetQueue({ contract, shotlist: draft.shotlist }),
     ...(mode === 'visual' ? [
@@ -447,7 +448,7 @@ export function composeDeliverable({ contract, draft }) {
     '',
     '## 视频工具投喂包',
     '',
-    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s；上传图片控制在 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张以内。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
+    `按即梦单次生成上限处理：每段最多 ${MAX_VIDEO_SEGMENT_SECONDS}s；默认每段约 ${PACED_STORYBOARD_IMAGES_PER_FEED_CARD} 个分镜关键帧，给运镜和表演留时间；上传图片控制在 ${MAX_UPLOAD_IMAGES_PER_FEED_CARD} 张以内。总片长 ${contract.target.durationSeconds}s 会自动拆成多个片段，最后再剪到一起。`,
     '',
     '到即梦里，每一段只做两件事：',
     '',

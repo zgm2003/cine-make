@@ -65,6 +65,30 @@ test('composeDraftAssets extracts isolated-mansion memory thriller anchors', asy
   assert.doesNotMatch(serialized, /identity_anchor":"医生正/)
 })
 
+test('composeDraftAssets ignores role preamble and extracts isolated-mansion episode beats', async () => {
+  const episodeSource = [
+    '角色设定',
+    '林默（男主角）：私家侦探。冷静、神经质。',
+    '安娜（女性）：心理医生，知性、冷静。',
+    '第一集剧本：【分崩离析的10分钟】',
+    '[场景：孤岛别墅 - 客厅 - 夜]',
+    '▲ 【画面】 窗外暴雨倾盆，一道闪电划过，照亮昏暗的客厅。',
+    '▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。',
+    '▲ 【画面】 林默急切地拉开衣袖。他的手臂上刻着一行字：【我的记忆只有10分钟。凶手在他们中间。】',
+    '▲ 【画面】 林默的手机突然定时闹钟响起：【00:10:00】时间到。',
+    '林默（惊恐）：“你们……是谁？！”'
+  ].join('\n')
+  const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', episodeSource]))
+  const draft = composeDraftAssets(contract)
+  const serialized = JSON.stringify(draft)
+
+  assert.match(serialized, /私家侦探林默/)
+  assert.match(serialized, /孤岛别墅客厅/)
+  assert.match(serialized, /手机10分钟倒计时/)
+  assert.doesNotMatch(draft.shotlist[0].action, /角色设定|男主角/)
+  assert.match(draft.shotlist.at(-1).action, /你们.*是谁|00:10:00|时间到/)
+})
+
 test('enterprise documentary draft condenses long essays into a 30 second theme film', async () => {
   const essay = [
     '号声里的奋斗密码。',
@@ -88,7 +112,7 @@ test('enterprise documentary draft condenses long essays into a 30 second theme 
   assert.match(draft.shotlist[0].action, /建立精神母题/)
   assert.match(draft.shotlist.at(-1).action, /传承到新一代/)
   assert.doesNotMatch(draft.shotlist.at(-1).action, /技术难题逼近失败边缘/)
-  assert.equal(draft.shotlist.length, 14)
+  assert.equal(draft.shotlist.length, 8)
 })
 
 test('folklore fantasy draft preserves the protagonist, ritual object, monster, and twist', async () => {

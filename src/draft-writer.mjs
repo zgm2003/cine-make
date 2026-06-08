@@ -637,8 +637,18 @@ function stripSourcePrefix(sourceText) {
   return sourceText.replace(/^(小说片段|粗剧本|广告短片|广告文案|剧情|剧本)[:：]\s*/u, '').trim()
 }
 
+function filmableBeatText(sourceText) {
+  let cleaned = stripSourcePrefix(sourceText)
+  const episodeStart = cleaned.search(/第一集剧本|第[一二三四五六七八九十0-9]+集剧本/u)
+  if (episodeStart !== -1) cleaned = cleaned.slice(episodeStart)
+  cleaned = cleaned.replace(/^第[一二三四五六七八九十0-9]+集剧本[^\n]*\n?/u, '')
+  cleaned = cleaned.replace(/^\[场景[^\]]+\]\s*/u, '')
+  cleaned = cleaned.replace(/^\s*角色设定[\s\S]*?(?=▲|【画面】|\[场景|$)/u, '')
+  return cleaned.trim()
+}
+
 function splitBeats(sourceText) {
-  const cleaned = stripSourcePrefix(sourceText)
+  const cleaned = filmableBeatText(sourceText)
   const beats = cleaned
     .split(/[。！？!?；;]\s*/u)
     .map((part) => part.trim())
@@ -686,30 +696,36 @@ function firstIncluded(text, values, fallback) {
 
 function inferAnchors(contract) {
   const text = stripSourcePrefix(contract.sourceText)
-  const protagonist = firstMatch(text, [
+  let protagonist = firstMatch(text, [
+    /([\u4e00-\u9fa5]{2,4})（男主角）[:：]\s*(?:私家侦探|警探|侦探|医生|记者|画家)/u,
     /((?:退役|前)?(?:潜水员|外卖骑手|外卖员|列车调度员|调度员|医生|记者|画家|警探|私家侦探|侦探|工程师|母亲|父亲)[\u4e00-\u9fa5]{1,4})(?=接|送|回|走|来到|收到|发现|站|进入|沿|看|听|推|把|伸|穿|坐|躺|猛|惊|在|，|。|$)/u,
     /(女孩|男孩|女人|男人|母亲|父亲|老人|孩子)/u
   ], 'main subject')
+  const roleProtagonist = text.match(/([\u4e00-\u9fa5]{2,4})（男主角）[:：]\s*(私家侦探|警探|侦探|医生|记者|画家)/u)
+  if (roleProtagonist) protagonist = `${roleProtagonist[2]}${roleProtagonist[1]}`
 
   const lostFigure = firstMatch(text, [
     /(妹妹|哥哥|姐姐|弟弟|女儿|儿子|母亲|父亲|恋人|妻子|丈夫|朋友)/u,
     /(女孩影子|男孩影子|人影|影子)/u
   ], 'lost figure')
 
-  const keyObject = firstMatch(text, [
-    /(手机10分钟倒计时|10分钟倒计时|倒计时手机|手臂血字|刀刻血字|血字|血手|解剖刀|警枪|热水杯|药瓶|红色胶囊)/u,
+  let keyObject = firstMatch(text, [
+    /(手机10分钟倒计时|10分钟倒计时|倒计时手机|00:10:00|记忆只有10分钟|我的记忆只有10分钟|手臂血字|刀刻血字|血字|血手|解剖刀|警枪|热水杯|药瓶|红色胶囊)/u,
     /(红色弹珠|弹珠|纸质车票|车票|蓝鲸|画纸|红围巾|信号灯|黑伞|照片|录音带|钥匙|戒指)/u,
     /(一张[\u4e00-\u9fa5]{1,8}|一盏[\u4e00-\u9fa5]{1,8}|一条[\u4e00-\u9fa5]{1,8})/u
   ], 'key object')
+  if (/(00:10:00|记忆只有10分钟|10分钟)/u.test(text) && /(手机|闹钟|倒计时)/u.test(text)) keyObject = '手机10分钟倒计时'
 
-  const location = firstMatch(text, [
-    /(暴风雨孤岛别墅客厅|孤岛别墅客厅|孤岛别墅|别墅客厅|精神病院|圣路易斯精神病院|废弃医院|护士站|废弃海洋馆|旧地铁站|废弃地铁站|站台|巷口|医院走廊|医院|旧影院|灯塔|车站|海边|隧道|水箱)/u
+  let location = firstMatch(text, [
+    /(暴风雨孤岛别墅客厅|孤岛别墅\s*-\s*客厅(?:\s*-\s*夜)?|孤岛别墅客厅|孤岛别墅|别墅客厅|精神病院|圣路易斯精神病院|废弃医院|护士站|废弃海洋馆|旧地铁站|废弃地铁站|站台|巷口|医院走廊|医院|旧影院|灯塔|车站|海边|隧道|水箱)/u
   ], 'liminal location')
+  if (/孤岛别墅\s*-\s*客厅|孤岛别墅客厅|孤岛别墅[\s\S]{0,20}客厅/u.test(text)) location = '孤岛别墅客厅'
 
-  const impossibleSign = firstMatch(text, [
-    /(手机10分钟倒计时|10分钟倒计时|倒计时归零|记忆清空|记忆归零|失忆症|失忆|凯撒|圣路易斯精神病院)/u,
+  let impossibleSign = firstMatch(text, [
+    /(手机10分钟倒计时|10分钟倒计时|00:10:00|时间到|倒计时归零|记忆清空|记忆归零|记忆又在消失|失忆症|失忆|凯撒|圣路易斯精神病院)/u,
     /(不存在的13楼|13楼|电梯|绿色信号灯|鲸鱼的低鸣|鲸鱼低鸣|报站声|深海光|没有司机的银色列车|黑伞|广播)/u
   ], 'impossible signal')
+  if (/(00:10:00|时间到|记忆又在消失|记忆清空|失忆症|失忆)/u.test(text)) impossibleSign = '记忆清空倒计时'
 
   return {
     strategy: 'suspense_drama',
@@ -829,8 +845,18 @@ function shotId(index) {
   return `S${String(index + 1).padStart(2, '0')}`
 }
 
-function visibleBeat(beats, index) {
-  return beats[index % beats.length]
+function spreadIndex({ index, count, length }) {
+  if (length <= 1 || count <= 1) return 0
+  if (count <= length) return Math.round(index * (length - 1) / (count - 1))
+  return index % length
+}
+
+function spreadPick(items, count) {
+  return Array.from({ length: count }, (_, index) => items[spreadIndex({ index, count, length: items.length })])
+}
+
+function visibleBeat(beats, index, count) {
+  return beats[spreadIndex({ index, count, length: beats.length })]
 }
 
 function expressionCue(performance) {
@@ -854,25 +880,25 @@ function secondaryMotionCue(index) {
 function selectEnterpriseBlueprints(count) {
   if (count === 7) return [0, 2, 4, 7, 9, 11, 13].map((index) => ENTERPRISE_DOCUMENTARY_BLUEPRINTS[index])
   if (count === 14) return ENTERPRISE_DOCUMENTARY_BLUEPRINTS
-  return Array.from({ length: count }, (_, index) => ENTERPRISE_DOCUMENTARY_BLUEPRINTS[Math.floor(index * ENTERPRISE_DOCUMENTARY_BLUEPRINTS.length / count)])
+  return spreadPick(ENTERPRISE_DOCUMENTARY_BLUEPRINTS, count)
 }
 
 function selectFolkloreFantasyBlueprints(count) {
   if (count === 7) return [0, 1, 2, 5, 7, 10, 12].map((index) => FOLKLORE_FANTASY_BLUEPRINTS[index])
   if (count === 14) return FOLKLORE_FANTASY_BLUEPRINTS
-  return Array.from({ length: count }, (_, index) => FOLKLORE_FANTASY_BLUEPRINTS[Math.floor(index * FOLKLORE_FANTASY_BLUEPRINTS.length / count)])
+  return spreadPick(FOLKLORE_FANTASY_BLUEPRINTS, count)
 }
 
 function selectCultivationTransmigrationBlueprints(count) {
   if (count === 7) return [0, 2, 4, 6, 9, 12, 14].map((index) => CULTIVATION_TRANSMIGRATION_BLUEPRINTS[index])
   if (count === 14) return CULTIVATION_TRANSMIGRATION_BLUEPRINTS.slice(0, 14)
-  return Array.from({ length: count }, (_, index) => CULTIVATION_TRANSMIGRATION_BLUEPRINTS[Math.floor(index * CULTIVATION_TRANSMIGRATION_BLUEPRINTS.length / count)])
+  return spreadPick(CULTIVATION_TRANSMIGRATION_BLUEPRINTS, count)
 }
 
 function selectBlueprints(count) {
   if (count === 7) return [0, 1, 3, 6, 8, 9, 12].map((index) => SHOT_BLUEPRINTS[index])
   if (count === 14) return [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14].map((index) => SHOT_BLUEPRINTS[index])
-  return Array.from({ length: count }, (_, index) => SHOT_BLUEPRINTS[Math.floor(index * SHOT_BLUEPRINTS.length / count)])
+  return spreadPick(SHOT_BLUEPRINTS, count)
 }
 
 function selectBlueprintsForContract(contract, count) {
@@ -928,7 +954,7 @@ export function composeDraftAssets(contract) {
         ? blueprint.sourceNote
       : anchors.strategy === 'folklore_fantasy'
         ? blueprint.sourceNote
-      : visibleBeat(beats, index)
+        : visibleBeat(beats, index, count)
     const action = `${blueprint.purpose}；源剧情：${beat}`
     return {
       shot_id: shotId(index),

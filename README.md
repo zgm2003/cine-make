@@ -38,12 +38,12 @@ storyboard-images/
 character-reference.png
 scene-reference.png
 segment-01-start.png
-S01.png ... S07.png
+S01.png ... S04.png
 segment-01-end.png
 segment-02-end.png
 ```
 
-Storyboard density can stay high, but each Jimeng feed card can upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+Cine Make defaults to about 4 storyboard keyframes per 15-second Jimeng feed card so the clip has room for camera movement, performance, and suspense beats. Each feed card can still upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
 
 For normal short-script and excerpt runs, internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files from those runs. Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages.
 

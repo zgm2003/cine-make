@@ -10,8 +10,8 @@ test('parses a story request into a normalized contract', async () => {
   assert.equal(contract.target.aspectRatio, '9:16')
   assert.equal(contract.target.style, 'cinematic，超写实真人电影质感')
   assert.equal(contract.target.platform, 'jimeng')
-  assert.equal(contract.target.shotCount, 14)
-  assert.equal(contract.target.storyboardCount, 14)
+  assert.equal(contract.target.shotCount, 8)
+  assert.equal(contract.target.storyboardCount, 8)
   assert.equal(contract.contentType, 'novel_excerpt')
   assert.match(contract.sourceText, /女孩/)
 })
@@ -24,8 +24,8 @@ test('defaults to photoreal live-action cinematic storyboard packs', async () =>
   assert.match(contract.target.style, /85mm镜头/)
   assert.match(contract.target.style, /4K/)
   assert.doesNotMatch(contract.target.style, /动漫|二次元|非真人写实|anime/i)
-  assert.equal(contract.target.shotCount, 7)
-  assert.equal(contract.target.storyboardCount, 7)
+  assert.equal(contract.target.shotCount, 4)
+  assert.equal(contract.target.storyboardCount, 4)
 })
 
 test('classifies enterprise documentary essays separately from novels', async () => {
@@ -61,8 +61,8 @@ test('infers longer default duration from dense folklore fantasy plot', async ()
   assert.equal(contract.target.durationSource, 'inferred_from_source')
   assert.ok(contract.target.durationSeconds > 30)
   assert.equal(contract.target.durationSeconds % 15, 0)
-  assert.ok(contract.target.shotCount > 14)
-  assert.ok(contract.target.shotCount <= Math.ceil(contract.target.durationSeconds / 15) * 7)
+  assert.ok(contract.target.shotCount > 8)
+  assert.ok(contract.target.shotCount <= Math.ceil(contract.target.durationSeconds / 15) * 4)
 })
 
 test('explicit duration still overrides long-source duration inference', async () => {
@@ -71,7 +71,7 @@ test('explicit duration still overrides long-source duration inference', async (
 
   assert.equal(contract.target.durationSource, 'explicit')
   assert.equal(contract.target.durationSeconds, 30)
-  assert.equal(contract.target.shotCount, 14)
+  assert.equal(contract.target.shotCount, 8)
 })
 
 test('classifies cultivation transmigration without confusing xianxia families for folklore spirits', async () => {

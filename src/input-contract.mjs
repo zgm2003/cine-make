@@ -8,7 +8,8 @@ const MAX_VISUAL_REFERENCE_IMAGES = 12
 const DEFAULT_MIN_DURATION_SECONDS = 30
 const MAX_DURATION_SECONDS = 180
 const VIDEO_SEGMENT_SECONDS = 15
-const DEFAULT_SHOTS_PER_SEGMENT = 7
+const DEFAULT_SHOTS_PER_SEGMENT = 4
+const DEFAULT_MIN_SHOTS = Math.ceil(DEFAULT_MIN_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const MAX_SHOTS = Math.ceil(MAX_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
@@ -295,7 +296,7 @@ function inferPlotShotCount(sourceText, contentType) {
 
   if (contentType === 'enterprise_documentary') {
     return Math.ceil(Math.max(
-      14,
+      DEFAULT_MIN_SHOTS,
       units / 180,
       sentenceCount * 0.35,
       dialogueCount * 0.55,
@@ -304,11 +305,11 @@ function inferPlotShotCount(sourceText, contentType) {
   }
 
   return Math.ceil(Math.max(
-    14,
+    DEFAULT_MIN_SHOTS,
     units / 160,
-    14 + Math.max(0, substantiveSentenceCount - 12) * 0.22,
-    14 + Math.max(0, dialogueCount - 4) * 0.6,
-    14 + Math.max(0, eventCueCount - 6) * 0.45
+    DEFAULT_MIN_SHOTS + Math.max(0, substantiveSentenceCount - DEFAULT_MIN_SHOTS) * 0.35,
+    DEFAULT_MIN_SHOTS + Math.max(0, dialogueCount - 3) * 0.55,
+    DEFAULT_MIN_SHOTS + Math.max(0, eventCueCount - 4) * 0.45
   ))
 }
 

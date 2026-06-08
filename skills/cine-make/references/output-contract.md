@@ -27,7 +27,7 @@ Image-output package slots:
 - `storyboard-images/character-reference.png` only when no user character image is provided; this must be a photoreal white-background / 白底 tri-view character sheet showing character name, height, and core prop without age;
 - `storyboard-images/scene-reference.png` only when no user scene image is provided;
 - `storyboard-images/segment-01-start.png` for the first 15-second segment start frame;
-- `storyboard-images/S01.png` ... `S07.png` for the first 15-second segment AI-storyboard keyframes;
+- `storyboard-images/S01.png` ... `S04.png` for the first 15-second segment AI-storyboard keyframes;
 - `storyboard-images/segment-01-end.png` for the first segment end frame;
 - for segment 2 and later, reuse the previous segment end frame as the next segment start frame.
 
@@ -35,7 +35,7 @@ No artifact may claim final MP4 generation.
 
 Video-tool feed pack:
 
-- default to dense storyboards, but split Jimeng feed cards so each card uploads at most 9 uploaded images per feed card;
+- default to about 4 storyboard keyframes per 15-second Jimeng feed card, and split cards so each card uploads at most 9 uploaded images per feed card;
 - character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images;
 - split longer videos into multiple cards for later external editing/stitching;
 - each feed card must state uploaded images, start frame, end frame, subject lock, short action order, camera language, and negative constraints;

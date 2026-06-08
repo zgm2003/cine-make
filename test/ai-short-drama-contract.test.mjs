@@ -68,7 +68,8 @@ test('visual mode produces the AI-short-drama image package contract', async () 
       assert.match(text, /storyboard-images\/segment-01-start\.png/)
       assert.match(text, /storyboard-images\/segment-01-end\.png/)
       assert.match(text, /storyboard-images\/S01\.png/)
-      assert.match(text, /storyboard-images\/S07\.png/)
+      assert.match(text, /storyboard-images\/S04\.png/)
+      assert.doesNotMatch(text, /storyboard-images\/S05\.png/)
       assert.doesNotMatch(text, /storyboard-images\/contact-sheet\.jpg/)
       assert.doesNotMatch(text, /episodes\//)
     }
@@ -150,7 +151,7 @@ test('30 second output splits into two feed cards and reuses previous end frame 
     assert.match(deliverable, /第 2 段/)
     assert.match(deliverable, /上一段尾帧 = 本段首帧/)
     assert.ok(allSegmentUploadImageCounts(deliverable).every((count) => count <= 9))
-    assert.deepEqual(allSegmentUploadImageCounts(deliverable), [9, 9])
+    assert.deepEqual(allSegmentUploadImageCounts(deliverable), [8, 8])
 
     const segmentTwoIndex = deliverable.indexOf('### 第 2 段')
     assert.notEqual(segmentTwoIndex, -1)
