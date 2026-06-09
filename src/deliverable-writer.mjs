@@ -207,32 +207,97 @@ function composeShotTable(shotlist) {
   ]
 }
 
-function composeImagePromptList(shotlist) {
-  return shotlist.flatMap((shot) => [
-    `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
+function composeDirectorBible({ contract }) {
+  return [
+    '- 类型：超写实真人电影短剧；每张图都是 shot，不是插画。',
+    `- 画幅 / 风格：${contract.target.aspectRatio} / ${contract.target.style}`,
+    '- 视觉语言：低饱和、低调布光、真实镜头行为、负空间、环境叙事。',
+    '- 表演规则：情绪通过眼神、呼吸、手指张力、姿态停顿泄露；避免夸张恐怖表演。',
+    '- 摄影规则：允许 slow push、slow dolly、rack focus、locked frame、controlled slide；避免快切、乱晃、突然 zoom。',
+    '- 连续性优先级：角色一致性 > 空间连续性 > 镜头连续性 > 光线连续性 > 情绪连续性 > 单张漂亮。',
+    '- 全局规则不在每镜重复；每个镜头只写本镜头局部目标。'
+  ]
+}
+
+function composeCharacterBibleLines({ characters = [], mainCharacter }) {
+  const known = characters.length ? characters : [mainCharacter].filter(Boolean)
+  if (!known.length) return ['- 主角：按源故事和分镜设定保持同一演员、同一服装、同一道具。']
+
+  return known.flatMap((character) => [
+    `### ${character.identity_anchor ?? character.name ?? character.id}`,
     '',
-    '```text',
-    shot.image_prompt,
-    '```',
+    `- 身份/锚点：${character.role ?? character.identity ?? character.identity_anchor ?? '主角'}`,
+    `- 外观/服装：${character.costume_anchor ?? character.costume ?? '保持同一造型'}`,
+    `- 核心道具：${character.prop_anchor ?? (character.props ?? []).join('、') ?? '关键道具'}`,
+    `- 微动作：${character.performance_anchor ?? '眼神、呼吸、手指、姿态小幅变化，不夸张表演。'}`,
+    `- 连续性：${character.continuity_notes ?? '同一张脸、同一发型、同一体型、同一服装材质。'}`,
     ''
   ])
 }
 
-function composeAIStoryboard(shotlist) {
+function uniqueScenes(shotlist = []) {
+  const scenes = []
+  for (const shot of shotlist) {
+    const scene = shot.scene || '主场景'
+    if (!scenes.includes(scene)) scenes.push(scene)
+  }
+  return scenes
+}
+
+function composeSceneBible({ shotlist }) {
+  const scenes = uniqueScenes(shotlist)
+  return [
+    ...scenes.map((scene) => `- ${scene}：锁定建筑结构、入口、主体站位、光线方向、材质和空气状态；不要每镜换地方。`),
+    '- 空间连续性：镜头可以换机位，但沙发/门口/角落/关键通道等关系不能随机漂移。',
+    '- 声音感也影响画面：雨声、电流声、脚步、道具轻响应体现在空气和材质里。'
+  ]
+}
+
+function composeArtDirection({ contract }) {
+  return [
+    `- 色彩：${contract.target.style}；优先低饱和蓝灰、真实肤色、少量高亮信号色。`,
+    '- 光线：practical lighting / motivated lighting；每个高光必须有场内来源。',
+    '- 构图：负空间、前景遮挡、分层景深、环境压迫；不做海报式摆拍。',
+    '- 镜头：广角建立空间，标准镜头做关系，85mm/macro 做线索和心理压缩。',
+    '- Keyframe 提示词是静态画面提示；Motion Prompt 才描述视频运动。'
+  ]
+}
+
+function composeShotDefinitionLine(shot) {
+  return [
+    `- Static Shot Definition：${shot.shot_size}，${shot.lens ?? 'same lens system'}，${compactAction(shot.composition)}。`,
+    `- 人物/调度：${compactAction(shot.blocking ?? '按上一镜空间连续调度')}。`,
+    `- 画面状态：${shotPurpose(shot)}。`,
+    `- 光影/连续性：${compactAction(shot.lighting ?? '按 Art Direction 延续')}；${compactAction(shot.continuity_from_previous ?? '保持上一镜连续性')}。`
+  ]
+}
+
+function composeShotDefinitions(shotlist) {
   return shotlist.flatMap((shot) => [
-    `### ${shot.shot_id}｜${shot.duration_seconds}s｜AI_VIDEO_STORYBOARD`,
+    `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
     '',
-    `- 画面任务：${compactAction(shot.action)}`,
-    `- 镜头语言：${shot.video_prompt_note}`,
-    `- 景别：${shot.shot_size}`,
-    `- 焦段：${shot.lens ?? '按同一镜头系统延续'}`,
-    `- 运镜：${shot.camera_movement}`,
-    `- 构图：${compactAction(shot.composition)}`,
-    `- 调度：${compactAction(shot.blocking ?? '主体动作从上一镜头自然延续，不突然换位')}`,
-    `- 表演：${compactAction(shot.performance_detail)}`,
-    `- 光影：${compactAction(shot.lighting)}`,
-    `- 连续性：${compactAction(shot.continuity_from_previous)}`,
-    '- 禁止：字幕、水印、跳剪、突然换脸、换服装、乱加角色、乱加道具、恐怖怪物化、脱离本镜头剧情',
+    ...composeShotDefinitionLine(shot),
+    ''
+  ])
+}
+
+function composeStaticKeyframePrompt(shot) {
+  return [
+    'single cinematic keyframe, photorealistic live-action film still',
+    `Static Shot Definition: ${shot.shot_size}, ${shot.lens ?? 'same lens system'}, ${compactAction(shot.composition)}`,
+    `Subject/blocking: ${compactAction(shot.blocking ?? 'spatially continuous blocking')}`,
+    `Visible state: ${shotPurpose(shot)}`,
+    `Lighting: ${compactAction(shot.lighting ?? 'motivated low-key cinematic lighting')}`,
+    `Continuity: ${compactAction(shot.continuity_from_previous ?? 'same actor, same location, same prop state')}`,
+    'No motion blur, no video transition, no poster layout, no subtitles, no watermark, no extra characters.'
+  ].join(', ')
+}
+
+function composeKeyframePromptList(shotlist) {
+  return shotlist.flatMap((shot) => [
+    `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
+    '',
+    composeStaticKeyframePrompt(shot),
     ''
   ])
 }
@@ -351,41 +416,54 @@ function composeTimeline(segment) {
   })
 }
 
-function dynamicExpression(shot) {
-  const performance = compactAction(shot.performance_detail)
-  if (/恐惧|fear|惊|僵|发紧|迟疑/u.test(performance)) return '眼神先停住，呼吸变短，指尖收紧'
-  if (/旧记忆|grief|伤|记忆/u.test(performance)) return '眼眶压住情绪，嘴角轻收，视线慢半拍落到关键物'
-  if (/邀请|决定|选择|crossing/u.test(performance)) return '下颌收紧，视线先确认关键物，再看向通道'
-  return '表情克制，眉眼和手部先于身体动作泄露情绪'
-}
-
-function secondaryAnimation(shot) {
-  const action = compactAction(shot.action)
-  if (/手|指|触碰|放下|关键物|弹珠|车票|照片/u.test(action)) return '手指轻颤，关键物轻微晃动，动作完成后短暂停住'
-  if (/走|进入|迈|靠近|后退/u.test(action)) return '脚步带动衣摆和肩线回弹，身体重心连续移动'
-  if (/抬头|看|听|声音|信号/u.test(action)) return '呼吸带动胸口微起伏，眼神焦点缓慢转移'
-  return '衣角、发梢或道具做小幅连带运动，避免夸张变形'
-}
-
 function formatSeconds(value) {
   return Number(value).toFixed(1).replace(/\.0$/, '')
 }
 
+function primaryMotionCue(shot) {
+  const action = compactAction(shot.action)
+  if (/惊醒|醒来|惊醒/u.test(action)) return 'Lin Mo wakes from the sofa, then freezes before making any second action.'
+  if (/血手|满是鲜血|双手|看向自己的双手/u.test(action)) return 'He slowly raises his bloody hands into frame.'
+  if (/拉开衣袖|刻着|手臂/u.test(action)) return 'He exposes the marked forearm and holds it still.'
+  if (/倒计时|手机|00:00:00/u.test(action)) return 'The camera holds on the countdown phone as the screen reaches zero.'
+  if (/镜头拉开|还有另外|还有安娜|还有雷队|还有阿杰/u.test(action)) return 'The camera slowly reveals the fixed room layout and character positions.'
+  if (/靠近|走|进入|后退|推开/u.test(action)) return 'The subject completes one small position change, then stops.'
+  if (/看|抬头|听/u.test(action)) return 'The subject shifts eye line once toward the visual cue.'
+  return 'Execute only the single visible action in this shot definition.'
+}
+
+function microPerformanceCue(shot) {
+  const text = `${shot.performance_detail ?? ''}\n${shot.action ?? ''}`
+  if (/恐惧|惊|血|失忆|空洞|痛/u.test(text)) return 'short breath, delayed eye focus, tense fingers'
+  if (/安抚|温柔|倒水|医生/u.test(text)) return 'slow hands, controlled eye contact, half-second hesitation'
+  if (/暴怒|枪|警|逼/u.test(text)) return 'stiff jaw, heavy shoulders, controlled threat'
+  if (/阿杰|冷笑|诡异|角落/u.test(text)) return 'small hidden smile, eyes move before the body'
+  return 'subtle breath and small eye movement'
+}
+
+function composeMotionPromptLine(shot) {
+  return [
+    `${shot.shot_id}: ${formatSeconds(Number(shot.duration_seconds) || 1)}s.`,
+    `${shot.camera_movement || 'locked frame'}.`,
+    primaryMotionCue(shot),
+    `Micro-performance: ${microPerformanceCue(shot)}.`,
+    'No cut, no new action, no face change.'
+  ].join(' ')
+}
+
+function composeMotionPrompts(shotlist) {
+  return shotlist.flatMap((shot) => [
+    `### ${shot.shot_id}｜Motion Prompt`,
+    '',
+    composeMotionPromptLine(shot),
+    ''
+  ])
+}
+
 function composeVideoBeatLine({ shot, startSecond }) {
   const shotDuration = Number(shot.duration_seconds) || 1
-  const firstTurn = startSecond + shotDuration * 0.35
-  const secondTurn = startSecond + shotDuration * 0.68
   const endSecond = startSecond + shotDuration
-
-  if (shotDuration <= 2) {
-    return `${shot.shot_id}（${formatSeconds(startSecond)}-${formatSeconds(endSecond)}s）：${shotPurpose(shot)}；运镜 ${shot.camera_movement}；表情 ${dynamicExpression(shot)}；二级动画 ${secondaryAnimation(shot)}。`
-  }
-
-  return [
-    `${shot.shot_id}（${formatSeconds(startSecond)}-${formatSeconds(firstTurn)}s）：起幅稳定，锁定主体位置和${shot.lens ?? '同一镜头系统'}，不要提前泄露下一镜。`,
-    `（${formatSeconds(firstTurn)}-${formatSeconds(secondTurn)}s）：${shotPurpose(shot)}；主运动清楚，表情 ${dynamicExpression(shot)}。`,
-    `（${formatSeconds(secondTurn)}-${formatSeconds(endSecond)}s）：二级动画 ${secondaryAnimation(shot)}；焦点按主体、关键物、异常信号顺序收束，尾帧可接下一段。`
-  ].join('')
+  return `${formatSeconds(startSecond)}-${formatSeconds(endSecond)}s｜${composeMotionPromptLine(shot)}`
 }
 
 function composeCharacterLockSentence({ segment, mainCharacter, characters = [] }) {
@@ -408,23 +486,21 @@ function composeCharacterLockSentence({ segment, mainCharacter, characters = [] 
 
 function composeVideoPrompt({ contract, segment, mainCharacter, segmentIndex, characters = [] }) {
   const duration = segmentDuration(segment)
-  const shotIds = segment.map((shot) => shot.shot_id).join(' -> ')
-  const actions = segment.map((shot) => `${shot.shot_id} ${shotPurpose(shot)}`).join('；')
-  const cameraLanguage = [...new Set(segment.map((shot) => `${shot.shot_size}/${shot.lens ?? '同一镜头系统'}/${shot.camera_movement}`))].join('；')
   let cursor = 0
   const beatLines = segment.map((shot) => {
     const line = composeVideoBeatLine({ shot, startSecond: cursor })
     cursor += Number(shot.duration_seconds) || 1
     return line
-  }).join('')
+  }).join('\n')
 
   return [
-    `${duration}s / ${contract.target.aspectRatio} / ${contract.target.style}。按精简分镜顺序生成 ${shotIds}：${actions}。`,
+    `${duration}s / ${contract.target.aspectRatio}. Use uploaded keyframes as fixed visual state anchors.`,
+    'Do not reinterpret the plot. Execute the Motion Prompts only.',
     composeCharacterLockSentence({ segment, mainCharacter, characters }),
-    `镜头按分镜执行：${cameraLanguage}。只表现本段剧情，不跳过、不合并、不串到其他段。`,
     beatLines,
-    '不要字幕、水印、跳剪、突然换脸、换服装、乱加角色、乱加道具或超出剧情。'
-  ].join('')
+    '中文约束：主运动清楚；每镜只做一个主动作；不跳过、不合并、不串到其他段。',
+    'Global avoid: no subtitles, no watermark, no jump cut, no new character, no new prop, no face/costume/location change.'
+  ].join('\n')
 }
 
 function composeVideoFeedPack({ contract, shotlist, mainCharacter, characters = [] }) {
@@ -500,6 +576,33 @@ export function composeDeliverable({ contract, draft }) {
     mainCharacter
       ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
       : '主角锚点：按源故事和分镜设定保持一致。',
+    '',
+    '## DIRECTOR_BIBLE',
+    '',
+    ...composeDirectorBible({ contract }),
+    '',
+    '## CHARACTER_BIBLE',
+    '',
+    ...composeCharacterBibleLines({ characters: draft.characters, mainCharacter }),
+    '## SCENE_BIBLE',
+    '',
+    ...composeSceneBible({ shotlist: draft.shotlist }),
+    '',
+    '## ART_DIRECTION',
+    '',
+    ...composeArtDirection({ contract }),
+    '',
+    '## STORYBOARD：Shot Definition',
+    '',
+    ...composeShotDefinitions(draft.shotlist),
+    '',
+    '## KEYFRAME_PROMPTS',
+    '',
+    ...composeKeyframePromptList(draft.shotlist),
+    '',
+    '## MOTION_PROMPTS',
+    '',
+    ...composeMotionPrompts(draft.shotlist),
     '',
     '## 精简分镜',
     '',

@@ -26,11 +26,31 @@ storyboard-images/
 1. Film preview
 2. Story flow
 3. Short-film plan
-4. Compact storyboard
-5. Image-output checklist
-6. Video-tool feed pack
-7. Visual references
-8. Continuity notes
+4. Layered director system: `DIRECTOR_BIBLE`, `CHARACTER_BIBLE`, `SCENE_BIBLE`, `ART_DIRECTION`
+5. `STORYBOARD: Shot Definition`
+6. `KEYFRAME_PROMPTS`
+7. `MOTION_PROMPTS`
+8. Compact storyboard
+9. Image-output checklist
+10. Video-tool feed pack
+11. Visual references
+12. Continuity notes
+
+### Layered cinematic pipeline
+
+Cine Make outputs a Structured Cinematic Pipeline instead of one overloaded prompt:
+
+```text
+DIRECTOR_BIBLE      # global directing rules
+CHARACTER_BIBLE     # actor / costume / behavior continuity
+SCENE_BIBLE         # spatial continuity
+ART_DIRECTION       # color, light, camera language
+Shot Definition     # static shot design
+Keyframe Prompt     # static image prompt for the image model
+Motion Prompt       # minimal state transition for the video model
+```
+
+global rules are not repeated per shot. Each shot carries only its local goal. Keyframe prompts are static image prompts; Motion Prompt entries describe one main action, micro-performance, and camera movement for video generation.
 
 `storyboard-images/` contains or prepares:
 
@@ -44,6 +64,8 @@ segment-02-end.png
 ```
 
 Cine Make defaults to about 4 storyboard keyframes per 15-second Jimeng feed card so the clip has room for camera movement, performance, and suspense beats. Each feed card can still upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images. The next card reuses the previous card's end frame as its start frame to preserve continuity.
+
+Manual Canvas generation uses the same layering. `canvas-pack` creates only the foundation references. After the user locks character, scene, and style main images, `canvas-storyboard-pack` appends static Keyframe image nodes. Those nodes carry `metadata.cineMake.promptLayer = keyframe_static`; Motion Prompt text is kept in metadata for the later video stage instead of being mixed into the image prompt.
 
 For normal short-script and excerpt runs, internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files from those runs. Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages.
 

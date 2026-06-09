@@ -192,3 +192,41 @@ test('hospital rider story keeps the delivery rider as the subject, not the girl
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('layered cinematic pipeline separates bibles static keyframes and concise motion prompts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-layered-'))
+  const thrillerSource = `第一集剧本：【分崩离析的10分钟】
+[场景：孤岛别墅 - 客厅 - 夜]
+▲ 【画面】 窗外暴雨倾盆，一道闪电划过，照亮昏暗的客厅。
+▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。
+▲ 【画面】 林默急切地拉开衣袖。他的手臂上刻着：【我的记忆只有10分钟。凶手在他们中间。】
+▲ 【画面】 镜头拉开，客厅里还有安娜、雷队、阿杰。`
+
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '15s', '--aspect', '9:16', thrillerSource], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.match(deliverable, /## DIRECTOR_BIBLE/)
+    assert.match(deliverable, /## CHARACTER_BIBLE/)
+    assert.match(deliverable, /## SCENE_BIBLE/)
+    assert.match(deliverable, /## ART_DIRECTION/)
+    assert.match(deliverable, /## STORYBOARD：Shot Definition/)
+    assert.match(deliverable, /## KEYFRAME_PROMPTS/)
+    assert.match(deliverable, /## MOTION_PROMPTS/)
+    assert.ok(deliverable.indexOf('## KEYFRAME_PROMPTS') < deliverable.indexOf('## MOTION_PROMPTS'))
+    assert.match(deliverable, /Static Shot Definition/u)
+    assert.match(deliverable, /Motion Prompt/u)
+    assert.doesNotMatch(deliverable, /按精简分镜顺序生成 .*；.*；.*；/u)
+    assert.doesNotMatch(deliverable, /表情克制，眉眼和手部先于身体动作泄露情绪/u)
+
+    const keyframeSection = deliverable.slice(deliverable.indexOf('## KEYFRAME_PROMPTS'), deliverable.indexOf('## MOTION_PROMPTS'))
+    assert.doesNotMatch(keyframeSection, /二级动画|breathing becomes|slow push-in.*breathing|视频模型/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})

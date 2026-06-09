@@ -26,11 +26,31 @@ storyboard-images/
 1. 成片预览
 2. 故事全流程
 3. 短片方案
-4. 精简分镜
-5. 出图清单
-6. 视频工具投喂包
-7. 视觉参考
-8. 连续性注意事项
+4. 分层导演系统：`DIRECTOR_BIBLE`、`CHARACTER_BIBLE`、`SCENE_BIBLE`、`ART_DIRECTION`
+5. `STORYBOARD：Shot Definition`
+6. `KEYFRAME_PROMPTS`
+7. `MOTION_PROMPTS`
+8. 精简分镜
+9. 出图清单
+10. 视频工具投喂包
+11. 视觉参考
+12. 连续性注意事项
+
+### 分层导演管线
+
+Cine Make 现在按 Structured Cinematic Pipeline 输出，而不是把所有信息塞进一个超长 prompt：
+
+```text
+DIRECTOR_BIBLE      # 全局导演规则
+CHARACTER_BIBLE     # 人物一致性
+SCENE_BIBLE         # 空间连续性
+ART_DIRECTION       # 色彩、光影、镜头语言
+Shot Definition     # 静态镜头定义
+Keyframe Prompt     # 图片模型用的静态关键帧提示词
+Motion Prompt       # 视频模型用的最小运动提示词
+```
+
+全局规则不在每镜重复；每个镜头只保留本镜头的局部目标。Keyframe 提示词是静态图片提示，不写视频运动；Motion Prompt 才写单镜头单动作、微表情和镜头运动。
 
 `storyboard-images/` 是图片资产目录，包含或准备：
 
@@ -57,6 +77,8 @@ README.md
 `canvas-project.zip` 可以直接在 Canvas 里导入。当前首版只打基础：少量文本资源节点 + 可生成的风格参考图、角色参考图、场景参考图。文本资源包含 World Bible / Art Direction、Character Bible 和 Environment Bible；真正需要点击生成的是右侧图片节点。暂不生成 Shot List、Keyframes 或视频段节点。
 
 等你在 Canvas 里手动生成并锁定人物主图、场景主图、风格主图后，再使用第二阶段 `canvas-storyboard-pack`。它只追加 Shot List 文本节点和 Keyframe 图片节点，不重复人设、场景、风格参考图；Keyframe 节点会在 metadata 里声明要复用的稳定锚点，例如 `character-ref-linmo`、`environment-ref-*`、`style-reference`。请在 Canvas 使用“合并到当前画布 / 导入到当前画布”，不要重新导入成一个新工程。
+
+`canvas-storyboard-pack` 里的 Keyframe 节点是静态层：`metadata.cineMake.promptLayer = keyframe_static`。Motion Prompt 会作为 metadata 保留给后续视频阶段，不会混进图片节点 prompt，避免图片模型被“呼吸、推拉、二级动画”等动态词污染。
 
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 

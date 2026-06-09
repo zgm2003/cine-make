@@ -39,6 +39,9 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
 - Do not pass `--emit-internal` in normal user runs. It is only for compiler debugging and creates `.cine-make-internal/`.
+- Cine Make uses a layered cinematic pipeline: `DIRECTOR_BIBLE`, `CHARACTER_BIBLE`, `SCENE_BIBLE`, `ART_DIRECTION`, `Shot Definition`, `Keyframe Prompt`, and `Motion Prompt`. global rules are not repeated per shot; per-shot prompts stay local and minimal.
+- Keyframe prompts are static image prompts. They must define composition, blocking, subject state, lens, lighting, and continuity only. They must not describe video motion, breathing animation, secondary animation, transitions, or multi-action performance.
+- Motion Prompt entries are video-model state transitions: one main action, one micro-performance cue, one camera movement, and strict no-cut/no-new-action/no-face-change constraints.
 - `deliverable.md` must first help the user understand the film: `成片预览` -> `故事全流程` -> `精简分镜`, then provide the `出图清单` and concise `视频工具投喂包`.
 - `精简分镜` is mandatory and must be director-grade: shot size, lens, camera movement, composition, blocking, performance, lighting, and continuity. Start/end frames are derived from this storyboard; they do not replace it.
 - `deliverable.md` must also contain a plain-language `视频工具投喂包`: tell the user exactly which images to upload and which prompt text to copy.
@@ -55,7 +58,7 @@ Use only these two user-facing modes. In CLI/internal contracts the second mode 
 | `draft` / 草稿模式 | default first pass; user is still changing story, rhythm, shots | no images | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` / 出图模式 | draft is approved; user wants references/keyframes for video tools | yes, still images only when image generation is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
-`canvas-pack` and `canvas-storyboard-pack` are not third/fourth draft/visual modes. They are handoff commands for manual Canvas generation. Both write `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; neither generates images, videos, media files, or `storyboard-images/`. The first Canvas graph is intentionally compact and left-to-right: text bibles on the left, reference image generation nodes on the right. It covers only style, characters, and environment. `canvas-storyboard-pack` comes later after the foundation is approved and locked; it appends Shot List and Keyframe image nodes that reuse stable anchors from the current Canvas.
+`canvas-pack` and `canvas-storyboard-pack` are not third/fourth draft/visual modes. They are handoff commands for manual Canvas generation. Both write `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; neither generates images, videos, media files, or `storyboard-images/`. The first Canvas graph is intentionally compact and left-to-right: text bibles on the left, reference image generation nodes on the right. It covers only style, characters, and environment. `canvas-storyboard-pack` comes later after the foundation is approved and locked; it appends Shot List and Keyframe image nodes that reuse stable anchors from the current Canvas. Canvas Keyframe nodes are static image nodes with `metadata.cineMake.promptLayer = keyframe_static`; Motion Prompt text belongs in metadata for later video work, not inside the image prompt.
 
 Do not invent extra modes. Keep internal/debug artifacts internal.
 

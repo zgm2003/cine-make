@@ -260,6 +260,8 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
       prompt: composeKeyframePrompt({ shot, contract, environment, props }),
       inputOrder: requiredAnchors.map((anchor) => anchor.anchorId),
       requiredAnchors,
+      promptLayer: 'keyframe_static',
+      motionPrompt: composeMotionPrompt({ shot }),
       mergeStrategy: 'append'
     }))
   })
@@ -347,10 +349,14 @@ function inferProps(sourceText, draft) {
   return PROP_CATALOG.filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
 }
 
-function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, mergeStrategy }) {
+function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, promptLayer, motionPrompt, mergeStrategy }) {
   const isVideo = canvasType === 'video'
   const isText = canvasType === 'text'
   const isLandscapeImage = canvasType === 'image' && imageSize === '16:9'
+  const cineMake = {
+    promptLayer,
+    motionPrompt
+  }
   return {
     id,
     role,
@@ -369,6 +375,11 @@ function createManifestNode({ id, role, title, canvasType, row, column, prompt, 
     inputOrder,
     anchor,
     requiredAnchors,
+    metadata: {
+      cineMake
+    },
+    promptLayer,
+    motionPrompt,
     mergeStrategy
   }
 }
@@ -475,7 +486,9 @@ function cineMakeNodeMetadata(node, manifest) {
     role: node.role,
     mergeStrategy: node.mergeStrategy,
     anchor: node.anchor,
-    requiredAnchors: node.requiredAnchors
+    requiredAnchors: node.requiredAnchors,
+    promptLayer: node.promptLayer,
+    motionPrompt: node.motionPrompt
   }
 }
 
@@ -773,7 +786,8 @@ function composeCompactShotList({ shots, environment }) {
 function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
   const usedProps = props.filter((prop) => shotUsesProp(shot, prop))
   return [
-    '关键帧生成任务：生成一张电影概念帧 / 分镜定格，不是视频，不是多格漫画。',
+    '关键帧生成任务：生成一张 single cinematic keyframe / 电影概念帧 / 分镜定格。',
+    'Static Shot Definition：这是一张静态图片提示词，只描述构图、人物位置、光线、场景和情绪状态。',
     '',
     '必须使用 Canvas 中已锁定人物主图、已锁定场景主图和已锁定风格主图作为直接视觉参考。',
     '已锁定人物主图决定演员脸、发型、体型、服装和道具；不要重新发明角色，不要换演员。',
@@ -786,14 +800,46 @@ function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
     `出场人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
     usedProps.length ? `关键道具：${usedProps.map((prop) => prop.label).join('、')}` : '',
     `景别/镜头：${shot.shot_size || ''} / ${shot.lens || ''}`,
-    `运镜只转化为静态构图暗示：${shot.camera_movement || ''}`,
-    `画面动作：${shot.action || ''}`,
+    `构图：${shot.composition || ''}`,
+    `空间调度：${shot.blocking || ''}`,
+    `画面状态：${shot.action || ''}`,
+    `光影：${shot.lighting || contract.target.style}`,
     `调度：${shot.blocking || ''}`,
     '',
-    shot.image_prompt || '',
+    'photorealistic live-action film still, grounded cinematic realism, restrained psychological thriller mood, consistent actor face and costume, consistent physical location, no motion blur, no transition, no collage.',
     '',
-    '负面：不要字幕、水印、logo、乱加未连接角色、突然换脸、换服装、换场景、把客厅变成其他地点。'
+    '负面：不要字幕、水印、logo、乱加未连接角色、突然换脸、换服装、换场景、把客厅变成其他地点、不要模拟视频运动。'
   ].filter(Boolean).join('\n')
+}
+
+function composeMotionPrompt({ shot }) {
+  return [
+    `${shot.shot_id}: ${Number(shot.duration_seconds) || 1}s.`,
+    `${shot.camera_movement || 'locked frame'}.`,
+    motionCueForShot(shot),
+    `Micro-performance: ${microCueForShot(shot)}.`,
+    'No cut. No new action. No face change.'
+  ].join(' ')
+}
+
+function motionCueForShot(shot) {
+  const action = [shot.action, shot.blocking, shot.composition].filter(Boolean).join('\n')
+  if (/惊醒|醒来/u.test(action)) return 'Lin Mo wakes from the sofa, then freezes.'
+  if (/血手|双手|满是鲜血/u.test(action)) return 'He slowly raises bloody hands into frame.'
+  if (/拉开衣袖|刻着|手臂/u.test(action)) return 'He exposes the marked forearm and holds it still.'
+  if (/倒计时|00:00:00|手机/u.test(action)) return 'Hold on the countdown phone as the screen reaches zero.'
+  if (/镜头拉开|还有另外|安娜|雷队|阿杰/u.test(action)) return 'Reveal the fixed room layout and character positions only.'
+  if (/靠近|走|后退|进入/u.test(action)) return 'The subject completes one small position change, then stops.'
+  return 'Execute only the single visible action described by this shot definition.'
+}
+
+function microCueForShot(shot) {
+  const text = [shot.action, shot.performance_detail].filter(Boolean).join('\n')
+  if (/阿杰|冷笑|诡异/u.test(text)) return 'small hidden smile, eyes move before the body'
+  if (/雷队|枪|暴躁|门口/u.test(text)) return 'stiff jaw, heavy shoulders, controlled threat'
+  if (/安娜|医生|倒水|安抚/u.test(text)) return 'slow hands, controlled eye contact, half-second hesitation'
+  if (/血|惊|怕|失忆|空洞/u.test(text)) return 'short breath, delayed eye focus, tense fingers'
+  return 'subtle breath and small eye movement'
 }
 
 function composePromptPackMarkdown(manifest) {

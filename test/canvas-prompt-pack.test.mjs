@@ -249,6 +249,30 @@ test('exports a merge-friendly storyboard Canvas pack that reuses locked foundat
   }
 })
 
+test('canvas storyboard keyframe prompts are static image definitions not motion prompts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-static-keyframes-'))
+  try {
+    const contract = await createInputContract(parseArgs(['--aspect', '9:16', isolatedMansionScript]))
+    const result = await exportCanvasStoryboardPack({ outDir: out, contract })
+    const manifest = JSON.parse(await readFile(result.manifestPath, 'utf8'))
+    const keyframe = manifest.nodes.find((node) => node.role === 'keyframe')
+
+    assert.ok(keyframe)
+    assert.equal(keyframe.metadata?.cineMake?.promptLayer, 'keyframe_static')
+    assert.equal(typeof keyframe.metadata?.cineMake?.motionPrompt, 'string')
+    assert.match(keyframe.prompt, /Static Shot Definition|single cinematic keyframe/iu)
+    assert.doesNotMatch(keyframe.prompt, /breathing becomes|二级动画|视频模型|video motion|Motion Prompt|slow push-in.*breathing/iu)
+
+    const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    const byId = new Map(projectsJson.projects[0].project.nodes.map((node) => [node.id, node]))
+    const canvasKeyframe = byId.get(keyframe.id)
+    assert.equal(canvasKeyframe.metadata.cineMake.promptLayer, 'keyframe_static')
+    assert.equal(canvasKeyframe.metadata.cineMake.motionPrompt, keyframe.metadata.cineMake.motionPrompt)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
 function assertConnection(connections, fromNodeId, toNodeId) {
   assert.ok(connections.some((connection) => connection.fromNodeId === fromNodeId && connection.toNodeId === toNodeId), `${fromNodeId} should connect to ${toNodeId}`)
 }

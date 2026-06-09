@@ -89,6 +89,22 @@ test('readmes describe Codex-only image generation through $imagegen', async () 
   assert.doesNotMatch(chinese, /OPENAI_API_KEY/)
 })
 
+test('docs describe layered cinematic pipeline instead of repeating global rules per shot', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+  const english = await readFile(join(root, 'README.md'), 'utf8')
+  const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
+  const combined = [skill, english, chinese].join('\n')
+
+  assert.match(combined, /DIRECTOR_BIBLE/)
+  assert.match(combined, /CHARACTER_BIBLE/)
+  assert.match(combined, /SCENE_BIBLE/)
+  assert.match(combined, /ART_DIRECTION/)
+  assert.match(combined, /Shot Definition/)
+  assert.match(combined, /Motion Prompt/)
+  assert.match(combined, /global rules are not repeated per shot|全局规则不在每镜重复/u)
+  assert.match(combined, /Keyframe prompts are static|Keyframe 提示词是静态/u)
+})
+
 test('golden rain-alley example is a valid production run', async () => {
   const exampleRun = join(root, 'examples', 'rain-alley')
   const result = await validateRunDirectory({ runDir: exampleRun, stage: 'production' })
