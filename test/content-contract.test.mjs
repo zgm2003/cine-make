@@ -50,6 +50,24 @@ test('skill describes Codex-only image generation through $imagegen', async () =
   assert.doesNotMatch(skill, /OPENAI_API_KEY/)
 })
 
+test('skill routes manual Canvas work to canvas-pack instead of image generation', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+  const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
+
+  assert.match(skill, /canvas-pack/)
+  assert.match(skill, /manual Canvas generation/i)
+  assert.match(skill, /do not run `--mode visual`/i)
+  assert.match(skill, /Do not create `storyboard-images\/`/i)
+  assert.match(skill, /World Bible/)
+  assert.match(skill, /Art Direction/)
+  assert.match(skill, /Keyframes/)
+  assert.match(chinese, /canvas-pack/)
+  assert.match(chinese, /手动生成/)
+  assert.match(chinese, /World Bible/)
+  assert.match(chinese, /Art Direction/)
+  assert.match(chinese, /Keyframes/)
+})
+
 test('readmes describe Codex-only image generation through $imagegen', async () => {
   const english = await readFile(join(root, 'README.md'), 'utf8')
   const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')

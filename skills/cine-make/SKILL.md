@@ -18,6 +18,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - preserve long source stories by splitting them into feed cards instead of compressing them into one teaser;
 - generate storyboard/keyframe prompts and, in image-output mode (`visual` internally), still images into `storyboard-images/`;
 - package concrete Jimeng feed cards for external AI video generation;
+- export short-script/story prompt packs into a media-free Canvas import zip for manual Canvas generation;
 - export whole-novel episode packages into a text-only Canvas import zip when the user runs the Canvas system;
 - preserve continuity instead of relying on random video generation.
 
@@ -33,6 +34,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - For normal short-script and excerpt draft/visual runs, user-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages; see `references/novel-project-mode.md`.
 - Whole-novel Canvas export is a handoff adapter only: it writes `canvas-manifest.json` and `canvas-project.zip`; it does not generate images, videos, media files, or a web UI.
+- Manual Canvas generation is also a first-class handoff for short scripts and excerpts: use `node src/cli.mjs canvas-pack ...` when the user wants control in Canvas, says they do not want to draw/gamble/generate images here, or asks for a prompt pack. It exports a pre-production graph: Script Breakdown -> World Bible -> Character Bible / Environment Bible / Prop Bible -> Art Direction -> Shot List -> Keyframes. Do not run `--mode visual`; Do not create `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
@@ -44,7 +46,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - For multi-card outputs, the previous card's end frame is the next card's start frame. Do not generate a separate new start frame that breaks continuity.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
-## Two product modes
+## Two product modes plus Canvas handoff
 
 Use only these two user-facing modes. In CLI/internal contracts the second mode is still `visual`, but user-facing Chinese should call it `出图模式`, not `视觉包模式` or `生产模式`.
 
@@ -53,11 +55,14 @@ Use only these two user-facing modes. In CLI/internal contracts the second mode 
 | `draft` / 草稿模式 | default first pass; user is still changing story, rhythm, shots | no images | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` / 出图模式 | draft is approved; user wants references/keyframes for video tools | yes, still images only when image generation is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
-Do not invent extra user modes. Keep internal/debug artifacts internal.
+`canvas-pack` is not a third draft/visual mode. It is a handoff command for manual Canvas generation. It writes `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; it does not generate images, videos, media files, or `storyboard-images/`. The Canvas graph covers Script Breakdown, World Bible, Character Bible, Environment Bible, Prop Bible, Art Direction, Shot List, and Keyframes.
+
+Do not invent extra modes. Keep internal/debug artifacts internal.
 
 ## Source-size routing
 
-- Short story fragments, scripts, ad briefs, shotlists, and pasted excerpts use the existing draft -> visual flow below.
+- Short story fragments, scripts, ad briefs, shotlists, and pasted excerpts use the existing draft -> visual flow below unless the user wants manual Canvas generation.
+- If the user says they do not want to "抽卡", "出图", "generate images", or wants to import into Canvas manually, use `canvas-pack` directly.
 - A whole novel or large `.txt` file uses novel project mode. Read `references/novel-project-mode.md` before operating it.
 - Never paste the whole source into context. Use the project tasks to summarize bounded chapters and build the bible from accepted summaries.
 - Generate S/A character references only after bible planning and visual-bible planning; do not create identity assets from raw unsummarized source.
@@ -78,6 +83,10 @@ $cine-make 这个草稿可以，继续进入出图模式，生成首尾控制帧
 
 ```text
 $cine-make 用这张人物图锁定女主，把下面剧情做成竖屏真人电影质感AI短剧出图包：……
+```
+
+```text
+$cine-make 我不想在这里抽卡，直接给我 Canvas 提示词包，我导入画布手动生成：……
 ```
 
 Do not require prompts like:
@@ -104,7 +113,12 @@ The compiler root is the directory containing `src/cli.mjs`.
 When triggered by a story-to-video-preproduction request:
 
 1. Identify the source material: novel excerpt, rough script, ad brief, shotlist, or voiceover script.
-2. Run the compiler in draft mode first:
+2. If the user wants manual Canvas generation, prompt packs, or says they do not want local image generation, run:
+   ```bash
+   node src/cli.mjs canvas-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
+   ```
+   This is the preferred manual Canvas generation path. It creates separate Script Breakdown, World Bible, Character Bible, Environment Bible, Prop Bible, Art Direction, Shot List, and Keyframes nodes. Character, environment, and prop bible nodes stay independent; each Keyframes node only connects to the exact character/environment/prop/art-direction/shot context it needs. Do not create video segment nodes. Do not run `--mode visual`; Do not create `storyboard-images/`.
+3. Otherwise, run the compiler in draft mode first:
    ```bash
    node src/cli.mjs --mode draft --out <run-dir> --aspect <ratio> --style <style> "<source material>"
    ```
@@ -116,17 +130,17 @@ When triggered by a story-to-video-preproduction request:
    ```bash
    --character-image <path> --scene-image <path> --style-image <path>
    ```
-3. Read `deliverable.md` first. Treat it as the user-facing north star.
+4. Read `deliverable.md` first. Treat it as the user-facing north star.
    - In draft mode, the first understanding sections should be `成片预览`, `故事全流程`, and `精简分镜`.
    - `视频工具投喂包` should come after the user understands the story and storyboard.
    - The feed pack must be operational: upload images, copy prompt, preserve subject, timeline, camera language, lighting/art direction, continuity, and negative constraints.
    - Do not make the user open internal task trees just to understand what to do.
    - If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
-4. If the user approves the draft and wants images, run image-output mode (`--mode visual`):
+5. If the user approves the draft and wants images, run image-output mode (`--mode visual`):
    ```bash
    node src/cli.mjs --mode visual --out <run-dir> --aspect <ratio> --style <style> [--character-image <path>] "<source material>"
    ```
-5. In image-output mode, generate still images with `$imagegen` in this order:
+6. In image-output mode, generate still images with `$imagegen` in this order:
    - `storyboard-images/character-reference.png` only if no character image was provided;
    - `storyboard-images/scene-reference.png` only if no scene image was provided;
    - each 15-second segment start frame, e.g. `storyboard-images/segment-01-start.png`;
@@ -134,7 +148,7 @@ When triggered by a story-to-video-preproduction request:
    - each segment end frame, e.g. `storyboard-images/segment-01-end.png`;
    For segment 2 and later, reuse the previous end frame as the new start frame: `segment-01-end.png` is segment 2's start frame.
    Use `$imagegen` directly when the user asks for still images. Do not route image generation through external image APIs.
-6. Summarize only the deliverable path, storyboard folder, mode, and next action.
+7. Summarize only the relevant user-facing package path(s), mode/handoff type, and next action.
 
 ## Output rules
 
@@ -144,6 +158,7 @@ When triggered by a story-to-video-preproduction request:
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
 - Each video-tool feed card must keep uploaded images at or under 9 total. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
+- If the user says `Canvas 提示词包`, `导入画布`, `手动生成`, or `不想抽卡`, treat it as the `canvas-pack` handoff, not as `visual` mode.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
 - If character identity is under-specified, generate or request character references before final storyboards.
@@ -164,8 +179,8 @@ Before saying a Cine Make run is ready, report:
 
 - compiler command run;
 - generated run directory;
-- mode: `draft` / 草稿模式 or `visual` / 出图模式;
-- `deliverable.md` path;
+- mode: `draft` / 草稿模式, `visual` / 出图模式, or `canvas-pack` / manual Canvas generation handoff;
+- `deliverable.md` path, or for `canvas-pack`: `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`;
 - whether still images were generated or only prompts were prepared;
 - video prompt pack status; mention a platform only if the user explicitly named one;
 - continuity review result;

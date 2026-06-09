@@ -159,6 +159,19 @@ test('composeDraftAssets extracts isolated-mansion cast into cinematic character
   assert.doesNotMatch(leiShot.image_prompt, /preset lock: protagonist .*林默/u)
 })
 
+test('short-drama script mentioning a devil does not switch to folklore fantasy template', async () => {
+  const source = `${isolatedMansionScript}\n阿杰（冷笑）：“你这个魔鬼……你到底杀了我多少次？！”`
+  const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', source]))
+  const draft = composeDraftAssets(contract)
+  const serialized = JSON.stringify(draft)
+
+  assert.match(source, /魔鬼/u)
+  assert.equal(contract.contentType, 'short_drama_script')
+  assert.match(serialized, /林默/)
+  assert.match(serialized, /孤岛别墅客厅/)
+  assert.doesNotMatch(serialized, /莫川|黄不语|双耳三足香炉|陈家老祖/u)
+})
+
 test('short-drama script uses source-paced duration instead of stretching explicit runtime', async () => {
   const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', isolatedMansionScript]))
   const draft = composeDraftAssets(contract)

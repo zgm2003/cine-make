@@ -45,14 +45,27 @@ segment-02-end.png
 
 Cine Make 默认每 15 秒即梦投喂卡约 4 个分镜关键帧，给运镜、表演和悬疑停顿留时间。每段仍然最多上传 9 张图片。角色图、场景图、首帧、分镜关键帧、尾帧都算图片。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
 
+如果你不想在 Cine Make 里抽卡出图，而是想导入 Canvas 手动生成，使用 `canvas-pack`，只交付：
+
+```text
+canvas-project.zip
+canvas-manifest.json
+prompt-pack.md
+README.md
+```
+
+`canvas-project.zip` 可以直接在 Canvas 里导入。里面是前期制作图谱：Script Breakdown、World Bible、Character Bible、Environment Bible、Prop Bible、Art Direction、Shot List 和 Keyframes。人物、场景、道具都是独立 bible 节点；每个 Keyframe 只连接它实际需要的人物、场景、道具、Art Direction 和对应分镜，不生成视频段节点。
+
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 
-## 两种模式
+## 两种模式 + Canvas 提示词包
 
 | 模式 | 用途 | 图片 | 输出 |
 | --- | --- | --- | --- |
 | `draft` | 快速看故事、节奏和分镜 | 不生成图片 | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` | 草稿确认后进入出图模式 | 生成或准备静态图 | `deliverable.md` + `storyboard-images/` |
+
+`canvas-pack` 不是第三种出图模式，而是给 Canvas 手动生成用的提示词包交接命令。它不生成图片、不生成视频、不创建 `storyboard-images/`。
 
 ### 草稿模式
 
@@ -159,6 +172,20 @@ cine-make --mode visual \
 
 这些都不是必填项。
 
+### Canvas 提示词包
+
+如果你要在 `E:/admin_go/canvas_front_next` 之类的 Canvas 系统里手动生成，不要跑 `--mode visual`，直接跑：
+
+```bash
+cine-make canvas-pack \
+  --input ./script.txt \
+  --out .cine-make-runs/demo-canvas-pack \
+  --aspect 9:16 \
+  --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调"
+```
+
+导入 `canvas-project.zip` 后，先读 Script Breakdown / World Bible，确认世界规则；再读 Character Bible、Environment Bible、Prop Bible 和 Art Direction；最后只生成 Keyframes 节点。这样每个关键帧只吃自己需要的人物、场景、道具、视觉风格和对应 Shot List，不会把所有模块乱牵到一起。
+
 ### 长篇小说项目模式
 
 整本小说或很大的 `.txt` 文件使用项目模式。不要把整本小说塞进一次上下文；先导入项目，再按章节任务做有边界的摘要，确认摘要后生成系列 bible、规划视觉 bible，最后按集导出现有 Cine Make 草稿交付物。
@@ -218,6 +245,8 @@ cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容
 4. 在即梦里生成片段；
 5. 多段结果外部剪辑拼接，后一段首帧必须等于前一段尾帧。
 
+如果使用 `canvas-pack`，用户只导入 `canvas-project.zip`，然后在 Canvas 里按节点顺序手动生成。
+
 ## 开发
 
 ```bash
@@ -255,6 +284,12 @@ Cine Make 负责前期制片：
 
 ```text
 故事素材 -> deliverable.md -> storyboard-images/ -> 视频工具投喂包 -> 外部视频工具
+```
+
+或者：
+
+```text
+故事素材 -> canvas-pack -> canvas-project.zip -> Canvas 手动生成
 ```
 
 外部视频工具负责最终合成：

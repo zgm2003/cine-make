@@ -735,6 +735,10 @@ function isFolkloreFantasyText(sourceText) {
   return /(黄皮|黄不语|讨封|香炉|神龛|祠堂|牌位|列祖列宗|祖宗|老祖|香火|供香|飨食|鬼|精怪|妖)/u.test(text)
 }
 
+function usesFolkloreFantasyTemplate(contract) {
+  return contract.contentType === 'novel_excerpt' && isFolkloreFantasyText(contract.sourceText)
+}
+
 function firstMatch(text, patterns, fallback) {
   for (const pattern of patterns) {
     const match = text.match(pattern)
@@ -1084,7 +1088,7 @@ function selectBlueprints(count) {
 function selectBlueprintsForContract(contract, count) {
   if (contract.contentType === 'enterprise_documentary') return selectEnterpriseBlueprints(count)
   if (contract.contentType === 'cultivation_transmigration' || isCultivationTransmigrationText(contract.sourceText)) return selectCultivationTransmigrationBlueprints(count)
-  if (isFolkloreFantasyText(contract.sourceText)) return selectFolkloreFantasyBlueprints(count)
+  if (usesFolkloreFantasyTemplate(contract)) return selectFolkloreFantasyBlueprints(count)
   return selectBlueprints(count)
 }
 
@@ -1124,7 +1128,7 @@ export function composeDraftAssets(contract) {
     ? inferEnterpriseAnchors(contract)
     : contract.contentType === 'cultivation_transmigration' || isCultivationTransmigrationText(contract.sourceText)
       ? inferCultivationTransmigrationAnchors(contract)
-    : isFolkloreFantasyText(contract.sourceText)
+    : usesFolkloreFantasyTemplate(contract)
       ? inferFolkloreFantasyAnchors(contract)
     : inferAnchors(contract)
   const useScriptProfile = anchors.strategy === 'suspense_drama' && isScriptProfileUseful(scriptProfile)
