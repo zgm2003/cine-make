@@ -26,31 +26,48 @@ storyboard-images/
 1. Film preview
 2. Story flow
 3. Short-film plan
-4. Layered director system: `DIRECTOR_BIBLE`, `CHARACTER_BIBLE`, `SCENE_BIBLE`, `ART_DIRECTION`
-5. `STORYBOARD: Shot Definition`
-6. `KEYFRAME_PROMPTS`
-7. `MOTION_PROMPTS`
-8. Compact storyboard
-9. Image-output checklist
-10. Video-tool feed pack
-11. Visual references
-12. Continuity notes
+4. Director judgment layers: `SCRIPT_BEATS`, `DIRECTOR_DECISION`, `ENVIRONMENT_BIBLES`, `ANCHOR_POLICY`
+5. Layered director system: `DIRECTOR_BIBLE`, `CHARACTER_BIBLE`, `SCENE_BIBLE`, `ART_DIRECTION`
+6. `STORYBOARD: Shot Definition`
+7. `Storyboard Version A: Full Coverage` and `Storyboard Version B: Director Cut`
+8. `KEYFRAME_PROMPTS`
+9. `MOTION_PROMPTS`
+10. `QUALITY_CHECK` and `AI_RISK_WARNINGS`
+11. Compact storyboard, image-output checklist, and video-tool feed pack
+12. Visual references and continuity notes
 
 ### Layered cinematic pipeline
 
 Cine Make outputs a Structured Cinematic Pipeline instead of one overloaded prompt:
 
 ```text
+SCRIPT_BEATS        # narrative beat function before shot design
+DIRECTOR_DECISION   # shot keep / merge / delete judgment
 DIRECTOR_BIBLE      # global directing rules
 CHARACTER_BIBLE     # actor / costume / behavior continuity
-SCENE_BIBLE         # spatial continuity
+ENVIRONMENT_BIBLES  # multi-location spatial continuity array
 ART_DIRECTION       # color, light, camera language
-Shot Definition     # static shot design
+ANCHOR_POLICY       # global / character / story / per-shot anchor limits
+Shot Definition     # static shot design with shot_function and audience_takeaway
+Director Cut        # recommended reduced storyboard, not just full coverage
 Keyframe Prompt     # static image prompt for the image model
 Motion Prompt       # minimal state transition for the video model
+QUALITY_CHECK       # prompt and storyboard self-checks
+AI_RISK_WARNINGS    # image/video generation risk warnings
 ```
 
 global rules are not repeated per shot. Each shot carries only its local goal. Keyframe prompts are static image prompts; Motion Prompt entries describe one main action, micro-performance, and camera movement for video generation.
+
+### Director decision layer
+
+Cine Make's next layer is judgment, not longer prompts. `SCRIPT_BEATS` names what each story beat does; `DIRECTOR_DECISION` asks whether each shot adds new information, changes relationships, escalates pressure, reveals a prop, misleads the audience, strengthens the countdown/loop mechanism, or pushes the final hook. In other words, each shot must prove why it should stay.
+
+`ENVIRONMENT_BIBLES` replaces the old single-scene assumption for multi-location scripts. Each shot can bind to an environment id and mode such as reality, hallucination, or distorted reality.
+
+`ANCHOR_POLICY` separates global, character, story, and per-shot anchors. Not every anchor enters every frame: each shot should use at most one primary anchor and at most two secondary anchors. Phone/countdown/weapon/blood-text props appear only when they serve the shot function.
+
+Draft output keeps `Storyboard Version A: Full Coverage` for review, but recommends `Storyboard Version B: Director Cut` for generation. `QUALITY_CHECK` and `AI_RISK_WARNINGS` flag common AI failures, including macro shot complex action mismatch, wide shot readable text mismatch, overloaded multi-character frames, forced unnecessary props, Keyframe prompts polluted by Motion Prompt language, and Motion Prompts with too many main actions.
+
 
 `storyboard-images/` contains or prepares:
 

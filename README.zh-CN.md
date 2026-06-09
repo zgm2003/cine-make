@@ -26,31 +26,48 @@ storyboard-images/
 1. 成片预览
 2. 故事全流程
 3. 短片方案
-4. 分层导演系统：`DIRECTOR_BIBLE`、`CHARACTER_BIBLE`、`SCENE_BIBLE`、`ART_DIRECTION`
-5. `STORYBOARD：Shot Definition`
-6. `KEYFRAME_PROMPTS`
-7. `MOTION_PROMPTS`
-8. 精简分镜
-9. 出图清单
-10. 视频工具投喂包
-11. 视觉参考
-12. 连续性注意事项
+4. 导演判断层：`SCRIPT_BEATS`、`DIRECTOR_DECISION`、`ENVIRONMENT_BIBLES`、`ANCHOR_POLICY`
+5. 分层导演系统：`DIRECTOR_BIBLE`、`CHARACTER_BIBLE`、`SCENE_BIBLE`、`ART_DIRECTION`
+6. `STORYBOARD：Shot Definition`
+7. `Storyboard Version A: Full Coverage` 和 `Storyboard Version B: Director Cut` / 导演删减版
+8. `KEYFRAME_PROMPTS`
+9. `MOTION_PROMPTS`
+10. `QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS`
+11. 精简分镜、出图清单、视频工具投喂包
+12. 视觉参考和连续性注意事项
 
 ### 分层导演管线
 
 Cine Make 现在按 Structured Cinematic Pipeline 输出，而不是把所有信息塞进一个超长 prompt：
 
 ```text
+SCRIPT_BEATS        # 先判断叙事节拍功能
+DIRECTOR_DECISION   # 决定镜头保留 / 合并 / 删除
 DIRECTOR_BIBLE      # 全局导演规则
 CHARACTER_BIBLE     # 人物一致性
-SCENE_BIBLE         # 空间连续性
+ENVIRONMENT_BIBLES  # 多场景环境圣经数组
 ART_DIRECTION       # 色彩、光影、镜头语言
-Shot Definition     # 静态镜头定义
+ANCHOR_POLICY       # 全局 / 角色 / 剧情 / 单镜锚点策略
+Shot Definition     # 带 shot_function 和 audience_takeaway 的静态镜头定义
+Director Cut        # 默认推荐的导演删减版，而不是只做完整拆解
 Keyframe Prompt     # 图片模型用的静态关键帧提示词
 Motion Prompt       # 视频模型用的最小运动提示词
+QUALITY_CHECK       # 质量检查
+AI_RISK_WARNINGS    # AI 生成风险提示
 ```
 
 全局规则不在每镜重复；每个镜头只保留本镜头的局部目标。Keyframe 提示词是静态图片提示，不写视频运动；Motion Prompt 才写单镜头单动作、微表情和镜头运动。
+
+### 导演判断层
+
+Cine Make 下一层不是把提示词写更长，而是判断得更准。`SCRIPT_BEATS` 先标记每个剧情节拍的功能；`DIRECTOR_DECISION` 要求每个镜头必须证明自己不可删除：它是否提供新信息、改变人物关系、升级情绪压力、揭示关键道具、误导观众、强化倒计时/循环机制，或推进结尾钩子。
+
+`ENVIRONMENT_BIBLES` / 环境圣经数组用于多场景剧本，不再假设只有一个 `SCENE_BIBLE`。每个镜头可以绑定环境 id，并标记 reality / hallucination / distorted reality 等空间模式。
+
+`ANCHOR_POLICY` / 锚点策略会区分全局锚点、角色锚点、剧情锚点和单镜锚点。不是所有锚点都要进每一镜：每镜最多 1 个 primary anchor，最多 2 个 secondary anchors。手机、倒计时、武器、血字等道具只在服务本镜功能时入画。
+
+草稿会保留 `Storyboard Version A: Full Coverage` 方便检查是否漏剧情，但默认推荐 `Storyboard Version B: Director Cut` / 导演删减版用于实际生成。`QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS` 会专门标出常见翻车点：macro 镜头承担复杂表演、wide 镜头承担文字阅读、多人镜头信息过载、每镜强塞无关道具、Keyframe 混入 Motion 描述、Motion Prompt 含多个主动作。
+
 
 `storyboard-images/` 是图片资产目录，包含或准备：
 

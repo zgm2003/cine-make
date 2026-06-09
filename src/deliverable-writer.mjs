@@ -194,6 +194,260 @@ function composeStoryFlow({ contract, shotlist }) {
   })
 }
 
+function storyFunctionForShot(shot, index, total) {
+  const text = compactAction(`${shot.action ?? ''} ${shot.blocking ?? ''} ${shot.composition ?? ''}`)
+  if (index === 0) return '开场 / 空间与危险建立'
+  if (index === total - 1) return '结尾钩子 / 状态重置'
+  if (/刻字|10分钟|记忆只有|倒计时|00:00:00|手机/u.test(text)) return '信息揭示 / 核心机制强化'
+  if (/三个人|另外三人|安娜|雷队|阿杰|嫌疑/u.test(text)) return '人物关系建立 / 嫌疑结构'
+  if (/质问|拿枪|逼|怒|冲突|尸体|被杀/u.test(text)) return '冲突升级'
+  if (/凯撒|谎|误导|阿杰|冷笑/u.test(text)) return '误导 / 反派钩子'
+  if (/精神病院|幻觉|闪回|真相|现实/u.test(text)) return '真相靠近 / 现实裂缝'
+  return '情绪推进'
+}
+
+function audienceQuestionForShot(shot, index, total) {
+  const text = compactAction(shot.action)
+  if (index === 0) return '这里为什么危险，主角被困在哪里？'
+  if (index === total - 1) return '重置之后谁会控制局面？'
+  if (/刻字|10分钟|倒计时/u.test(text)) return '林默为什么只能记住10分钟？这个规则会如何反噬他？'
+  if (/血|尸体|被杀/u.test(text)) return '血是谁的，刚刚到底发生了什么？'
+  if (/安娜|雷队|阿杰|三个人/u.test(text)) return '这几个人谁可信，谁在撒谎？'
+  if (/凯撒|阿杰/u.test(text)) return '凯撒是真凶，还是有人在现场编造？'
+  return '这个信息会把林默推向哪个错误判断？'
+}
+
+function visualInfoForShot(shot) {
+  const text = compactAction(shot.action)
+  if (/刻字|手臂/u.test(text)) return '手臂刻字必须可读，血迹和刀痕清楚'
+  if (/倒计时|手机|00:00:00/u.test(text)) return '倒计时手机屏幕是 primary anchor'
+  if (/血手|满手鲜血|双手/u.test(text)) return '林默血手和惊醒状态'
+  if (/安娜|雷队|阿杰|三个人/u.test(text)) return '三人方位和嫌疑结构'
+  if (/凯撒|阿杰/u.test(text)) return '阿杰低位伪装和眼神异常'
+  if (/枪|雷队/u.test(text)) return '雷队堵门、枪、出口压力'
+  return shotPurpose(shot)
+}
+
+function emotionalPressureForShot(shot, index, total) {
+  const text = compactAction(shot.action)
+  if (index === total - 1 || /归零|死亡|尸体|尖叫|真相|杀/u.test(text)) return '爆发'
+  if (/质问|枪|凯撒|刻字|血/u.test(text)) return '高'
+  if (/三个人|安抚|闪回|倒水/u.test(text)) return '中'
+  return '低'
+}
+
+function mustKeepShot(shot, index, total) {
+  const text = compactAction(shot.action)
+  return index === 0 || index === total - 1 || /(刻字|10分钟|倒计时|00:00:00|血手|尸体|枪|凯撒|精神病院|真相|死亡|反转)/u.test(text)
+}
+
+function mergeCandidate(shot, index, total) {
+  if (mustKeepShot(shot, index, total)) return false
+  const text = compactAction(shot.action)
+  return !/(新信息|关键|揭示|反转|死亡|归零|刻字|倒计时)/u.test(text)
+}
+
+function composeScriptBeats(shotlist) {
+  const total = shotlist.length
+  return shotlist.flatMap((shot, index) => [
+    `### B${String(index + 1).padStart(2, '0')} -> ${shot.shot_id}`,
+    '',
+    `- story_function: ${storyFunctionForShot(shot, index, total)}`,
+    `- audience_question: ${audienceQuestionForShot(shot, index, total)}`,
+    `- required_visual_info: ${visualInfoForShot(shot)}`,
+    `- emotional_pressure: ${emotionalPressureForShot(shot, index, total)}`,
+    `- can_be_merged: ${mergeCandidate(shot, index, total)}`,
+    `- must_keep: ${mustKeepShot(shot, index, total)}`,
+    ''
+  ])
+}
+
+function shotFunction(shot, index, total) {
+  return storyFunctionForShot(shot, index, total)
+}
+
+function audienceTakeaway(shot, index, total) {
+  const text = compactAction(shot.action)
+  if (/刻字|10分钟/u.test(text)) return '林默的记忆规则和凶手假设被明确建立。'
+  if (/倒计时|归零|00:00:00/u.test(text)) return '循环机制生效，林默回到无知状态。'
+  if (/血手|满手鲜血/u.test(text)) return '林默可能刚参与过暴力事件，但他自己不知道。'
+  if (/安娜|雷队|阿杰|三个人/u.test(text)) return '房间里形成嫌疑人棋盘。'
+  if (/凯撒|阿杰/u.test(text)) return '阿杰开始把观众和林默带向外部凶手叙事。'
+  if (index === 0) return '主角被放进封闭危险空间。'
+  if (index === total - 1) return '本段以钩子结束，观众等待下一轮循环。'
+  return '情绪或空间压力被推进。'
+}
+
+function visualPriority(shot) {
+  const primary = visualInfoForShot(shot)
+  const text = compactAction(shot.action)
+  const secondary = /手机|倒计时/u.test(text) ? '血手 / 屏幕冷光' : /刻字/u.test(text) ? '血手 / 袖口' : /阿杰/u.test(text) ? '拐杖 / 腿部支架' : '人物眼神 / 关键道具'
+  const background = /客厅|别墅|安娜|雷队|阿杰/u.test(text) ? '孤岛别墅客厅空间方位' : '当前环境连续性'
+  return { primary, secondary, background }
+}
+
+function composeDirectorDecision(shotlist) {
+  const total = shotlist.length
+  return shotlist.flatMap((shot, index) => {
+    const canMerge = mergeCandidate(shot, index, total)
+    return [
+      `### ${shot.shot_id}`,
+      '',
+      `- shot_purpose: ${shotFunction(shot, index, total)}`,
+      `- new_information: ${audienceTakeaway(shot, index, total)}`,
+      `- emotion_upgrade: ${emotionalPressureForShot(shot, index, total)}`,
+      `- delete_cost: ${mustKeepShot(shot, index, total) ? '删除会损失关键规则、误导、冲突或钩子。' : '可和相邻镜头合并，前提是不损失观众读到的信息。'}`,
+      `- merge_suggestion: ${canMerge ? '可合并到相邻镜头，避免平均切碎。' : '保留为独立镜头。'}`,
+      ''
+    ]
+  })
+}
+
+function slugEnvironment(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]+/gu, '-').replace(/^-|-$/g, '') || 'main'
+}
+
+function inferEnvironmentBibles({ contract, shotlist }) {
+  const text = [contract.sourceText, ...shotlist.flatMap((shot) => [shot.scene, shot.action])].filter(Boolean).join('\n')
+  const envs = []
+  const add = (id, name, mode, description) => {
+    if (!envs.some((env) => env.id === id)) envs.push({ id, name, mode, description })
+  }
+  if (/孤岛|别墅|客厅/u.test(text)) add('E01_island_villa_living_room', '孤岛别墅客厅', 'reality', '沙发、茶几、门口、窗户、角落方位稳定；暴雨窗光和室内低光持续。')
+  if (/走廊/u.test(text)) add('E02_dark_corridor', '阴暗走廊', 'reality', '狭窄低天花，墙灯闪烁，脚步和拐杖声突出。')
+  if (/浴室|门口/u.test(text)) add('E03_bathroom_doorway', '浴室门口', 'reality', '不可见杀戮区入口，门缝、湿地面、血迹承担悬疑。')
+  if (/禁闭室|幻觉|闪回|精神病院/u.test(text)) add('E04_asylum_cell_hallucination', '精神病院禁闭室幻觉', 'hallucination', '闪电或耳鸣触发，别墅构图短暂变成冷白软墙。')
+  if (/监护室|现实|束缚|医生|护士/u.test(text)) add('E05_asylum_monitoring_room_reality', '精神病院监护室现实', 'reality', '冷白荧光灯、束缚椅、防撞软墙、心电监护仪。')
+
+  if (!envs.length) {
+    const first = uniqueScenes(shotlist)[0] ?? '主场景'
+    add(`E01_${slugEnvironment(first)}`, first, 'reality', '保持空间结构、光线方向、材质和入口关系稳定。')
+  }
+  return envs
+}
+
+function composeEnvironmentBibles({ contract, shotlist }) {
+  return inferEnvironmentBibles({ contract, shotlist }).flatMap((env) => [
+    `### ${env.id}`,
+    '',
+    `- name: ${env.name}`,
+    `- environment_mode: ${env.mode}`,
+    `- continuity_rule: ${env.description}`,
+    env.id.includes('E05') ? '- transition_environment: from E01_island_villa_living_room to E05_asylum_monitoring_room_reality; trigger: thunder / wall peeling / corpse disappearance' : '',
+    ''
+  ].filter(Boolean))
+}
+
+function anchorsForShot(shot) {
+  const text = compactAction(`${shot.action ?? ''} ${sanitizeStaticShotText(shot.composition ?? '')} ${shot.blocking ?? ''}`)
+  if (/倒计时|手机|00:00:00/u.test(text)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
+  if (/刻字|手臂/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
+  if (/阿杰|凯撒/u.test(text)) return { primary: '阿杰眼神/嘴角', secondary: ['拐杖', '腿部支架'] }
+  if (/雷队|枪/u.test(text)) return { primary: '雷队堵门', secondary: ['手枪', '出口'] }
+  if (/安娜|药|倒水/u.test(text)) return { primary: '安娜安抚动作', secondary: ['热水杯', '药瓶'] }
+  if (/血手|鲜血/u.test(text)) return { primary: '林默血手', secondary: ['沙发', '低光'] }
+  return { primary: '本镜头主要视觉信息', secondary: ['环境连续性'] }
+}
+
+function composeAnchorPolicy({ characters = [], shotlist = [] }) {
+  return [
+    '## ANCHOR_POLICY',
+    '',
+    '规则：不是所有锚点都要进入每一镜。每镜最多 1 个 primary anchor，最多 2 个 secondary anchors。',
+    '',
+    '### global_anchors',
+    '',
+    '- 同一批演员脸、发型、体型和服装材质。',
+    '- 暴雨孤岛心理惊悚风格 / 低饱和蓝灰 / practical lighting。',
+    '- 空间方位连续，不随机换房间。',
+    '',
+    '### character_anchors',
+    '',
+    ...(characters.length ? characters.map((character) => `- ${character.identity_anchor ?? character.name}: ${character.costume_anchor ?? character.costume ?? '固定服装'} / ${character.prop_anchor ?? (character.props ?? []).join('、') ?? '关键道具'}`) : ['- 主角：同一演员、同一服装、同一道具状态。']),
+    '',
+    '### story_anchors',
+    '',
+    '- 10分钟倒计时',
+    '- 手臂刻字',
+    '- 血手 / 血迹',
+    '- 拍立得照片 / 药丸 / 血字等只在对应剧情镜头入画',
+    '',
+    '### per_shot_anchors',
+    '',
+    ...shotlist.map((shot) => {
+      const anchors = anchorsForShot(shot)
+      return `- ${shot.shot_id}: primary=${anchors.primary}; secondary=${anchors.secondary.slice(0, 2).join('、')}`
+    })
+  ]
+}
+
+function composeStoryboardVersionA(shotlist) {
+  return [
+    '## Storyboard Version A: Full Coverage',
+    '',
+    '完整覆盖版：保留所有已拆镜头，用于检查剧情信息是否遗漏。',
+    '',
+    ...shotlist.map((shot) => `- ${shot.shot_id}: ${shotPurpose(shot)} / ${shot.shot_size} / ${shot.lens ?? 'same lens'}`)
+  ]
+}
+
+function directorCutShots(shotlist) {
+  const total = shotlist.length
+  const keep = shotlist.filter((shot, index) => mustKeepShot(shot, index, total))
+  const target = Math.min(12, Math.max(6, Math.ceil(shotlist.length * 0.7)))
+  for (const shot of shotlist) {
+    if (keep.length >= target) break
+    if (!keep.includes(shot)) keep.push(shot)
+  }
+  return keep.sort((a, b) => shotlist.indexOf(a) - shotlist.indexOf(b))
+}
+
+function composeStoryboardVersionB(shotlist) {
+  const cut = directorCutShots(shotlist)
+  return [
+    '## Storyboard Version B: Director Cut',
+    '',
+    '导演删减版：优先保留新信息、关系变化、关键道具、误导、反转和结尾钩子；默认推荐用这一版进入生成。',
+    '',
+    ...cut.map((shot) => `- ${shot.shot_id}: ${shotPurpose(shot)}`),
+    '',
+    '### 镜头合并建议',
+    '',
+    ...shotlist
+      .filter((shot, index) => !cut.includes(shot) || mergeCandidate(shot, index, shotlist.length))
+      .map((shot) => `- ${shot.shot_id}: 可考虑合并到相邻镜头，除非它承担明确新信息。`)
+  ]
+}
+
+function composeQualityCheck(shotlist) {
+  return [
+    '## QUALITY_CHECK',
+    '',
+    '- story_clarity: 检查前10秒是否让观众知道主角处于危险中；每段结尾是否有明确钩子。',
+    '- shot_efficiency: 检查是否存在只重复气氛、不推进信息的镜头；检查是否有可以合并的人物介绍镜头。',
+    '- prompt_control: 检查是否每镜强制出现不必要道具；Keyframe Prompt 是否混入 Motion 描述；Motion Prompt 是否包含多个主动作。',
+    '- continuity: 检查人物是否只在需要的镜头出现；场景是否绑定正确 Environment Bible；道具出现/消失是否有逻辑。',
+    `- director_cut_ratio: ${directorCutShots(shotlist).length}/${shotlist.length} shots retained for recommended director cut.`
+  ]
+}
+
+function composeAIRiskWarnings(shotlist) {
+  const warnings = []
+  for (const shot of shotlist) {
+    const text = compactAction(`${shot.action ?? ''} ${sanitizeStaticShotText(shot.composition ?? '')} ${shot.shot_size ?? ''}`)
+    if (/macro|insert/i.test(shot.shot_size ?? '') && /奔跑|争吵|多人|复杂|走位|扑/u.test(text)) warnings.push(`- ${shot.shot_id}: macro 镜头承担复杂表演，建议拆镜或改 medium close-up。`)
+    if (/wide/i.test(shot.shot_size ?? '') && /文字|刻字|00:|读清|手机屏/u.test(text)) warnings.push(`- ${shot.shot_id}: wide 镜头承担文字阅读，建议改 close-up / insert。`)
+    if (/必须作为稳定视觉锚点/u.test(text)) warnings.push(`- ${shot.shot_id}: 每镜强制出现不必要道具风险，按 ANCHOR_POLICY 限制 primary/secondary anchors。`)
+  }
+  return [
+    '## AI_RISK_WARNINGS',
+    '',
+    warnings.length ? warnings.join('\n') : '- 暂未发现高风险镜头；仍需人工检查 macro/文字、多人物信息过载和不必要道具入画。',
+    '',
+    '重点错误类型：macro 镜头承担复杂表演；wide 镜头承担文字阅读；每镜强制出现不必要道具。'
+  ]
+}
+
 function composeShotTable(shotlist) {
   return [
     '| 镜头 | 时长 | 景别 | 焦段 | 运镜 | 空间调度 | 画面动作 | 故事板图 |',
@@ -263,32 +517,49 @@ function composeArtDirection({ contract }) {
   ]
 }
 
-function composeShotDefinitionLine(shot) {
+function composeShotDefinitionLine(shot, index = 0, total = 1) {
+  const priority = visualPriority(shot)
   return [
-    `- Static Shot Definition：${shot.shot_size}，${shot.lens ?? 'same lens system'}，${compactAction(shot.composition)}。`,
+    `- linked_beat: B${String(index + 1).padStart(2, '0')}`,
+    `- shot_function: ${shotFunction(shot, index, total)}`,
+    `- audience_takeaway: ${audienceTakeaway(shot, index, total)}`,
+    `- visual_priority: primary=${priority.primary}; secondary=${priority.secondary}; background=${priority.background}`,
+    `- Static Shot Definition：${shot.shot_size}，${shot.lens ?? 'same lens system'}，${sanitizeStaticShotText(shot.composition)}。`,
     `- 人物/调度：${compactAction(shot.blocking ?? '按上一镜空间连续调度')}。`,
     `- 画面状态：${shotPurpose(shot)}。`,
-    `- 光影/连续性：${compactAction(shot.lighting ?? '按 Art Direction 延续')}；${compactAction(shot.continuity_from_previous ?? '保持上一镜连续性')}。`
+    `- 光影/连续性：${compactAction(shot.lighting ?? '按 Art Direction 延续')}；${sanitizeStaticShotText(shot.continuity_from_previous ?? '保持上一镜连续性')}。`
   ]
 }
 
 function composeShotDefinitions(shotlist) {
-  return shotlist.flatMap((shot) => [
+  return shotlist.flatMap((shot, index) => [
     `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
     '',
-    ...composeShotDefinitionLine(shot),
+    ...composeShotDefinitionLine(shot, index, shotlist.length),
     ''
   ])
 }
 
+function sanitizeStaticShotText(value) {
+  return compactAction(value)
+    .replace(/；[^。；，,]*必须作为稳定视觉锚点/gu, '')
+    .replace(/[,， ]*[^,，。；]*must[^,，。；]*stable visual anchor[^,，。；]*/giu, '')
+    .replace(/、?手机10分钟倒计时\s*(与|和)\s*记忆清空倒计时/gu, '')
+    .replace(/、?10分钟倒计时\s*(与|和)\s*记忆清空倒计时/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 function composeStaticKeyframePrompt(shot) {
+  const priority = visualPriority(shot)
   return [
     'single cinematic keyframe, photorealistic live-action film still',
-    `Static Shot Definition: ${shot.shot_size}, ${shot.lens ?? 'same lens system'}, ${compactAction(shot.composition)}`,
+    `Static Shot Definition: ${shot.shot_size}, ${shot.lens ?? 'same lens system'}, ${sanitizeStaticShotText(shot.composition)}`,
+    `Visual priority: primary=${priority.primary}; secondary=${priority.secondary}; background=${priority.background}`,
     `Subject/blocking: ${compactAction(shot.blocking ?? 'spatially continuous blocking')}`,
     `Visible state: ${shotPurpose(shot)}`,
     `Lighting: ${compactAction(shot.lighting ?? 'motivated low-key cinematic lighting')}`,
-    `Continuity: ${compactAction(shot.continuity_from_previous ?? 'same actor, same location, same prop state')}`,
+    `Continuity: ${sanitizeStaticShotText(shot.continuity_from_previous ?? 'same actor, same location, same prop state')}`,
     'No motion blur, no video transition, no poster layout, no subtitles, no watermark, no extra characters.'
   ].join(', ')
 }
@@ -412,7 +683,7 @@ function composeTimeline(segment) {
     const start = cursor
     const end = cursor + seconds
     cursor = end
-    return `${formatTimecode(start)}-${formatTimecode(end)}｜${shot.shot_id}｜景别：${shot.shot_size}｜焦段：${shot.lens ?? 'same lens system'}｜运镜：${shot.camera_movement}｜构图：${compactAction(shot.composition)}｜调度：${compactAction(shot.blocking ?? '主体动作连续')}｜画面：${compactAction(shot.action)}｜表演：${compactAction(shot.performance_detail)}`
+    return `${formatTimecode(start)}-${formatTimecode(end)}｜${shot.shot_id}｜景别：${shot.shot_size}｜焦段：${shot.lens ?? 'same lens system'}｜运镜：${shot.camera_movement}｜构图：${sanitizeStaticShotText(shot.composition)}｜调度：${compactAction(shot.blocking ?? '主体动作连续')}｜画面：${compactAction(shot.action)}｜表演：${compactAction(shot.performance_detail)}`
   })
 }
 
@@ -543,6 +814,32 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter, characters = 
 export function composeDeliverable({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
   const mainCharacter = draft.characters?.[0]
+  const directorJudgmentSections = mode === 'draft'
+    ? [
+        '## SCRIPT_BEATS',
+        '',
+        ...composeScriptBeats(draft.shotlist),
+        '',
+        '## DIRECTOR_DECISION',
+        '',
+        ...composeDirectorDecision(draft.shotlist),
+        '',
+        '## ENVIRONMENT_BIBLES',
+        '',
+        ...composeEnvironmentBibles({ contract, shotlist: draft.shotlist }),
+        '',
+        ...composeAnchorPolicy({ characters: draft.characters, shotlist: draft.shotlist }),
+        '',
+        ...composeStoryboardVersionA(draft.shotlist),
+        '',
+        ...composeStoryboardVersionB(draft.shotlist),
+        '',
+        ...composeQualityCheck(draft.shotlist),
+        '',
+        ...composeAIRiskWarnings(draft.shotlist),
+        ''
+      ]
+    : []
 
   return [
     '# Cine Make Deliverable',
@@ -577,6 +874,7 @@ export function composeDeliverable({ contract, draft }) {
       ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
       : '主角锚点：按源故事和分镜设定保持一致。',
     '',
+    ...directorJudgmentSections,
     '## DIRECTOR_BIBLE',
     '',
     ...composeDirectorBible({ contract }),
@@ -587,7 +885,6 @@ export function composeDeliverable({ contract, draft }) {
     '## SCENE_BIBLE',
     '',
     ...composeSceneBible({ shotlist: draft.shotlist }),
-    '',
     '## ART_DIRECTION',
     '',
     ...composeArtDirection({ contract }),

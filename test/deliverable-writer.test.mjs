@@ -230,3 +230,51 @@ test('layered cinematic pipeline separates bibles static keyframes and concise m
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('draft deliverable adds story beats director decisions anchor policy and quality checks', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-director-decision-'))
+  const source = [
+    '漫剧概念设定：《孤岛碎忆》',
+    '林默醒来发现自己置身暴风雨中的孤岛别墅客厅，只有10分钟短期记忆。',
+    '▲ 【画面】 林默猛地从沙发上惊醒，看见满手鲜血。',
+    '▲ 【画面】 他拉开袖口，手臂刻着：我的记忆只有10分钟。凶手在他们中间。',
+    '▲ 【画面】 客厅里出现安娜、雷队、阿杰三个人。',
+    '▲ 【画面】 雷队拿枪质问刚刚有人被杀。',
+    '▲ 【画面】 阿杰在角落里抛出凯撒悬念。',
+    '▲ 【画面】 手机倒计时归零，林默再次失忆。'
+  ].join('\n')
+
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '30s', '--aspect', '9:16', source], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.match(deliverable, /## SCRIPT_BEATS/)
+    assert.match(deliverable, /## DIRECTOR_DECISION/)
+    assert.match(deliverable, /## ENVIRONMENT_BIBLES/)
+    assert.match(deliverable, /## ANCHOR_POLICY/)
+    assert.match(deliverable, /## Storyboard Version A: Full Coverage/)
+    assert.match(deliverable, /## Storyboard Version B: Director Cut/)
+    assert.match(deliverable, /## QUALITY_CHECK/)
+    assert.match(deliverable, /## AI_RISK_WARNINGS/)
+    assert.match(deliverable, /story_function/)
+    assert.match(deliverable, /audience_question/)
+    assert.match(deliverable, /can_be_merged/)
+    assert.match(deliverable, /shot_function/)
+    assert.match(deliverable, /audience_takeaway/)
+    assert.match(deliverable, /visual_priority/)
+    assert.match(deliverable, /每镜最多 1 个 primary anchor，最多 2 个 secondary anchors/)
+    assert.match(deliverable, /wide 镜头承担文字阅读|macro 镜头承担复杂表演|每镜强制出现不必要道具/u)
+
+    assert.doesNotMatch(deliverable, /手机.*必须作为稳定视觉锚点|倒计时.*必须作为稳定视觉锚点/u)
+
+    const keyframeSection = deliverable.slice(deliverable.indexOf('## KEYFRAME_PROMPTS'), deliverable.indexOf('## MOTION_PROMPTS'))
+    assert.doesNotMatch(keyframeSection, /手机.*必须作为稳定视觉锚点|倒计时.*必须作为稳定视觉锚点/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})

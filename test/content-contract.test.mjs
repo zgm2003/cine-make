@@ -105,6 +105,24 @@ test('docs describe layered cinematic pipeline instead of repeating global rules
   assert.match(combined, /Keyframe prompts are static|Keyframe 提示词是静态/u)
 })
 
+test('docs describe director decision layer and quality checks', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+  const english = await readFile(join(root, 'README.md'), 'utf8')
+  const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
+  const combined = [skill, english, chinese].join('\n')
+
+  assert.match(combined, /SCRIPT_BEATS/)
+  assert.match(combined, /DIRECTOR_DECISION/)
+  assert.match(combined, /Environment Bibles|ENVIRONMENT_BIBLES|环境圣经数组/u)
+  assert.match(combined, /Anchor Policy|ANCHOR_POLICY|锚点策略/u)
+  assert.match(combined, /Director Cut|导演删减版/u)
+  assert.match(combined, /Quality Check|QUALITY_CHECK|质量检查/u)
+  assert.match(combined, /AI_RISK_WARNINGS/)
+  assert.match(combined, /每个镜头必须证明自己不可删除|each shot must prove why it should stay/u)
+  assert.match(combined, /最多 1 个 primary anchor|at most one primary anchor/u)
+  assert.match(combined, /macro.*复杂表演|wide.*文字阅读|macro shot.*complex action|wide shot.*readable text/u)
+})
+
 test('golden rain-alley example is a valid production run', async () => {
   const exampleRun = join(root, 'examples', 'rain-alley')
   const result = await validateRunDirectory({ runDir: exampleRun, stage: 'production' })

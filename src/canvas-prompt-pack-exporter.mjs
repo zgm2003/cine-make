@@ -262,6 +262,11 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
       requiredAnchors,
       promptLayer: 'keyframe_static',
       motionPrompt: composeMotionPrompt({ shot }),
+      linkedBeat: `B${String(index + 1).padStart(2, '0')}`,
+      shotFunction: shotFunctionForCanvas(shot, index, shots.length),
+      audienceTakeaway: audienceTakeawayForCanvas(shot, index, shots.length),
+      environmentId: environment.id,
+      anchorPolicy: anchorPolicyForShot(shot),
       mergeStrategy: 'append'
     }))
   })
@@ -349,13 +354,18 @@ function inferProps(sourceText, draft) {
   return PROP_CATALOG.filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
 }
 
-function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, promptLayer, motionPrompt, mergeStrategy }) {
+function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, promptLayer, motionPrompt, linkedBeat, shotFunction, audienceTakeaway, environmentId, anchorPolicy, mergeStrategy }) {
   const isVideo = canvasType === 'video'
   const isText = canvasType === 'text'
   const isLandscapeImage = canvasType === 'image' && imageSize === '16:9'
   const cineMake = {
     promptLayer,
-    motionPrompt
+    motionPrompt,
+    linkedBeat,
+    shotFunction,
+    audienceTakeaway,
+    environmentId,
+    anchorPolicy
   }
   return {
     id,
@@ -380,6 +390,11 @@ function createManifestNode({ id, role, title, canvasType, row, column, prompt, 
     },
     promptLayer,
     motionPrompt,
+    linkedBeat,
+    shotFunction,
+    audienceTakeaway,
+    environmentId,
+    anchorPolicy,
     mergeStrategy
   }
 }
@@ -488,7 +503,12 @@ function cineMakeNodeMetadata(node, manifest) {
     anchor: node.anchor,
     requiredAnchors: node.requiredAnchors,
     promptLayer: node.promptLayer,
-    motionPrompt: node.motionPrompt
+    motionPrompt: node.motionPrompt,
+    linkedBeat: node.linkedBeat,
+    shotFunction: node.shotFunction,
+    audienceTakeaway: node.audienceTakeaway,
+    environmentId: node.environmentId,
+    anchorPolicy: node.anchorPolicy
   }
 }
 
@@ -745,6 +765,16 @@ function composeEnvironmentReferencePrompt({ environment, contract }) {
   ].join('\n')
 }
 
+function sanitizeStaticShotText(value = '') {
+  return String(value || '')
+    .replace(/\s+/g, ' ')
+    .replace(/；[^。；，,]*必须作为稳定视觉锚点/gu, '')
+    .replace(/[,， ]*[^,，。；]*must[^,，。；]*stable visual anchor[^,，。；]*/giu, '')
+    .replace(/、?手机10分钟倒计时\s*(与|和)\s*记忆清空倒计时/gu, '')
+    .replace(/、?10分钟倒计时\s*(与|和)\s*记忆清空倒计时/gu, '')
+    .trim()
+}
+
 function composeShotBible({ shot, environment }) {
   return [
     `# Shot List：${shot.shot_id}`,
@@ -757,11 +787,11 @@ function composeShotBible({ shot, environment }) {
     `- 景别：${shot.shot_size || ''}`,
     `- 镜头：${shot.lens || ''}`,
     `- 机位/运镜：${shot.camera_movement || ''}`,
-    `- 构图：${shot.composition || ''}`,
+    `- 构图：${sanitizeStaticShotText(shot.composition)}`,
     `- 调度：${shot.blocking || ''}`,
     `- 表演：${shot.performance_detail || ''}`,
     `- 画面动作：${shot.action || ''}`,
-    `- 连续性：${shot.continuity_from_previous || ''}`
+    `- 连续性：${sanitizeStaticShotText(shot.continuity_from_previous)}`
   ].join('\n')
 }
 
@@ -776,7 +806,7 @@ function composeCompactShotList({ shots, environment }) {
       `- 场景：${shot.scene || environment.name}`,
       `- 人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
       `- 镜头：${shot.shot_size || ''} / ${shot.lens || ''} / ${shot.camera_movement || ''}`,
-      `- 构图：${shot.composition || ''}`,
+      `- 构图：${sanitizeStaticShotText(shot.composition)}`,
       `- 调度：${shot.blocking || ''}`,
       `- 画面动作：${shot.action || ''}`
     ].join('\n'))
@@ -800,7 +830,7 @@ function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
     `出场人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
     usedProps.length ? `关键道具：${usedProps.map((prop) => prop.label).join('、')}` : '',
     `景别/镜头：${shot.shot_size || ''} / ${shot.lens || ''}`,
-    `构图：${shot.composition || ''}`,
+    `构图：${sanitizeStaticShotText(shot.composition)}`,
     `空间调度：${shot.blocking || ''}`,
     `画面状态：${shot.action || ''}`,
     `光影：${shot.lighting || contract.target.style}`,
@@ -823,7 +853,7 @@ function composeMotionPrompt({ shot }) {
 }
 
 function motionCueForShot(shot) {
-  const action = [shot.action, shot.blocking, shot.composition].filter(Boolean).join('\n')
+  const action = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
   if (/惊醒|醒来/u.test(action)) return 'Lin Mo wakes from the sofa, then freezes.'
   if (/血手|双手|满是鲜血/u.test(action)) return 'He slowly raises bloody hands into frame.'
   if (/拉开衣袖|刻着|手臂/u.test(action)) return 'He exposes the marked forearm and holds it still.'
@@ -840,6 +870,41 @@ function microCueForShot(shot) {
   if (/安娜|医生|倒水|安抚/u.test(text)) return 'slow hands, controlled eye contact, half-second hesitation'
   if (/血|惊|怕|失忆|空洞/u.test(text)) return 'short breath, delayed eye focus, tense fingers'
   return 'subtle breath and small eye movement'
+}
+
+function shotFunctionForCanvas(shot, index, total) {
+  const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
+  if (index === 0) return '开场 / 空间与危险建立'
+  if (index === total - 1) return '结尾钩子 / 状态重置'
+  if (/刻字|10分钟|倒计时|00:00:00|手机/u.test(text)) return '信息揭示 / 核心机制强化'
+  if (/三个人|另外三人|安娜|雷队|阿杰|嫌疑/u.test(text)) return '人物关系建立 / 嫌疑结构'
+  if (/质问|拿枪|逼|怒|冲突|尸体|被杀/u.test(text)) return '冲突升级'
+  if (/凯撒|谎|误导|阿杰|冷笑/u.test(text)) return '误导 / 反派钩子'
+  if (/精神病院|幻觉|闪回|真相|现实/u.test(text)) return '真相靠近 / 现实裂缝'
+  return '情绪推进'
+}
+
+function audienceTakeawayForCanvas(shot, index, total) {
+  const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
+  if (/刻字|10分钟/u.test(text)) return '林默的记忆规则和凶手假设被明确建立。'
+  if (/倒计时|归零|00:00:00|手机/u.test(text)) return '循环机制生效，林默回到无知状态。'
+  if (/血手|满手鲜血|双手/u.test(text)) return '林默可能刚参与过暴力事件，但他自己不知道。'
+  if (/安娜|雷队|阿杰|三个人/u.test(text)) return '房间里形成嫌疑人棋盘。'
+  if (/凯撒|阿杰/u.test(text)) return '阿杰开始把观众和林默带向外部凶手叙事。'
+  if (index === 0) return '主角被放进封闭危险空间。'
+  if (index === total - 1) return '本段以钩子结束，观众等待下一轮循环。'
+  return '情绪或空间压力被推进。'
+}
+
+function anchorPolicyForShot(shot) {
+  const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
+  if (/倒计时|手机|00:00:00/u.test(text)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
+  if (/刻字|手臂/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
+  if (/阿杰|凯撒/u.test(text)) return { primary: '阿杰眼神/嘴角', secondary: ['拐杖', '腿部支架'] }
+  if (/雷队|枪/u.test(text)) return { primary: '雷队堵门', secondary: ['手枪', '出口'] }
+  if (/安娜|药|倒水/u.test(text)) return { primary: '安娜安抚动作', secondary: ['热水杯', '药瓶'] }
+  if (/血手|鲜血|双手/u.test(text)) return { primary: '林默血手', secondary: ['沙发', '低光'] }
+  return { primary: '本镜头主要视觉信息', secondary: ['环境连续性'] }
 }
 
 function composePromptPackMarkdown(manifest) {
@@ -886,7 +951,7 @@ function shotUsesProp(shot, prop) {
   const text = [
     shot.action,
     shot.subject,
-    shot.composition,
+    sanitizeStaticShotText(shot.composition),
     shot.blocking,
     shot.image_prompt,
     shot.video_prompt_note,

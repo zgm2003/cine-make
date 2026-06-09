@@ -262,12 +262,42 @@ test('canvas storyboard keyframe prompts are static image definitions not motion
     assert.equal(typeof keyframe.metadata?.cineMake?.motionPrompt, 'string')
     assert.match(keyframe.prompt, /Static Shot Definition|single cinematic keyframe/iu)
     assert.doesNotMatch(keyframe.prompt, /breathing becomes|二级动画|视频模型|video motion|Motion Prompt|slow push-in.*breathing/iu)
+    assert.doesNotMatch(JSON.stringify(manifest.nodes), /手机.*必须作为稳定视觉锚点|倒计时.*必须作为稳定视觉锚点/u)
 
     const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    assert.doesNotMatch(JSON.stringify(projectsJson.projects[0].project.nodes), /手机.*必须作为稳定视觉锚点|倒计时.*必须作为稳定视觉锚点/u)
     const byId = new Map(projectsJson.projects[0].project.nodes.map((node) => [node.id, node]))
     const canvasKeyframe = byId.get(keyframe.id)
     assert.equal(canvasKeyframe.metadata.cineMake.promptLayer, 'keyframe_static')
     assert.equal(canvasKeyframe.metadata.cineMake.motionPrompt, keyframe.metadata.cineMake.motionPrompt)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('canvas storyboard keyframes expose director decision metadata', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-director-decision-'))
+  try {
+    const contract = await createInputContract(parseArgs(['--aspect', '9:16', isolatedMansionScript]))
+    const result = await exportCanvasStoryboardPack({ outDir: out, contract })
+    const manifest = JSON.parse(await readFile(result.manifestPath, 'utf8'))
+    const keyframe = manifest.nodes.find((node) => node.role === 'keyframe')
+
+    assert.ok(keyframe)
+    assert.match(keyframe.metadata?.cineMake?.linkedBeat, /^B\d{2}$/)
+    assert.equal(typeof keyframe.metadata?.cineMake?.shotFunction, 'string')
+    assert.equal(typeof keyframe.metadata?.cineMake?.audienceTakeaway, 'string')
+    assert.equal(typeof keyframe.metadata?.cineMake?.environmentId, 'string')
+    assert.equal(typeof keyframe.metadata?.cineMake?.anchorPolicy?.primary, 'string')
+    assert.ok(Array.isArray(keyframe.metadata?.cineMake?.anchorPolicy?.secondary))
+    assert.notEqual(keyframe.metadata.cineMake.anchorPolicy.primary, '倒计时手机')
+
+    const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    const byId = new Map(projectsJson.projects[0].project.nodes.map((node) => [node.id, node]))
+    const canvasKeyframe = byId.get(keyframe.id)
+    assert.equal(canvasKeyframe.metadata.cineMake.linkedBeat, keyframe.metadata.cineMake.linkedBeat)
+    assert.equal(canvasKeyframe.metadata.cineMake.environmentId, keyframe.metadata.cineMake.environmentId)
+    assert.deepEqual(canvasKeyframe.metadata.cineMake.anchorPolicy, keyframe.metadata.cineMake.anchorPolicy)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
