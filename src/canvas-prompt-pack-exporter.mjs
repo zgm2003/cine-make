@@ -107,69 +107,79 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   const characters = normalizeCharacters(draft.characters)
   const environment = inferPrimaryScene(contract, draft)
   const props = inferProps(contract.sourceText, draft)
-  const shots = draft.shotlist ?? []
 
   nodes.push(createManifestNode({
-    id: 'preproduction-bible',
-    role: 'preproduction_bible',
-    title: '前期总控：剧本拆解 / World Bible / Art Direction',
+    id: 'style-bible',
+    role: 'style_bible',
+    title: '风格设定：World Bible / Art Direction',
     canvasType: 'text',
     row: 0,
     column: 0,
-    content: composePreproductionBible({ contract, draft, characters, environment, props })
+    content: composeStyleBible({ contract, environment, props })
   }))
 
+  nodes.push(createManifestNode({
+    id: 'style-reference',
+    role: 'style_reference',
+    title: '风格参考图：整体视觉',
+    canvasType: 'image',
+    row: 0,
+    column: 1,
+    prompt: composeStyleReferencePrompt({ contract, environment }),
+    inputOrder: ['style-bible']
+  }))
+  connect(connections, 'style-bible', 'style-reference', 'style_rules')
+
   characters.forEach((character, index) => {
+    const row = index + 1
+    const refId = characterReferenceNodeId(character)
     nodes.push(createManifestNode({
       id: character.id,
       role: 'character_bible',
       title: `人设：${character.name}`,
       canvasType: 'text',
-      row: 1,
-      column: index,
+      row,
+      column: 0,
       content: composeCharacterBible(character)
     }))
+    nodes.push(createManifestNode({
+      id: refId,
+      role: 'character_reference',
+      title: `角色参考图：${character.name}`,
+      canvasType: 'image',
+      row,
+      column: 1,
+      prompt: composeCharacterReferencePrompt({ character, contract }),
+      inputOrder: ['style-bible', character.id]
+    }))
+    connect(connections, 'style-bible', refId, 'style_rules')
+    connect(connections, character.id, refId, 'character_bible')
   })
 
+  const environmentRow = characters.length + 1
+  const environmentRefId = environmentReferenceNodeId(environment)
   nodes.push(createManifestNode({
     id: environment.id,
     role: 'environment_bible',
     title: environment.title,
     canvasType: 'text',
-    row: 0,
-    column: 1,
+    row: environmentRow,
+    column: 0,
     content: composeEnvironmentBible({ environment })
   }))
 
   nodes.push(createManifestNode({
-    id: 'shot-list',
-    role: 'shot_list',
-    title: '分镜清单 / Shot List',
-    canvasType: 'text',
-    row: 0,
-    column: 2,
-    content: composeCompactShotList({ shots, environment })
+    id: environmentRefId,
+    role: 'environment_reference',
+    title: `场景参考图：${environment.name}`,
+    canvasType: 'image',
+    row: environmentRow,
+    column: 1,
+    prompt: composeEnvironmentReferencePrompt({ environment, contract }),
+    inputOrder: ['style-bible', environment.id]
   }))
-
-  shots.forEach((shot, index) => {
-    const keyframeId = keyframeNodeId(shot, index)
-    const usedCharacters = characters.filter((character) => shotUsesCharacter(shot, character.name))
-    const inputOrder = ['preproduction-bible', environment.id, ...usedCharacters.map((character) => character.id)]
-    nodes.push(createManifestNode({
-      id: keyframeId,
-      role: 'keyframe',
-      title: `关键帧 ${shot.shot_id}`,
-      canvasType: 'image',
-      row: 3 + Math.floor(index / SHOTS_PER_SEGMENT),
-      column: index % SHOTS_PER_SEGMENT,
-      prompt: composeKeyframePrompt({ shot, contract, environment, props }),
-      inputOrder
-    }))
-
-    connect(connections, 'preproduction-bible', keyframeId, 'production_rules')
-    connect(connections, environment.id, keyframeId, 'environment_reference')
-    for (const character of usedCharacters) connect(connections, character.id, keyframeId, 'character_reference')
-  })
+  connect(connections, 'style-bible', environmentRefId, 'style_rules')
+  connect(connections, environment.id, environmentRefId, 'environment_bible')
 
   return {
     schemaVersion: 1,
@@ -189,9 +199,9 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     },
     manualWorkflow: [
       '导入 canvas-project.zip。',
-      '先阅读前期总控、场景设定、人物圣经和分镜清单。',
-      '真正需要生成的是 Keyframe 图片节点；文本节点只作为上游上下文 chip。',
-      '每个 Keyframe 只读取它直接连接的人设、场景和前期总控；不要依赖文本节点之间的串流。'
+      '这是基础参考图包：先不做分镜和 Keyframe。',
+      '左侧是风格、人设、场景文本设定；右侧是可生成的风格参考图、角色参考图、场景参考图。',
+      '用户从右侧图片节点开始操作；文本节点只作为直接上游上下文 chip。'
     ],
     outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
     nodes,
@@ -205,9 +215,12 @@ function normalizeCharacters(characters = []) {
     name: character.identity_anchor || character.name || character.identity || `角色${index + 1}`,
     identity: character.identity || '',
     height: character.height || '',
+    age: character.age || '',
     appearance: character.appearance || '',
     costume: character.costume || character.costume_anchor || '',
+    bodyDetails: character.body_details || '',
     expression: character.expression || character.performance_anchor || '',
+    mood: character.mood || '',
     props: character.props ?? [],
     prompt: character.reference_prompt || ''
   }))
@@ -456,6 +469,28 @@ function composePreproductionBible({ contract, draft, characters, environment, p
   ].join('\n')
 }
 
+function composeStyleBible({ contract, environment, props }) {
+  return [
+    '# 风格设定 / World Bible / Art Direction',
+    '',
+    '这个节点只作为右侧参考图生成节点的上游文本，不需要单独生成图片。',
+    '',
+    composeWorldBible({ contract, environment }),
+    '',
+    composeArtDirection({ contract, environment }),
+    '',
+    '## 道具与视觉锚点',
+    props.length
+      ? props.map((prop) => `- ${prop.label}：${prop.triggers.join(' / ')}`).join('\n')
+      : '- 本片段未识别到需要单独锁定的道具。',
+    '',
+    '## 基础参考图阶段规则',
+    '- 当前版本只生成人物参考图、场景参考图和整体风格参考图。',
+    '- 暂不生成分镜、关键帧、视频段。',
+    '- 所有参考图必须共享同一套心理悬疑、暴雨夜、低饱和蓝灰、practical lighting / motivated lighting 规则。'
+  ].join('\n')
+}
+
 function composeCharacterBible(character) {
   return [
     `# Character Bible：${character.name}`,
@@ -531,6 +566,64 @@ function composePropBible(prop) {
     '## 连续性规则',
     '道具形状、材质、污渍、位置逻辑保持一致；只在被分镜需要时进入关键帧。'
   ].filter(Boolean).join('\n')
+}
+
+function composeStyleReferencePrompt({ contract, environment }) {
+  return [
+    '风格参考图生成任务：生成一张整体视觉 mood frame，不是分镜，不要出现具体剧情动作。',
+    '',
+    '必须读取直接上游文本：风格设定 / World Bible / Art Direction。',
+    '',
+    `画幅：${contract.target.aspectRatio}`,
+    `主场景气质：${environment.name}`,
+    '画面内容：暴雨夜、低饱和蓝灰、冷暖对撞、室内 practical lighting、窗外闪电冷光、潮湿空气、负空间、真实电影质感。',
+    '用途：作为后续人物参考图和场景参考图的统一视觉锚点。',
+    '',
+    '负面：不要字幕、水印、logo、漫画风、海报排版、夸张发光、奇幻怪物、过度饱和。'
+  ].join('\n')
+}
+
+function composeCharacterReferencePrompt({ character, contract }) {
+  if (character.prompt?.trim()) return character.prompt.trim()
+
+  return [
+    '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，非插画，非漫画，非CG。',
+    '',
+    '画面为专业影视角色设定参考图：左侧是角色半身近景特写，右侧是角色正面、侧面、背面三视图全身定妆照，旁边整齐摆放核心道具。画面上方预留干净信息栏，用于后期添加角色名称、身高和道具说明。',
+    '',
+    `角色名称：${character.name}`,
+    character.height ? `身高：${character.height}` : '',
+    character.identity ? `身份：${character.identity}` : '',
+    character.age ? `年龄：${character.age}` : '',
+    character.appearance ? `外貌：${character.appearance}。` : '',
+    character.costume ? `服装：${character.costume}。` : '',
+    character.bodyDetails ? `身体细节：${character.bodyDetails}。` : '',
+    character.expression ? `表情：${character.expression}。` : '',
+    character.props?.length ? `核心道具：${character.props.join('；')}。` : '',
+    '',
+    character.mood ? `整体气质：${character.mood}。` : '整体气质：真实、克制、阴冷，不要夸张奇幻化。',
+    '',
+    'photorealistic, live action film still, cinematic portrait photography, realistic human face, realistic skin pores, natural imperfections, practical costume design, studio character reference photo, character turnaround, front view, side view, back view, prop reference, high detail, sharp focus, 35mm lens, dramatic low key lighting, muted colors, psychological thriller mood, realistic wet fabric.',
+    '',
+    '负面提示词：anime, manga, cartoon, illustration, comic style, concept art, 3d render, CGI, doll face, plastic skin, perfect skin, over smooth skin, fantasy armor, cyberpunk, exaggerated features, monster, deformed hands, extra fingers, bad anatomy, blurry text, unreadable text, watermark, logo, low resolution.'
+  ].filter(Boolean).join('\n')
+}
+
+function composeEnvironmentReferencePrompt({ environment, contract }) {
+  return [
+    `场景参考图生成任务：生成 ${environment.name} 的电影场景设定图。`,
+    '',
+    '必须读取直接上游文本：风格设定 + 当前 Environment Bible。',
+    '',
+    `画幅：${contract.target.aspectRatio}`,
+    `场景：${environment.name}`,
+    `空间定义：${environment.description}`,
+    '构图：空场景或极少人物剪影；重点建立沙发、茶几、门口、窗户、角落的空间方位。',
+    '光线：窗外闪电和暴雨冷光为主，室内少量暖黄 practical lighting 为辅，低饱和蓝灰，潮湿反光。',
+    '用途：作为后续分镜和关键帧的空间连续性锚点。',
+    '',
+    '负面：不要把场景变成白天、医院、办公室、走廊；不要字幕、水印、logo；不要拥挤人物。'
+  ].join('\n')
 }
 
 function composeShotBible({ shot, environment }) {
@@ -656,6 +749,14 @@ function shotNodeId(shot, fallbackIndex = 0) {
 function keyframeNodeId(shot, fallbackIndex = 0) {
   const id = shot?.shot_id || `S${String(fallbackIndex + 1).padStart(2, '0')}`
   return `keyframe-${id.toLowerCase()}`
+}
+
+function characterReferenceNodeId(character) {
+  return character.id.replace(/^character-/u, 'character-ref-')
+}
+
+function environmentReferenceNodeId(environment) {
+  return environment.id.replace(/^environment-/u, 'environment-ref-')
 }
 
 function totalDuration(shots) {

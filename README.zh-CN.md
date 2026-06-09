@@ -54,7 +54,7 @@ prompt-pack.md
 README.md
 ```
 
-`canvas-project.zip` 可以直接在 Canvas 里导入。它按 Canvas 的真实生成模型组织：少量文本资源节点 + Keyframe 空图片节点。文本资源包含前期总控（Script Breakdown / World Bible / Art Direction）、Character Bible、Environment Bible 和 Shot List；真正需要点击生成的是 Keyframes。每个 Keyframe 只直连它实际需要的前期总控、场景和人物文本资源，不做无意义的文本节点串流，也不生成视频段节点。
+`canvas-project.zip` 可以直接在 Canvas 里导入。当前首版只打基础：少量文本资源节点 + 可生成的风格参考图、角色参考图、场景参考图。文本资源包含 World Bible / Art Direction、Character Bible 和 Environment Bible；真正需要点击生成的是右侧图片节点。暂不生成 Shot List、Keyframes 或视频段节点。
 
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 
@@ -184,7 +184,7 @@ cine-make canvas-pack \
   --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调"
 ```
 
-导入 `canvas-project.zip` 后，先读前期总控、人物、场景和 Shot List；最后只生成 Keyframes 空图片节点。文本节点是上游上下文 chip，不需要逐个生成；Keyframe prompt 自带当前镜头动作和道具信息。这样连接只服务当前图片生成，不会把所有模块乱牵到一起。
+导入 `canvas-project.zip` 后，先看左侧文本设定，再从右侧图片节点开始生成：先生成风格参考图，再生成人物参考图和场景参考图。文本节点是上游上下文 chip，不需要逐个生成。首版不动分镜，先把人设、场景和风格基础打牢。
 
 ### 长篇小说项目模式
 

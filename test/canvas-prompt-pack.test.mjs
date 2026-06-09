@@ -63,7 +63,7 @@ const isolatedMansionScript = `漫剧概念设定：《孤岛碎忆》
 场景主要有：孤岛别墅、夜晚
 主要元素内容：手机、茶壶、枪、警徽、带血的解剖刀`
 
-test('exports a compact Canvas graph with text resources feeding keyframe image nodes', async () => {
+test('exports a compact foundation Canvas graph for character scene and style references', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-pack-'))
   try {
     const contract = await createInputContract(parseArgs(['--aspect', '9:16', isolatedMansionScript]))
@@ -86,33 +86,37 @@ test('exports a compact Canvas graph with text resources feeding keyframe image 
     const roles = new Set(manifest.nodes.map((node) => node.role))
     assert.deepEqual([...roles].sort(), [
       'character_bible',
+      'character_reference',
       'environment_bible',
-      'keyframe',
-      'preproduction_bible',
-      'shot_list'
+      'environment_reference',
+      'style_bible',
+      'style_reference'
     ])
-    assert.ok(manifest.nodes.length <= 24, `expected compact Canvas pack, got ${manifest.nodes.length} nodes`)
+    assert.ok(manifest.nodes.length <= 14, `expected compact foundation Canvas pack, got ${manifest.nodes.length} nodes`)
 
     const manifestById = new Map(manifest.nodes.map((node) => [node.id, node]))
-    assert.equal(manifestById.get('preproduction-bible').title, '前期总控：剧本拆解 / World Bible / Art Direction')
-    assert.equal(manifestById.get('shot-list').title, '分镜清单 / Shot List')
+    assert.equal(manifestById.get('style-bible').title, '风格设定：World Bible / Art Direction')
     assert.equal(manifestById.get('character-linmo').title, '人设：林默')
     assert.equal(manifestById.get('character-anna').title, '人设：安娜')
     assert.equal(manifestById.get('character-leidui').title, '人设：雷队')
     assert.equal(manifestById.get('character-ajie').title, '人设：阿杰')
     assert.equal(manifestById.get('environment-island-villa-living-room-night').title, '场景设定：孤岛别墅客厅 / 暴雨夜')
-    assert.equal(manifestById.get('keyframe-s02').role, 'keyframe')
+    assert.equal(manifestById.get('character-ref-linmo').title, '角色参考图：林默')
+    assert.equal(manifestById.get('environment-ref-island-villa-living-room-night').title, '场景参考图：孤岛别墅客厅 / 暴雨夜')
+    assert.equal(manifestById.get('style-reference').title, '风格参考图：整体视觉')
     assert.equal(manifestById.has('shot-s02'), false)
+    assert.equal(manifestById.has('shot-list'), false)
+    assert.equal(manifestById.has('keyframe-s02'), false)
     assert.equal(manifestById.has('prop-phone'), false)
     assert.equal(manifestById.has('video-segment-01'), false)
 
-    assertConnection(manifest.connections, 'preproduction-bible', 'keyframe-s02')
-    assertConnection(manifest.connections, 'environment-island-villa-living-room-night', 'keyframe-s02')
-    assertConnection(manifest.connections, 'character-linmo', 'keyframe-s02')
-    assertNoConnection(manifest.connections, 'character-anna', 'keyframe-s02')
-    assertNoConnection(manifest.connections, 'shot-list', 'keyframe-s02')
+    assertConnection(manifest.connections, 'style-bible', 'style-reference')
+    assertConnection(manifest.connections, 'style-bible', 'character-ref-linmo')
+    assertConnection(manifest.connections, 'character-linmo', 'character-ref-linmo')
+    assertConnection(manifest.connections, 'style-bible', 'environment-ref-island-villa-living-room-night')
+    assertConnection(manifest.connections, 'environment-island-villa-living-room-night', 'environment-ref-island-villa-living-room-night')
     for (const connection of manifest.connections) {
-      assert.match(connection.toNodeId, /^keyframe-/u, 'connections should feed image keyframe nodes only')
+      assert.match(connection.toNodeId, /^(style-reference|character-ref-|environment-ref-)/u, 'connections should feed reference image nodes only')
     }
 
     const projectsJson = await readProjectsJsonFromZip(result.zipPath)
@@ -130,11 +134,23 @@ test('exports a compact Canvas graph with text resources feeding keyframe image 
     assert.deepEqual(item.project.viewport, { x: 0, y: 0, k: 1 })
 
     const byId = new Map(item.project.nodes.map((node) => [node.id, node]))
-    assertTextNode(byId.get('preproduction-bible'), /心理悬疑/u, /10分钟/u, /低饱和/u, /practical lighting|motivated lighting/i)
+    assertTextNode(byId.get('style-bible'), /心理悬疑/u, /10分钟/u, /低饱和/u, /practical lighting|motivated lighting/i)
     assertTextNode(byId.get('character-linmo'), /林默/u, /黑色湿呢大衣/u, /微动作/u)
     assertTextNode(byId.get('environment-island-villa-living-room-night'), /孤岛别墅客厅/u, /暴雨夜/u, /声音感/u)
-    assertTextNode(byId.get('shot-list'), /摄影机脚本/u, /S02/u, /林默猛地从沙发上惊醒/u)
-    assertImagePromptNode(byId.get('keyframe-s02'), /关键帧/u, /直接上游文本/u, /林默猛地从沙发上惊醒/u, /手机/u)
+    assertImagePromptNode(
+      byId.get('character-ref-linmo'),
+      /真人电影角色定妆照/u,
+      /专业影视角色设定参考图/u,
+      /三视图全身定妆照/u,
+      /真实皮肤纹理/u,
+      /毛孔细节/u,
+      /角色名称：林默/u,
+      /黑色湿呢大衣/u,
+      /负面提示词/u,
+      /anime, manga, cartoon/u
+    )
+    assertImagePromptNode(byId.get('environment-ref-island-villa-living-room-night'), /场景参考图/u, /孤岛别墅客厅/u, /暴雨夜/u)
+    assertImagePromptNode(byId.get('style-reference'), /风格参考图/u, /低饱和/u, /暴雨夜/u)
 
     for (const node of item.project.nodes) {
       assert.equal(Object.hasOwn(node, 'role'), false)

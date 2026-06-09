@@ -60,12 +60,16 @@ test('skill routes manual Canvas work to canvas-pack instead of image generation
   assert.match(skill, /Do not create `storyboard-images\/`/i)
   assert.match(skill, /World Bible/)
   assert.match(skill, /Art Direction/)
-  assert.match(skill, /Keyframes/)
+  assert.match(skill, /style_reference|style reference|风格参考/u)
+  assert.match(skill, /character reference|角色参考/u)
+  assert.match(skill, /environment reference|场景参考/u)
   assert.match(chinese, /canvas-pack/)
   assert.match(chinese, /手动生成/)
   assert.match(chinese, /World Bible/)
   assert.match(chinese, /Art Direction/)
-  assert.match(chinese, /Keyframes/)
+  assert.match(chinese, /风格参考/)
+  assert.match(chinese, /角色参考/)
+  assert.match(chinese, /场景参考/)
 })
 
 test('readmes describe Codex-only image generation through $imagegen', async () => {
