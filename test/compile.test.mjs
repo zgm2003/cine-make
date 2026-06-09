@@ -86,3 +86,46 @@ test('cli writes a manual Canvas prompt pack without storyboard images', async (
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('cli writes a manual Canvas storyboard append pack without foundation nodes', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-storyboard-pack-cli-'))
+  const input = join(out, 'script.txt')
+  try {
+    await writeFile(input, `第一集剧本：【分崩离析的10分钟】
+[场景：孤岛别墅 - 客厅 - 夜]
+角色设定：
+林默（男主角）：私家侦探。冷静、神经质。
+安娜（女性）：心理医生，知性、冷静。
+雷队（中年男）：脾气暴躁的警探。
+阿杰（青年男）：胆小、唯唯诺诺的瘸子。
+▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。
+▲ 【画面】 镜头拉开，客厅里还有另外三个人。
+雷队（咬牙切齿）：
+“林默，你终于醒了。”
+安娜（温柔安抚）：
+“林默，看着我。”
+▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。`, 'utf8')
+
+    const result = spawnSync(process.execPath, ['src/cli.mjs', 'canvas-storyboard-pack', '--input', input, '--out', out, '--aspect', '9:16'], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.ok(existsSync(join(out, 'canvas-project.zip')))
+    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
+    const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
+    assert.equal(manifest.kind, 'cine-make-canvas-storyboard-pack')
+    assert.equal(manifest.packageType, 'manual_canvas_storyboard_append')
+    assert.equal(manifest.mergeTarget, 'current_canvas')
+    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), false)
+    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), false)
+    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), false)
+    assert.match(result.stdout, /storyboard Canvas append/i)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})

@@ -56,6 +56,8 @@ README.md
 
 `canvas-project.zip` 可以直接在 Canvas 里导入。当前首版只打基础：少量文本资源节点 + 可生成的风格参考图、角色参考图、场景参考图。文本资源包含 World Bible / Art Direction、Character Bible 和 Environment Bible；真正需要点击生成的是右侧图片节点。暂不生成 Shot List、Keyframes 或视频段节点。
 
+等你在 Canvas 里手动生成并锁定人物主图、场景主图、风格主图后，再使用第二阶段 `canvas-storyboard-pack`。它只追加 Shot List 文本节点和 Keyframe 图片节点，不重复人设、场景、风格参考图；Keyframe 节点会在 metadata 里声明要复用的稳定锚点，例如 `character-ref-linmo`、`environment-ref-*`、`style-reference`。请在 Canvas 使用“合并到当前画布 / 导入到当前画布”，不要重新导入成一个新工程。
+
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 
 ## 两种模式 + Canvas 提示词包
@@ -65,7 +67,7 @@ README.md
 | `draft` | 快速看故事、节奏和分镜 | 不生成图片 | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` | 草稿确认后进入出图模式 | 生成或准备静态图 | `deliverable.md` + `storyboard-images/` |
 
-`canvas-pack` 不是第三种出图模式，而是给 Canvas 手动生成用的提示词包交接命令。它不生成图片、不生成视频、不创建 `storyboard-images/`。
+`canvas-pack` 不是第三种出图模式，而是给 Canvas 手动生成用的基础资产包交接命令。它不生成图片、不生成视频、不创建 `storyboard-images/`。分镜关键帧追加包使用 `canvas-storyboard-pack`。
 
 ### 草稿模式
 
@@ -186,6 +188,17 @@ cine-make canvas-pack \
 
 导入 `canvas-project.zip` 后，先看左侧文本设定，再从右侧图片节点开始生成：先生成风格参考图，再生成人物参考图和场景参考图。文本节点是上游上下文 chip，不需要逐个生成。人物参考图只连接对应人设资料，不连接场景或风格节点，保持白底/浅灰棚拍三视图；场景和风格单独生成。首版不动分镜，先把人设、场景和风格基础打牢。
 
+基础主图锁定后，再导出并合并第二阶段：
+
+```bash
+cine-make canvas-storyboard-pack \
+  --input ./script.txt \
+  --out .cine-make-runs/demo-canvas-storyboard \
+  --aspect 9:16
+```
+
+这个包不要从画布库重新导入成新项目，而是在当前画布里“合并到当前画布”。合并后会追加 `Shot List` 和 `S01/S02/... Keyframe` 图片节点；每个 Keyframe 只声明本镜头实际需要的人物、场景、风格锚点，方便 Canvas 自动连到你已经设为主图的节点。
+
 ### 长篇小说项目模式
 
 整本小说或很大的 `.txt` 文件使用项目模式。不要把整本小说塞进一次上下文；先导入项目，再按章节任务做有边界的摘要，确认摘要后生成系列 bible、规划视觉 bible，最后按集导出现有 Cine Make 草稿交付物。
@@ -245,7 +258,7 @@ cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容
 4. 在即梦里生成片段；
 5. 多段结果外部剪辑拼接，后一段首帧必须等于前一段尾帧。
 
-如果使用 `canvas-pack`，用户只导入 `canvas-project.zip`，然后在 Canvas 里按节点顺序手动生成。
+如果使用 `canvas-pack`，用户先导入 `canvas-project.zip`，然后在 Canvas 里手动生成人物/场景/风格并设为主图。之后使用 `canvas-storyboard-pack`，把分镜/Keyframe 节点合并到当前画布继续生成。
 
 ## 开发
 
@@ -289,7 +302,7 @@ Cine Make 负责前期制片：
 或者：
 
 ```text
-故事素材 -> canvas-pack -> canvas-project.zip -> Canvas 手动生成
+故事素材 -> canvas-pack -> 基础资产主图锁定 -> canvas-storyboard-pack -> 合并到当前画布 -> Canvas 手动生成 Keyframes
 ```
 
 外部视频工具负责最终合成：

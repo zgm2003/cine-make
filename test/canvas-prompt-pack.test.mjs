@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createInputContract, parseArgs } from '../src/input-contract.mjs'
-import { exportCanvasPromptPack } from '../src/canvas-prompt-pack-exporter.mjs'
+import { exportCanvasPromptPack, exportCanvasStoryboardPack } from '../src/canvas-prompt-pack-exporter.mjs'
 
 const isolatedMansionScript = `漫剧概念设定：《孤岛碎忆》
 
@@ -104,6 +104,24 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.equal(manifestById.get('character-ref-linmo').title, '生成：林默角色参考图')
     assert.equal(manifestById.get('environment-ref-island-villa-living-room-night').title, '生成：孤岛别墅客厅 / 暴雨夜场景参考图')
     assert.equal(manifestById.get('style-reference').title, '生成：整体风格参考图')
+    assert.deepEqual(manifestById.get('character-ref-linmo').anchor, {
+      anchorId: 'character-ref-linmo',
+      anchorRole: 'character_reference',
+      anchorName: '林默',
+      mergeStrategy: 'reuse_existing'
+    })
+    assert.deepEqual(manifestById.get('environment-ref-island-villa-living-room-night').anchor, {
+      anchorId: 'environment-ref-island-villa-living-room-night',
+      anchorRole: 'environment_reference',
+      anchorName: '孤岛别墅客厅 / 暴雨夜',
+      mergeStrategy: 'reuse_existing'
+    })
+    assert.deepEqual(manifestById.get('style-reference').anchor, {
+      anchorId: 'style-reference',
+      anchorRole: 'style_reference',
+      anchorName: '整体风格参考图',
+      mergeStrategy: 'reuse_existing'
+    })
     assert.equal(manifestById.has('shot-s02'), false)
     assert.equal(manifestById.has('shot-list'), false)
     assert.equal(manifestById.has('keyframe-s02'), false)
@@ -152,6 +170,7 @@ test('exports a compact foundation Canvas graph for character scene and style re
       /负面提示词/u,
       /anime, manga, cartoon/u
     )
+    assert.deepEqual(byId.get('character-ref-linmo').metadata.cineMake.anchor, manifestById.get('character-ref-linmo').anchor)
     assert.deepEqual(byId.get('character-ref-linmo').metadata.inputOrder, ['character-linmo'])
     assertImagePromptNode(byId.get('environment-ref-island-villa-living-room-night'), { size: '9:16' }, /场景参考图/u, /孤岛别墅客厅/u, /暴雨夜/u)
     assertImagePromptNode(byId.get('style-reference'), { size: '9:16' }, /风格参考图/u, /低饱和/u, /暴雨夜/u)
@@ -169,6 +188,62 @@ test('exports a compact foundation Canvas graph for character scene and style re
       assert.equal(canvasIds.has(connection.fromNodeId), true)
       assert.equal(canvasIds.has(connection.toNodeId), true)
     }
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('exports a merge-friendly storyboard Canvas pack that reuses locked foundation anchors', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-storyboard-pack-'))
+  try {
+    const contract = await createInputContract(parseArgs(['--aspect', '9:16', isolatedMansionScript]))
+    const result = await exportCanvasStoryboardPack({ outDir: out, contract })
+
+    assert.equal(result.manifestPath, join(out, 'canvas-manifest.json'))
+    assert.equal(result.zipPath, join(out, 'canvas-project.zip'))
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
+
+    const manifest = JSON.parse(await readFile(result.manifestPath, 'utf8'))
+    assert.equal(manifest.kind, 'cine-make-canvas-storyboard-pack')
+    assert.equal(manifest.packageType, 'manual_canvas_storyboard_append')
+    assert.equal(manifest.mergeTarget, 'current_canvas')
+    assert.match(manifest.manualWorkflow.join('\n'), /合并到当前画布/u)
+
+    const roles = new Set(manifest.nodes.map((node) => node.role))
+    assert.deepEqual([...roles].sort(), ['keyframe', 'shot_list'])
+    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), false)
+    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), false)
+    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), false)
+
+    const manifestById = new Map(manifest.nodes.map((node) => [node.id, node]))
+    assert.ok(manifestById.has('shot-list'))
+    assert.ok(manifestById.has('keyframe-s01'))
+    assert.ok(manifestById.has('keyframe-s04'))
+    assert.equal(manifestById.get('shot-list').canvasType, 'text')
+    assert.equal(manifestById.get('keyframe-s01').canvasType, 'image')
+    assert.equal(manifestById.get('keyframe-s01').mergeStrategy, 'append')
+    assert.deepEqual(manifestById.get('keyframe-s01').requiredAnchors, [
+      { anchorId: 'style-reference', anchorRole: 'style_reference', anchorName: '整体风格参考图' },
+      { anchorId: 'environment-ref-island-villa-living-room-night', anchorRole: 'environment_reference', anchorName: '孤岛别墅客厅 / 暴雨夜' },
+      { anchorId: 'character-ref-linmo', anchorRole: 'character_reference', anchorName: '林默' }
+    ])
+    const allRequiredAnchorIds = new Set(manifest.nodes.flatMap((node) => node.requiredAnchors?.map((anchor) => anchor.anchorId) ?? []))
+    assert.equal(allRequiredAnchorIds.has('character-ref-anna'), true)
+    assert.equal(allRequiredAnchorIds.has('character-ref-leidui'), true)
+    assert.equal(allRequiredAnchorIds.has('character-ref-ajie'), true)
+    assert.equal(manifest.connections.length, 0)
+
+    const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    const item = projectsJson.projects[0]
+    const byId = new Map(item.project.nodes.map((node) => [node.id, node]))
+    assertTextNode(byId.get('shot-list'), /Shot List/u, /S01/u, /摄影机脚本/u)
+    assertImagePromptNode(byId.get('keyframe-s01'), { size: '9:16' }, /关键帧生成任务/u, /已锁定人物主图/u, /林默/u, /不要重新发明角色/u)
+    assert.deepEqual(byId.get('keyframe-s01').metadata.cineMake.requiredAnchors, manifestById.get('keyframe-s01').requiredAnchors)
+    assert.deepEqual(byId.get('keyframe-s01').metadata.inputOrder, [
+      'style-reference',
+      'environment-ref-island-villa-living-room-night',
+      'character-ref-linmo'
+    ])
   } finally {
     await rm(out, { recursive: true, force: true })
   }

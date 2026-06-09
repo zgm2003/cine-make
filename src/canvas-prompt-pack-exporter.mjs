@@ -77,10 +77,24 @@ export async function exportCanvasPromptPack({ outDir, contract } = {}) {
 
   const draft = composeDraftAssets(contract)
   const manifest = buildCanvasPromptPackManifest({ contract, draft })
+  return writeCanvasPackage({ outDir, manifest })
+}
+
+export async function exportCanvasStoryboardPack({ outDir, contract } = {}) {
+  if (!outDir) throw new Error('canvas storyboard pack requires outDir')
+  if (!contract) throw new Error('canvas storyboard pack requires contract')
+
+  await mkdir(outDir, { recursive: true })
+
+  const draft = composeDraftAssets(contract)
+  const manifest = buildCanvasStoryboardPackManifest({ contract, draft })
+  return writeCanvasPackage({ outDir, manifest })
+}
+
+async function writeCanvasPackage({ outDir, manifest }) {
   const canvasExport = buildCanvasExport(manifest)
   const promptPack = composePromptPackMarkdown(manifest)
   const readme = composeReadme(manifest)
-
   const manifestPath = join(outDir, 'canvas-manifest.json')
   const zipPath = join(outDir, 'canvas-project.zip')
   const promptPackPath = join(outDir, 'prompt-pack.md')
@@ -90,6 +104,7 @@ export async function exportCanvasPromptPack({ outDir, contract } = {}) {
   await writeFile(promptPackPath, `${promptPack}\n`, 'utf8')
   await writeFile(readmePath, `${readme}\n`, 'utf8')
   await writeFile(zipPath, createStoredZip([
+    { name: 'canvas-manifest.json', data: `${JSON.stringify(manifest, null, 2)}\n` },
     { name: 'projects.json', data: `${JSON.stringify(canvasExport, null, 2)}\n` }
   ]))
 
@@ -128,6 +143,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     row: 0,
     column: 1,
     prompt: composeStyleReferencePrompt({ contract, environment }),
+    anchor: styleReferenceAnchor(),
     inputOrder: ['style-bible']
   }))
   connect(connections, 'style-bible', 'style-reference', 'style_rules')
@@ -153,6 +169,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
       column: 1,
       prompt: composeCharacterReferencePrompt({ character, contract }),
       imageSize: '16:9',
+      anchor: characterReferenceAnchor(character),
       inputOrder: [character.id]
     }))
     connect(connections, character.id, refId, 'character_bible')
@@ -178,6 +195,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     row: environmentRow,
     column: 1,
     prompt: composeEnvironmentReferencePrompt({ environment, contract }),
+    anchor: environmentReferenceAnchor(environment),
     inputOrder: ['style-bible', environment.id]
   }))
   connect(connections, 'style-bible', environmentRefId, 'style_rules')
@@ -204,6 +222,71 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
       '这是基础参考图包：先不做分镜和 Keyframe。',
       '左侧是风格、人设、场景文本设定；右侧是可生成的风格参考图、角色参考图、场景参考图。',
       '用户从右侧图片节点开始操作；文本节点只作为直接上游上下文 chip。'
+    ],
+    outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
+    nodes,
+    connections
+  }
+}
+
+function buildCanvasStoryboardPackManifest({ contract, draft }) {
+  const nodes = []
+  const connections = []
+  const characters = normalizeCharacters(draft.characters)
+  const environment = inferPrimaryScene(contract, draft)
+  const props = inferProps(contract.sourceText, draft)
+  const shots = draft.shotlist ?? []
+
+  nodes.push(createManifestNode({
+    id: 'shot-list',
+    role: 'shot_list',
+    title: '资料：Shot List / 分镜清单（非生成）',
+    canvasType: 'text',
+    row: 0,
+    column: 0,
+    content: composeCompactShotList({ shots, environment }),
+    mergeStrategy: 'append'
+  }))
+
+  shots.forEach((shot, index) => {
+    const requiredAnchors = requiredAnchorsForShot({ shot, characters, environment })
+    nodes.push(createManifestNode({
+      id: keyframeNodeId(shot, index),
+      role: 'keyframe',
+      title: `生成：${shot.shot_id || `S${String(index + 1).padStart(2, '0')}`} 关键帧`,
+      canvasType: 'image',
+      row: index,
+      column: 1,
+      prompt: composeKeyframePrompt({ shot, contract, environment, props }),
+      inputOrder: requiredAnchors.map((anchor) => anchor.anchorId),
+      requiredAnchors,
+      mergeStrategy: 'append'
+    }))
+  })
+
+  return {
+    schemaVersion: 1,
+    kind: 'cine-make-canvas-storyboard-pack',
+    packageType: 'manual_canvas_storyboard_append',
+    mergeTarget: 'current_canvas',
+    createdAt: new Date().toISOString(),
+    source: {
+      title: contract.title,
+      contentType: contract.contentType
+    },
+    target: {
+      app: CANVAS_APP,
+      version: CANVAS_VERSION,
+      aspectRatio: contract.target.aspectRatio,
+      style: contract.target.style,
+      platform: contract.target.platform
+    },
+    manualWorkflow: [
+      '先在 Canvas 当前画布里锁定人物主图、场景主图和风格主图。',
+      '使用 Canvas 的“合并到当前画布 / 导入到当前画布”导入本 canvas-project.zip，不要作为新工程重新开始。',
+      '本包只追加 Shot List 和 Keyframe 图片节点，不重复生成 Character / Environment / Style 参考图。',
+      'Keyframe 节点会声明 requiredAnchors；Canvas 合并时应把它们连接到当前画布中已锁定的主图锚点。',
+      '导入后仍由用户逐个点击右侧 Keyframe 图片节点手动生成。'
     ],
     outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
     nodes,
@@ -264,7 +347,7 @@ function inferProps(sourceText, draft) {
   return PROP_CATALOG.filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
 }
 
-function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder }) {
+function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, mergeStrategy }) {
   const isVideo = canvasType === 'video'
   const isText = canvasType === 'text'
   const isLandscapeImage = canvasType === 'image' && imageSize === '16:9'
@@ -283,7 +366,10 @@ function createManifestNode({ id, role, title, canvasType, row, column, prompt, 
     content,
     seconds,
     imageSize,
-    inputOrder
+    inputOrder,
+    anchor,
+    requiredAnchors,
+    mergeStrategy
   }
 }
 
@@ -335,7 +421,8 @@ function toCanvasNode(node, manifest) {
         content: node.content || '',
         status: 'success',
         generationMode: 'text',
-        fontSize: 14
+        fontSize: 14,
+        cineMake: cineMakeNodeMetadata(node, manifest)
       }
     }
   }
@@ -354,7 +441,8 @@ function toCanvasNode(node, manifest) {
         status: 'idle',
         generationMode: 'video',
         size: manifest.target.aspectRatio,
-        seconds: node.seconds || '5'
+        seconds: node.seconds || '5',
+        cineMake: cineMakeNodeMetadata(node, manifest)
       }
     }
   }
@@ -375,8 +463,19 @@ function toCanvasNode(node, manifest) {
       size: node.imageSize || manifest.target.aspectRatio,
       quality: 'auto',
       count: 1,
-      inputOrder: node.inputOrder
+      inputOrder: node.inputOrder,
+      cineMake: cineMakeNodeMetadata(node, manifest)
     }
+  }
+}
+
+function cineMakeNodeMetadata(node, manifest) {
+  return {
+    packageType: manifest.packageType,
+    role: node.role,
+    mergeStrategy: node.mergeStrategy,
+    anchor: node.anchor,
+    requiredAnchors: node.requiredAnchors
   }
 }
 
@@ -676,8 +775,10 @@ function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
   return [
     '关键帧生成任务：生成一张电影概念帧 / 分镜定格，不是视频，不是多格漫画。',
     '',
-    '必须读取并遵守直接上游文本：前期总控、Environment Bible、实际连接的人物 Character Bible。',
-    '直接上游文本决定角色、场景和视觉风格；不要自己重新发明地点、灯光、服装或画面风格。未连接的人物不要出现。',
+    '必须使用 Canvas 中已锁定人物主图、已锁定场景主图和已锁定风格主图作为直接视觉参考。',
+    '已锁定人物主图决定演员脸、发型、体型、服装和道具；不要重新发明角色，不要换演员。',
+    '已锁定场景主图决定空间结构、门窗、沙发、茶几、角落和灯光方向；不要重新发明地点。',
+    '未连接的人物不要出现；未声明的场景不要出现。',
     '',
     `分镜：${shot.shot_id}`,
     `画幅：${contract.target.aspectRatio}`,
@@ -746,6 +847,54 @@ function shotUsesProp(shot, prop) {
     shot.dialogue_or_voiceover
   ].filter(Boolean).join('\n')
   return prop.triggers.some((trigger) => text.includes(trigger))
+}
+
+function styleReferenceAnchor() {
+  return {
+    anchorId: 'style-reference',
+    anchorRole: 'style_reference',
+    anchorName: '整体风格参考图',
+    mergeStrategy: 'reuse_existing'
+  }
+}
+
+function characterReferenceAnchor(character) {
+  return {
+    anchorId: characterReferenceNodeId(character),
+    anchorRole: 'character_reference',
+    anchorName: character.name,
+    mergeStrategy: 'reuse_existing'
+  }
+}
+
+function environmentReferenceAnchor(environment) {
+  return {
+    anchorId: environmentReferenceNodeId(environment),
+    anchorRole: 'environment_reference',
+    anchorName: environment.name,
+    mergeStrategy: 'reuse_existing'
+  }
+}
+
+function requiredAnchor(anchor) {
+  return {
+    anchorId: anchor.anchorId,
+    anchorRole: anchor.anchorRole,
+    anchorName: anchor.anchorName
+  }
+}
+
+function requiredAnchorsForShot({ shot, characters, environment }) {
+  const anchors = [
+    requiredAnchor(styleReferenceAnchor()),
+    requiredAnchor(environmentReferenceAnchor(environment))
+  ]
+  const usedCharacterNames = new Set(shot.characters ?? [])
+  for (const character of characters) {
+    if (!usedCharacterNames.has(character.name)) continue
+    anchors.push(requiredAnchor(characterReferenceAnchor(character)))
+  }
+  return anchors
 }
 
 function shotNodeId(shot, fallbackIndex = 0) {

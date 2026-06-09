@@ -192,6 +192,8 @@ canvas-project.zip
 
 `canvas-manifest.json` is Cine Make's semantic director handoff. `canvas-project.zip` is a text-only `projects.json` package that can be imported through the Canvas `导入画布` button. It does not generate images, videos, or media files.
 
+For short scripts and excerpts, use `canvas-pack` as the first manual Canvas foundation handoff. It creates style, character, and environment reference image nodes only. After the user generates and locks those reference images in Canvas, use `canvas-storyboard-pack` to create a merge-into-current-canvas append package with Shot List and Keyframe image nodes. The storyboard package does not duplicate foundation reference nodes; each Keyframe declares stable anchors such as `character-ref-*`, `environment-ref-*`, and `style-reference`.
+
 ### Debug artifacts
 
 ```bash

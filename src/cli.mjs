@@ -27,13 +27,14 @@ import { exportNovelEpisode } from './novel/episode-exporter.mjs'
 import { exportNovelCanvas } from './novel/canvas-exporter.mjs'
 import { updateProjectContinuity } from './novel/continuity-manager.mjs'
 import { planVisualBible } from './novel/visual-bible-planner.mjs'
-import { exportCanvasPromptPack } from './canvas-prompt-pack-exporter.mjs'
+import { exportCanvasPromptPack, exportCanvasStoryboardPack } from './canvas-prompt-pack-exporter.mjs'
 
 function usage() {
   return [
     'Usage:',
     '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <jimeng>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
     '  node src/cli.mjs canvas-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
+    '  node src/cli.mjs canvas-storyboard-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
@@ -372,6 +373,25 @@ async function exportManualCanvasPromptPack(argv, cineMakeRoot) {
   console.log('- images/videos: none; generate manually inside Canvas')
 }
 
+async function exportManualCanvasStoryboardPack(argv, cineMakeRoot) {
+  const options = parseArgs(argv)
+  if (options.help) {
+    console.log(usage())
+    return
+  }
+
+  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
+  const contract = await createInputContract(options)
+  const result = await exportCanvasStoryboardPack({ outDir, contract })
+
+  console.log('Cine Make storyboard Canvas append pack ready:')
+  console.log(`- canvas zip: ${result.zipPath}`)
+  console.log(`- manifest: ${result.manifestPath}`)
+  console.log(`- prompt pack: ${result.promptPackPath}`)
+  console.log(`- README: ${result.readmePath}`)
+  console.log('- images/videos: none; merge into current Canvas, then generate keyframes manually')
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -533,6 +553,11 @@ async function main() {
 
   if (process.argv[2] === 'canvas-pack') {
     await exportManualCanvasPromptPack(process.argv.slice(3), cineMakeRoot)
+    return
+  }
+
+  if (process.argv[2] === 'canvas-storyboard-pack') {
+    await exportManualCanvasStoryboardPack(process.argv.slice(3), cineMakeRoot)
     return
   }
 

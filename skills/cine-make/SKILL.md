@@ -34,7 +34,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - For normal short-script and excerpt draft/visual runs, user-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages; see `references/novel-project-mode.md`.
 - Whole-novel Canvas export is a handoff adapter only: it writes `canvas-manifest.json` and `canvas-project.zip`; it does not generate images, videos, media files, or a web UI.
-- Manual Canvas generation is also a first-class handoff for short scripts and excerpts: use `node src/cli.mjs canvas-pack ...` when the user wants control in Canvas, says they do not want to draw/gamble/generate images here, or asks for a prompt pack. The first Canvas handoff is a compact foundation graph: text resource nodes for World Bible / Art Direction, Character Bible, and Environment Bible, plus style_reference, character_reference, and environment_reference image nodes. Do not include Shot List or Keyframes in this first foundation pack. Do not run `--mode visual`; Do not create `storyboard-images/`.
+- Manual Canvas generation is also a first-class handoff for short scripts and excerpts. Use `node src/cli.mjs canvas-pack ...` for the first foundation graph when the user wants control in Canvas, says they do not want to draw/gamble/generate images here, or asks for a prompt pack. The first Canvas handoff is compact: text resource nodes for World Bible / Art Direction, Character Bible, and Environment Bible, plus style_reference, character_reference, and environment_reference image nodes. Do not include Shot List or Keyframes in this first foundation pack. After the user has generated and locked the character/scene/style main images in Canvas, use `node src/cli.mjs canvas-storyboard-pack ...` to create a merge-into-current-canvas append pack with Shot List and Keyframe image nodes. Do not run `--mode visual`; Do not create `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
@@ -55,14 +55,15 @@ Use only these two user-facing modes. In CLI/internal contracts the second mode 
 | `draft` / 草稿模式 | default first pass; user is still changing story, rhythm, shots | no images | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` / 出图模式 | draft is approved; user wants references/keyframes for video tools | yes, still images only when image generation is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
-`canvas-pack` is not a third draft/visual mode. It is a handoff command for manual Canvas generation. It writes `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; it does not generate images, videos, media files, or `storyboard-images/`. The first Canvas graph is intentionally compact and left-to-right: text bibles on the left, reference image generation nodes on the right. It covers only style, characters, and environment; storyboard/keyframe layers come later after the foundation is approved.
+`canvas-pack` and `canvas-storyboard-pack` are not third/fourth draft/visual modes. They are handoff commands for manual Canvas generation. Both write `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; neither generates images, videos, media files, or `storyboard-images/`. The first Canvas graph is intentionally compact and left-to-right: text bibles on the left, reference image generation nodes on the right. It covers only style, characters, and environment. `canvas-storyboard-pack` comes later after the foundation is approved and locked; it appends Shot List and Keyframe image nodes that reuse stable anchors from the current Canvas.
 
 Do not invent extra modes. Keep internal/debug artifacts internal.
 
 ## Source-size routing
 
 - Short story fragments, scripts, ad briefs, shotlists, and pasted excerpts use the existing draft -> visual flow below unless the user wants manual Canvas generation.
-- If the user says they do not want to "抽卡", "出图", "generate images", or wants to import into Canvas manually, use `canvas-pack` directly.
+- If the user says they do not want to "抽卡", "出图", "generate images", or wants to import into Canvas manually, use `canvas-pack` directly for the foundation stage.
+- If the user says they have locked/set main images in Canvas and now need shots, storyboard, keyframes, or the next Canvas package, use `canvas-storyboard-pack` directly.
 - A whole novel or large `.txt` file uses novel project mode. Read `references/novel-project-mode.md` before operating it.
 - Never paste the whole source into context. Use the project tasks to summarize bounded chapters and build the bible from accepted summaries.
 - Generate S/A character references only after bible planning and visual-bible planning; do not create identity assets from raw unsummarized source.
@@ -118,6 +119,11 @@ When triggered by a story-to-video-preproduction request:
    node src/cli.mjs canvas-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
    ```
    This is the preferred manual Canvas generation path. It creates a compact foundation pack: style bible -> style reference image, character bible -> character reference image, and environment bible -> environment reference image. Text nodes are upstream resources/chips, not generation targets. Character reference image nodes must connect only to their own Character Bible, not to environment or style nodes, so they stay white/light-gray studio turnaround sheets. The layout should read left-to-right rather than a tall top-down dependency tree. Do not create Shot List, Keyframes, text-to-text chain connections, or video segment nodes in this first foundation pack. Do not run `--mode visual`; Do not create `storyboard-images/`.
+   If the user has already generated and locked the foundation images in Canvas, run:
+   ```bash
+   node src/cli.mjs canvas-storyboard-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
+   ```
+   This creates a merge-friendly append pack for the current Canvas: a Shot List text node plus Keyframe image nodes. It does not duplicate character, scene, or style reference nodes. Each Keyframe declares `requiredAnchors` such as `character-ref-linmo`, `environment-ref-*`, and `style-reference` so Canvas can connect it to the already locked main images. The user should import this with Canvas's "merge into current canvas / 合并到当前画布" flow, not as a new project.
 3. Otherwise, run the compiler in draft mode first:
    ```bash
    node src/cli.mjs --mode draft --out <run-dir> --aspect <ratio> --style <style> "<source material>"
@@ -158,7 +164,8 @@ When triggered by a story-to-video-preproduction request:
 - A good video-tool feed card is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
 - Each video-tool feed card must keep uploaded images at or under 9 total. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
 - If the user says `视频工具投喂包`, treat it as the concrete upload-images-and-copy-prompt section in `deliverable.md`, not as hidden internal files.
-- If the user says `Canvas 提示词包`, `导入画布`, `手动生成`, or `不想抽卡`, treat it as the `canvas-pack` handoff, not as `visual` mode.
+- If the user says `Canvas 提示词包`, `导入画布`, `手动生成`, or `不想抽卡`, treat it as the `canvas-pack` foundation handoff, not as `visual` mode.
+- If the user has already locked foundation images and asks what is next, asks for storyboard/keyframe nodes, or says Canvas can merge into the current canvas, treat it as the `canvas-storyboard-pack` append handoff.
 - If platform limits are unknown, make tasks smaller instead of stuffing multiple storyboard beats into one prompt.
 - Do not surface platform selection in normal user prompts; treat it as an internal adapter concern.
 - If character identity is under-specified, generate or request character references before final storyboards.
@@ -179,8 +186,8 @@ Before saying a Cine Make run is ready, report:
 
 - compiler command run;
 - generated run directory;
-- mode: `draft` / 草稿模式, `visual` / 出图模式, or `canvas-pack` / manual Canvas generation handoff;
-- `deliverable.md` path, or for `canvas-pack`: `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`;
+- mode: `draft` / 草稿模式, `visual` / 出图模式, `canvas-pack` / foundation Canvas handoff, or `canvas-storyboard-pack` / storyboard append handoff;
+- `deliverable.md` path, or for Canvas handoff commands: `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`;
 - whether still images were generated or only prompts were prepared;
 - video prompt pack status; mention a platform only if the user explicitly named one;
 - continuity review result;
