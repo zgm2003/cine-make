@@ -34,7 +34,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - For normal short-script and excerpt draft/visual runs, user-facing output is only `deliverable.md` plus `storyboard-images/`.
 - Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages; see `references/novel-project-mode.md`.
 - Whole-novel Canvas export is a handoff adapter only: it writes `canvas-manifest.json` and `canvas-project.zip`; it does not generate images, videos, media files, or a web UI.
-- Manual Canvas generation is also a first-class handoff for short scripts and excerpts: use `node src/cli.mjs canvas-pack ...` when the user wants control in Canvas, says they do not want to draw/gamble/generate images here, or asks for a prompt pack. It exports a pre-production graph: Script Breakdown -> World Bible -> Character Bible / Environment Bible / Prop Bible -> Art Direction -> Shot List -> Keyframes. Do not run `--mode visual`; Do not create `storyboard-images/`.
+- Manual Canvas generation is also a first-class handoff for short scripts and excerpts: use `node src/cli.mjs canvas-pack ...` when the user wants control in Canvas, says they do not want to draw/gamble/generate images here, or asks for a prompt pack. It exports a compact Canvas-native graph: a few text resource nodes for Pre-production Bible / Character Bible / Environment Bible / Shot List, plus Keyframes image nodes. Do not run `--mode visual`; Do not create `storyboard-images/`.
 - Character, scene, and style images are optional; never make them required.
 - The user should not have to say “only deliver deliverable.md and storyboard-images/”. This is mandatory product behavior.
 - The user should not have to name a video platform. Cine Make targets Jimeng by default and does not generate other platform packs.
@@ -55,7 +55,7 @@ Use only these two user-facing modes. In CLI/internal contracts the second mode 
 | `draft` / 草稿模式 | default first pass; user is still changing story, rhythm, shots | no images | `deliverable.md` + `storyboard-images/README.md` |
 | `visual` / 出图模式 | draft is approved; user wants references/keyframes for video tools | yes, still images only when image generation is available | `deliverable.md` + generated/fillable `storyboard-images/` |
 
-`canvas-pack` is not a third draft/visual mode. It is a handoff command for manual Canvas generation. It writes `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; it does not generate images, videos, media files, or `storyboard-images/`. The Canvas graph covers Script Breakdown, World Bible, Character Bible, Environment Bible, Prop Bible, Art Direction, Shot List, and Keyframes.
+`canvas-pack` is not a third draft/visual mode. It is a handoff command for manual Canvas generation. It writes `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`; it does not generate images, videos, media files, or `storyboard-images/`. The Canvas graph is intentionally compact: Pre-production Bible combines Script Breakdown, World Bible, and Art Direction; Character Bible and Environment Bible stay as text resources; Shot List is for review; Keyframes are the image nodes the user generates manually.
 
 Do not invent extra modes. Keep internal/debug artifacts internal.
 
@@ -117,7 +117,7 @@ When triggered by a story-to-video-preproduction request:
    ```bash
    node src/cli.mjs canvas-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
    ```
-   This is the preferred manual Canvas generation path. It creates separate Script Breakdown, World Bible, Character Bible, Environment Bible, Prop Bible, Art Direction, Shot List, and Keyframes nodes. Character, environment, and prop bible nodes stay independent; each Keyframes node only connects to the exact character/environment/prop/art-direction/shot context it needs. Do not create video segment nodes. Do not run `--mode visual`; Do not create `storyboard-images/`.
+   This is the preferred manual Canvas generation path. It creates a compact Canvas-native pack: Pre-production Bible, Character Bible, Environment Bible, Shot List, and Keyframes nodes. Text nodes are upstream resources/chips, not generation targets. Each Keyframes image node directly connects only to the needed pre-production, environment, and character resources; shot/action/prop details live in that Keyframe's own prompt. Do not create text-to-text chain connections or video segment nodes. Do not run `--mode visual`; Do not create `storyboard-images/`.
 3. Otherwise, run the compiler in draft mode first:
    ```bash
    node src/cli.mjs --mode draft --out <run-dir> --aspect <ratio> --style <style> "<source material>"

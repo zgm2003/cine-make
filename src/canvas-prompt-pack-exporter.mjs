@@ -110,36 +110,14 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   const shots = draft.shotlist ?? []
 
   nodes.push(createManifestNode({
-    id: 'script-breakdown',
-    role: 'script_breakdown',
-    title: '剧本拆解',
+    id: 'preproduction-bible',
+    role: 'preproduction_bible',
+    title: '前期总控：剧本拆解 / World Bible / Art Direction',
     canvasType: 'text',
     row: 0,
     column: 0,
-    content: composeScriptBreakdown({ contract, draft, characters, environment, props })
+    content: composePreproductionBible({ contract, draft, characters, environment, props })
   }))
-
-  nodes.push(createManifestNode({
-    id: 'world-bible',
-    role: 'world_bible',
-    title: '世界观 / 类型 / 情绪规则',
-    canvasType: 'text',
-    row: 1,
-    column: 0,
-    content: composeWorldBible({ contract, environment })
-  }))
-  connect(connections, 'script-breakdown', 'world-bible', 'analysis_to_world_rules')
-
-  nodes.push(createManifestNode({
-    id: 'art-direction',
-    role: 'art_direction',
-    title: '视觉风格锁定 / Art Direction',
-    canvasType: 'text',
-    row: 1,
-    column: 1,
-    content: composeArtDirection({ contract, environment })
-  }))
-  connect(connections, 'world-bible', 'art-direction', 'world_rules_to_visual_rules')
 
   characters.forEach((character, index) => {
     nodes.push(createManifestNode({
@@ -147,11 +125,10 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
       role: 'character_bible',
       title: `人设：${character.name}`,
       canvasType: 'text',
-      row: 2,
+      row: 1,
       column: index,
       content: composeCharacterBible(character)
     }))
-    connect(connections, 'world-bible', character.id, 'world_rules_to_character')
   })
 
   nodes.push(createManifestNode({
@@ -159,69 +136,39 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     role: 'environment_bible',
     title: environment.title,
     canvasType: 'text',
-    row: 3,
-    column: 0,
+    row: 0,
+    column: 1,
     content: composeEnvironmentBible({ environment })
   }))
-  connect(connections, 'world-bible', environment.id, 'world_rules_to_environment')
 
-  props.forEach((prop, index) => {
-    nodes.push(createManifestNode({
-      id: prop.id,
-      role: 'prop_bible',
-      title: prop.title,
-      canvasType: 'text',
-      row: 3,
-      column: index + 1,
-      content: composePropBible(prop)
-    }))
-    connect(connections, 'world-bible', prop.id, 'world_rules_to_prop')
-  })
+  nodes.push(createManifestNode({
+    id: 'shot-list',
+    role: 'shot_list',
+    title: '分镜清单 / Shot List',
+    canvasType: 'text',
+    row: 0,
+    column: 2,
+    content: composeCompactShotList({ shots, environment })
+  }))
 
   shots.forEach((shot, index) => {
-    const shotId = shotNodeId(shot, index)
-    nodes.push(createManifestNode({
-      id: shotId,
-      role: 'shot',
-      title: `分镜 ${shot.shot_id}`,
-      canvasType: 'text',
-      row: 4 + Math.floor(index / SHOTS_PER_SEGMENT),
-      column: index % SHOTS_PER_SEGMENT,
-      content: composeShotBible({ shot, environment })
-    }))
-    if (index > 0) connect(connections, shotNodeId(shots[index - 1], index - 1), shotId, 'shot_sequence')
-  })
-
-  shots.forEach((shot, index) => {
-    const shotId = shotNodeId(shot, index)
     const keyframeId = keyframeNodeId(shot, index)
-    const inputOrder = ['art-direction', environment.id, shotId]
+    const usedCharacters = characters.filter((character) => shotUsesCharacter(shot, character.name))
+    const inputOrder = ['preproduction-bible', environment.id, ...usedCharacters.map((character) => character.id)]
     nodes.push(createManifestNode({
       id: keyframeId,
       role: 'keyframe',
       title: `关键帧 ${shot.shot_id}`,
       canvasType: 'image',
-      row: 4 + Math.ceil(shots.length / SHOTS_PER_SEGMENT) + Math.floor(index / SHOTS_PER_SEGMENT),
-      column: index,
-      prompt: composeKeyframePrompt({ shot, contract, environment }),
+      row: 3 + Math.floor(index / SHOTS_PER_SEGMENT),
+      column: index % SHOTS_PER_SEGMENT,
+      prompt: composeKeyframePrompt({ shot, contract, environment, props }),
       inputOrder
     }))
 
-    connect(connections, 'art-direction', keyframeId, 'style_lock')
+    connect(connections, 'preproduction-bible', keyframeId, 'production_rules')
     connect(connections, environment.id, keyframeId, 'environment_reference')
-    connect(connections, shotId, keyframeId, 'camera_script')
-    for (const character of characters) {
-      if (shotUsesCharacter(shot, character.name)) {
-        connect(connections, character.id, keyframeId, 'character_reference')
-        inputOrder.push(character.id)
-      }
-    }
-    for (const prop of props) {
-      if (shotUsesProp(shot, prop)) {
-        connect(connections, prop.id, keyframeId, 'prop_reference')
-        inputOrder.push(prop.id)
-      }
-    }
+    for (const character of usedCharacters) connect(connections, character.id, keyframeId, 'character_reference')
   })
 
   return {
@@ -242,9 +189,9 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     },
     manualWorkflow: [
       '导入 canvas-project.zip。',
-      '先阅读 Script Breakdown、World Bible、Character Bible、Environment Bible 和 Art Direction。',
-      '确认这些前期规则后，再生成 Keyframe 节点。',
-      '每个 Keyframe 只读取它上游连接的人设、场景、道具、Art Direction 和对应分镜。'
+      '先阅读前期总控、场景设定、人物圣经和分镜清单。',
+      '真正需要生成的是 Keyframe 图片节点；文本节点只作为上游上下文 chip。',
+      '每个 Keyframe 只读取它直接连接的人设、场景和前期总控；不要依赖文本节点之间的串流。'
     ],
     outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
     nodes,
@@ -485,6 +432,30 @@ function composeArtDirection({ contract, environment }) {
   ].join('\n')
 }
 
+function composePreproductionBible({ contract, draft, characters, environment, props }) {
+  return [
+    '# 前期总控 / Pre-production Bible',
+    '',
+    '这个节点是给 Canvas 图片节点直接读取的上游文本资源，不需要单独生成图片。',
+    '',
+    composeScriptBreakdown({ contract, draft, characters, environment, props }),
+    '',
+    composeWorldBible({ contract, environment }),
+    '',
+    composeArtDirection({ contract, environment }),
+    '',
+    '## 道具锚点',
+    props.length
+      ? props.map((prop) => `- ${prop.label}：${prop.triggers.join(' / ')}`).join('\n')
+      : '- 本片段未识别到需要单独锁定的道具。',
+    '',
+    '## Canvas 使用规则',
+    '- 只把本节点作为 Keyframe 图片节点的直接上游文本。',
+    '- 不依赖文本节点之间的串流；生成图片时以当前 Keyframe 的 prompt 为准。',
+    '- 如果画面漂移，优先检查 Keyframe 是否直接连接本节点、场景节点和需要的人物节点。'
+  ].join('\n')
+}
+
 function composeCharacterBible(character) {
   return [
     `# Character Bible：${character.name}`,
@@ -582,16 +553,37 @@ function composeShotBible({ shot, environment }) {
   ].join('\n')
 }
 
-function composeKeyframePrompt({ shot, contract, environment }) {
+function composeCompactShotList({ shots, environment }) {
+  return [
+    '# Shot List / 摄影机脚本',
+    '',
+    '这是人工审阅用的分镜清单。Keyframe 图片节点自己的 prompt 已经包含对应镜头，不需要把本节点连接到每个 Keyframe。',
+    '',
+    ...shots.map((shot) => [
+      `## ${shot.shot_id}`,
+      `- 场景：${shot.scene || environment.name}`,
+      `- 人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
+      `- 镜头：${shot.shot_size || ''} / ${shot.lens || ''} / ${shot.camera_movement || ''}`,
+      `- 构图：${shot.composition || ''}`,
+      `- 调度：${shot.blocking || ''}`,
+      `- 画面动作：${shot.action || ''}`
+    ].join('\n'))
+  ].join('\n\n')
+}
+
+function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
+  const usedProps = props.filter((prop) => shotUsesProp(shot, prop))
   return [
     '关键帧生成任务：生成一张电影概念帧 / 分镜定格，不是视频，不是多格漫画。',
     '',
-    '必须读取并遵守上游连接：Art Direction、Environment Bible、对应 Shot、实际连接的人设和道具。未连接的人物和道具不要出现。',
-    '上游连接决定角色、场景、道具和视觉风格；不要自己重新发明地点、灯光、服装或画面风格。',
+    '必须读取并遵守直接上游文本：前期总控、Environment Bible、实际连接的人物 Character Bible。',
+    '直接上游文本决定角色、场景和视觉风格；不要自己重新发明地点、灯光、服装或画面风格。未连接的人物不要出现。',
     '',
     `分镜：${shot.shot_id}`,
     `画幅：${contract.target.aspectRatio}`,
     `场景锚点：${environment.name}`,
+    `出场人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
+    usedProps.length ? `关键道具：${usedProps.map((prop) => prop.label).join('、')}` : '',
     `景别/镜头：${shot.shot_size || ''} / ${shot.lens || ''}`,
     `运镜只转化为静态构图暗示：${shot.camera_movement || ''}`,
     `画面动作：${shot.action || ''}`,

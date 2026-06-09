@@ -74,9 +74,10 @@ test('cli writes a manual Canvas prompt pack without storyboard images', async (
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
     const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
     assert.equal(manifest.nodes.some((node) => node.role === 'video_segment'), false)
-    assert.equal(manifest.nodes.some((node) => node.role === 'world_bible'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'art_direction'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'preproduction_bible'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), true)
     assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), true)
+    assert.equal(manifest.connections.every((connection) => connection.toNodeId.startsWith('keyframe-')), true)
     assert.match(result.stdout, /manual Canvas generation/)
   } finally {
     await rm(out, { recursive: true, force: true })
