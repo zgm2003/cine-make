@@ -43,6 +43,9 @@ Cine Make 现在按 Structured Cinematic Pipeline 输出，而不是把所有信
 ```text
 SCRIPT_BEATS        # 先判断叙事节拍功能
 DIRECTOR_DECISION   # 决定镜头保留 / 合并 / 删除
+TEXT_READABILITY_POLICY
+DIALOGUE_POLICY
+SHOT_DENSITY_CONTROLLER
 DIRECTOR_BIBLE      # 全局导演规则
 CHARACTER_BIBLE     # 人物一致性
 ENVIRONMENT_BIBLES  # 多场景环境圣经数组
@@ -60,13 +63,17 @@ AI_RISK_WARNINGS    # AI 生成风险提示
 
 ### 导演判断层
 
-Cine Make 下一层不是把提示词写更长，而是判断得更准。`SCRIPT_BEATS` 先标记每个剧情节拍的功能；`DIRECTOR_DECISION` 要求每个镜头必须证明自己不可删除：它是否提供新信息、改变人物关系、升级情绪压力、揭示关键道具、误导观众、强化倒计时/循环机制，或推进结尾钩子。
+Cine Make 下一层不是把提示词写更长，而是判断得更准。`SCRIPT_BEATS` 现在要先形成真实叙事节拍，不再退化成一镜一个 Beat；`DIRECTOR_DECISION` 必须给出明确的 `保留 / 合并 / 删除 / 重写`（keep / merge / delete / rewrite）结果，并要求每个镜头证明自己不可删除：它是否提供新信息、改变人物关系、升级情绪压力、揭示关键道具、误导观众、强化倒计时/循环机制，或推进结尾钩子。
+
+`TEXT_READABILITY_POLICY`、`DIALOGUE_POLICY`、`SHOT_DENSITY_CONTROLLER` 是小型控制规则，不是继续堆新阶段。它们负责提前抓翻车点：关键文字必须是 primary anchor 并用 close-up / insert，长台词要压缩成视觉剪辑版短台词，40-50 秒短剧不应盲目拆太碎。`QUALITY_CHECK` 会输出 `通过 / 警告 / 失败`（pass / warning / fail）状态和具体问题。
 
 `ENVIRONMENT_BIBLES` / 环境圣经数组用于多场景剧本，不再假设只有一个 `SCENE_BIBLE`。每个镜头可以绑定环境 id，并标记 reality / hallucination / distorted reality 等空间模式。
 
 `ANCHOR_POLICY` / 锚点策略会区分全局锚点、角色锚点、剧情锚点和单镜锚点。不是所有锚点都要进每一镜：每镜最多 1 个 primary anchor，最多 2 个 secondary anchors。手机、倒计时、武器、血字等道具只在服务本镜功能时入画。
 
-草稿会保留 `Storyboard Version A: Full Coverage` 方便检查是否漏剧情，但默认推荐 `Storyboard Version B: Director Cut` / 导演删减版用于实际生成。`QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS` 会专门标出常见翻车点：macro 镜头承担复杂表演、wide 镜头承担文字阅读、多人镜头信息过载、每镜强塞无关道具、Keyframe 混入 Motion 描述、Motion Prompt 含多个主动作。
+草稿会保留 `Storyboard Version A: Full Coverage` 方便检查是否漏剧情，但默认推荐 `Storyboard Version B: Director Cut` / 导演删减版用于实际生成。导演删减版可以重写节奏和镜头设计，而不是从 A 版里机械删除几镜。`QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS` 会专门标出常见翻车点：macro 镜头承担复杂表演、wide 镜头承担文字阅读、多人镜头信息过载、每镜强塞无关道具、Keyframe 混入 Motion 描述、Motion Prompt 含多个主动作。
+
+Keyframe 输出使用局部化 Keyframe / 局部化关键帧提示词：每条只写本镜的镜头设计、primary/secondary anchors、调度、光影和连续性；全局风格规则留在 bible 里，不在每个图片 prompt 里重复刷屏。
 
 
 `storyboard-images/` 是图片资产目录，包含或准备：

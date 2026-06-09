@@ -123,6 +123,22 @@ test('docs describe director decision layer and quality checks', async () => {
   assert.match(combined, /macro.*复杂表演|wide.*文字阅读|macro shot.*complex action|wide shot.*readable text/u)
 })
 
+test('docs describe director judgment v2 policies and localized prompts', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+  const english = await readFile(join(root, 'README.md'), 'utf8')
+  const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
+  const combined = [skill, english, chinese].join('\n')
+
+  assert.match(combined, /real narrative beats|真实叙事节拍/u)
+  assert.match(combined, /keep\s*\/\s*merge\s*\/\s*delete\s*\/\s*rewrite|保留\s*\/\s*合并\s*\/\s*删除\s*\/\s*重写/u)
+  assert.match(combined, /TEXT_READABILITY_POLICY/)
+  assert.match(combined, /DIALOGUE_POLICY/)
+  assert.match(combined, /SHOT_DENSITY_CONTROLLER/)
+  assert.match(combined, /pass\s*\/\s*warning\s*\/\s*fail|通过\s*\/\s*警告\s*\/\s*失败/u)
+  assert.match(combined, /localized Keyframe prompts|局部化 Keyframe|局部化关键帧/u)
+  assert.match(combined, /Director Cut.*rewrite|导演删减版.*重写/u)
+})
+
 test('golden rain-alley example is a valid production run', async () => {
   const exampleRun = join(root, 'examples', 'rain-alley')
   const result = await validateRunDirectory({ runDir: exampleRun, stage: 'production' })

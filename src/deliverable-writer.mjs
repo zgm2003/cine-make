@@ -196,9 +196,10 @@ function composeStoryFlow({ contract, shotlist }) {
 
 function storyFunctionForShot(shot, index, total) {
   const text = compactAction(`${shot.action ?? ''} ${shot.blocking ?? ''} ${shot.composition ?? ''}`)
+  const action = compactAction(shot.action ?? '')
   if (index === 0) return '开场 / 空间与危险建立'
   if (index === total - 1) return '结尾钩子 / 状态重置'
-  if (/刻字|10分钟|记忆只有|倒计时|00:00:00|手机/u.test(text)) return '信息揭示 / 核心机制强化'
+  if (/刻字|10分钟|记忆只有/u.test(action) || /倒计时|00:00:00|手机/u.test(action)) return '信息揭示 / 核心机制强化'
   if (/三个人|另外三人|安娜|雷队|阿杰|嫌疑/u.test(text)) return '人物关系建立 / 嫌疑结构'
   if (/质问|拿枪|逼|怒|冲突|尸体|被杀/u.test(text)) return '冲突升级'
   if (/凯撒|谎|误导|阿杰|冷笑/u.test(text)) return '误导 / 反派钩子'
@@ -247,17 +248,87 @@ function mergeCandidate(shot, index, total) {
   return !/(新信息|关键|揭示|反转|死亡|归零|刻字|倒计时)/u.test(text)
 }
 
-function composeScriptBeats(shotlist) {
+function shotAnalysisText(shot) {
+  return compactAction([
+    shot.action,
+    shot.blocking,
+    sanitizeStaticShotText(shot.composition),
+    shot.shot_size,
+    shot.lens
+  ].filter(Boolean).join(' '))
+}
+
+function beatKindForShot(shot, index, total) {
+  const text = shotAnalysisText(shot)
+  const action = compactAction(shot.action ?? '')
+  if (index === 0 || /窗外暴雨|闪电划过|暴雨.*闪电/u.test(text)) return { key: 'opening_space', name: '暴雨孤岛建立', functionName: '开场 / 空间与危险建立' }
+  if (index === total - 1 || /00:00:00|时间到|倒计时|手机|归零|空洞|你们是谁|再次失忆/u.test(action)) return { key: 'reset_hook', name: '倒计时归零，林默重置', functionName: '结尾钩子 / 状态重置' }
+  if (/惊醒|血手|满手鲜血|大口喘气/u.test(text)) return { key: 'blood_anomaly', name: '林默惊醒 + 血手异常', functionName: '异常出现' }
+  if (/刻字|记忆只有10分钟|我的记忆只有10分钟|手臂/u.test(text)) return { key: 'memory_rule', name: '10分钟记忆规则揭示', functionName: '核心规则揭示' }
+  if (/镜头拉开|另外三个人|三个人|四个方位|嫌疑/u.test(text)) return { key: 'suspect_board', name: '三名嫌疑人建立', functionName: '人物关系 / 嫌疑结构' }
+  if (/雷队|拿着枪|堵在门口|被杀|老张|死无对证/u.test(text)) return { key: 'lei_pressure', name: '雷队施压：刚刚有人被杀', functionName: '冲突升级' }
+  if (/安娜|倒热水|热水杯|安抚|失忆症/u.test(text)) return { key: 'anna_control', name: '安娜安抚：失忆症线索', functionName: '关系诱导 / 可疑安抚' }
+  if (/阿杰|瘸子|蜷缩|瑟瑟|拐杖|腿部支架/u.test(text) && !/冷笑|凯撒/u.test(text)) return { key: 'ajie_disguise', name: '阿杰弱者伪装伏笔', functionName: '伏笔 / 误导准备' }
+  if (/精神病院|警徽|解剖刀|闪回|圣路易斯/u.test(text)) return { key: 'asylum_flash', name: '精神病院闪回', functionName: '真相靠近 / 现实裂缝' }
+  if (/查案|非法活体实验|我是.*来查案/u.test(text)) return { key: 'investigation_identity', name: '林默身份线索：非法活体实验', functionName: '身份信息揭示' }
+  if (/冷笑|凯撒|幕后黑手|所有人的目光/u.test(text)) return { key: 'ajie_misdirect', name: '阿杰抛出“凯撒”误导', functionName: '误导 / 反派钩子' }
+  return { key: `beat_${index}`, name: shotPurpose(shot), functionName: storyFunctionForShot(shot, index, total) }
+}
+
+function deriveStoryBeats(shotlist) {
   const total = shotlist.length
-  return shotlist.flatMap((shot, index) => [
-    `### B${String(index + 1).padStart(2, '0')} -> ${shot.shot_id}`,
+  const beats = []
+  for (const [index, shot] of shotlist.entries()) {
+    const kind = beatKindForShot(shot, index, total)
+    let beat = beats.find((candidate) => candidate.key === kind.key)
+    if (!beat) {
+      beat = {
+        beat_id: `B${String(beats.length + 1).padStart(2, '0')}`,
+        key: kind.key,
+        name: kind.name,
+        story_function: kind.functionName,
+        shots: []
+      }
+      beats.push(beat)
+    }
+    beat.shots.push(shot)
+  }
+  return beats
+}
+
+function beatForShotId(beats, shotId) {
+  return beats.find((beat) => beat.shots.some((shot) => shot.shot_id === shotId))
+}
+
+function recommendedShotsForBeat(beat) {
+  const joined = compactAction(beat.shots.map((shot) => shot.action).join(' '))
+  if (beat.key === 'blood_anomaly') return ['S02A medium close-up：林默惊醒', 'S02B insert：血手']
+  if (beat.key === 'memory_rule') return ['tight insert / 85mm close-up：手臂文字占画面 60% 以上']
+  if (beat.key === 'suspect_board') return ['wide / controlled 28mm：四人空间棋盘一次建立']
+  if (beat.key === 'anna_control') return ['medium close-up：热水杯作为安抚/控制边界']
+  if (beat.key === 'ajie_disguise') return ['low close-up：阿杰畏缩姿态 + 暗中观察眼神']
+  if (beat.key === 'ajie_misdirect') return ['low close-up：阿杰嘴角冷笑 / 诡异眼神', '短台词：凯撒就在这间屋子里']
+  if (beat.key === 'reset_hook') return ['phone insert：00:00:00', 'reaction close-up：林默重置后的陌生眼神']
+  return beat.shots.map((shot) => `${shot.shot_id} ${shot.shot_size}：${shotPurpose(shot) || joined}`)
+}
+
+function composeScriptBeats(shotlist) {
+  const beats = deriveStoryBeats(shotlist)
+  return beats.flatMap((beat, index) => [
+    `### ${beat.beat_id} ${beat.name}`,
     '',
-    `- story_function: ${storyFunctionForShot(shot, index, total)}`,
-    `- audience_question: ${audienceQuestionForShot(shot, index, total)}`,
-    `- required_visual_info: ${visualInfoForShot(shot)}`,
-    `- emotional_pressure: ${emotionalPressureForShot(shot, index, total)}`,
-    `- can_be_merged: ${mergeCandidate(shot, index, total)}`,
-    `- must_keep: ${mustKeepShot(shot, index, total)}`,
+    `- story_function: ${beat.story_function}`,
+    `- script_source: ${beat.shots.map((shot) => shotPurpose(shot)).join(' / ')}`,
+    `- audience_question: ${audienceQuestionForShot(beat.shots[0], index, beats.length)}`,
+    '- required_visual_info:',
+    ...beat.shots.map((shot) => `  - ${visualInfoForShot(shot)}`),
+    `- emotional_pressure: ${beat.shots.some((shot, shotIndex) => emotionalPressureForShot(shot, shotIndex, beat.shots.length) === '爆发') ? 'high' : 'medium'}`,
+    `- shot_ids: ${beat.shots.map((shot) => shot.shot_id).join(', ')}`,
+    '- recommended_shots:',
+    ...recommendedShotsForBeat(beat).map((line) => `  - ${line}`),
+    `- can_merge_with: ${index < beats.length - 1 ? beats[index + 1].beat_id : 'none'}`,
+    `- can_be_merged: ${beat.shots.length === 1 && !mustKeepShot(beat.shots[0], index, beats.length)}`,
+    `- must_keep: ${beat.shots.some((shot, shotIndex) => mustKeepShot(shot, shotIndex, beat.shots.length))}`,
     ''
   ])
 }
@@ -278,28 +349,74 @@ function audienceTakeaway(shot, index, total) {
   return '情绪或空间压力被推进。'
 }
 
-function visualPriority(shot) {
-  const primary = visualInfoForShot(shot)
-  const text = compactAction(shot.action)
-  const secondary = /手机|倒计时/u.test(text) ? '血手 / 屏幕冷光' : /刻字/u.test(text) ? '血手 / 袖口' : /阿杰/u.test(text) ? '拐杖 / 腿部支架' : '人物眼神 / 关键道具'
-  const background = /客厅|别墅|安娜|雷队|阿杰/u.test(text) ? '孤岛别墅客厅空间方位' : '当前环境连续性'
-  return { primary, secondary, background }
+function riskTypeForShot(shot) {
+  const text = shotAnalysisText(shot)
+  if (/wide/i.test(shot.shot_size ?? '') && /刻字|文字|我的记忆只有10分钟|读清/u.test(text)) return 'text_readability_conflict'
+  if (/macro|insert/i.test(shot.shot_size ?? '') && /惊醒|大口喘气|猛地|身体/u.test(text)) return 'macro_action_conflict'
+  if (/medium close-up|tight close-up/i.test(shot.shot_size ?? '') && /四个方位|三个人|雷队|安娜|阿杰/u.test(text)) return 'multi_character_spatial_conflict'
+  if (/冷笑|凯撒/u.test(text) && /(所有人的目光|三人方位|嫌疑结构|insert-medium|wide reveal)/iu.test(text)) return 'visual_priority_mismatch'
+  return ''
 }
 
-function composeDirectorDecision(shotlist) {
+function decisionForShot(shot, index, total) {
+  const text = shotAnalysisText(shot)
+  const risk = riskTypeForShot(shot)
+  if (risk) return 'rewrite'
+  if (/阿杰.*蜷缩|瑟瑟|冷笑|凯撒/u.test(text)) return 'keep'
+  if (/安娜|热水杯|倒热水/u.test(text)) return 'merge'
+  if (mustKeepShot(shot, index, total)) return 'keep'
+  if (mergeCandidate(shot, index, total)) return 'merge'
+  return 'keep'
+}
+
+function decisionProblemForShot(shot) {
+  const text = shotAnalysisText(shot)
+  const risk = riskTypeForShot(shot)
+  if (risk === 'text_readability_conflict') return 'text_readability_conflict：wide 镜头不能稳定读清关键文字。'
+  if (risk === 'macro_action_conflict') return 'macro_action_conflict：macro insert 不适合承担惊醒、身体动作和表情。'
+  if (risk === 'multi_character_spatial_conflict') return 'multi_character_spatial_conflict：近景很难建立多人空间棋盘。'
+  if (risk === 'visual_priority_mismatch') return 'visual_priority_mismatch：此镜重点应是阿杰嘴角/眼神，不是三人方位。'
+  if (/安娜|热水杯|倒热水/u.test(text)) return '这一镜和三人介绍/安娜台词功能可能重复，但热水杯边界有价值。'
+  if (/阿杰.*蜷缩|瑟瑟/u.test(text)) return '阿杰弱者伪装需要早期植入，不能只在后面突然发力。'
+  return '无严重结构问题；检查是否承担新信息。'
+}
+
+function rewriteNoteForShot(shot) {
+  const risk = riskTypeForShot(shot)
+  const text = shotAnalysisText(shot)
+  if (risk === 'text_readability_conflict') return 'rewrite as tight insert / 85mm close-up；手臂文字占画面 60% 以上。'
+  if (risk === 'macro_action_conflict') return 'split into medium close-up 惊醒 + insert 血手。'
+  if (risk === 'multi_character_spatial_conflict') return 'rewrite as wide / controlled 28mm / vertical deep staging。'
+  if (risk === 'visual_priority_mismatch') return 'primary 改为阿杰嘴角冷笑 / 诡异眼神；其他人压成背景视线。'
+  if (/安娜|热水杯|倒热水/u.test(text)) return '可合并到三人位置建立或安娜台词镜头，保留热水杯作为控制边界。'
+  return '按现有镜头功能保留。'
+}
+
+function mergeIntoForShot(shot, index, shotlist) {
+  const text = shotAnalysisText(shot)
+  if (/安娜|热水杯|倒热水/u.test(text)) return 'S05 or S10'
+  if (index > 0) return shotlist[index - 1]?.shot_id ?? 'previous shot'
+  return shotlist[index + 1]?.shot_id ?? 'next shot'
+}
+
+function composeDirectorDecision(shotlist, beats = deriveStoryBeats(shotlist)) {
   const total = shotlist.length
   return shotlist.flatMap((shot, index) => {
-    const canMerge = mergeCandidate(shot, index, total)
+    const decision = decisionForShot(shot, index, total)
+    const beat = beatForShotId(beats, shot.shot_id)
     return [
       `### ${shot.shot_id}`,
       '',
+      `- linked_beat: ${beat?.beat_id ?? `B${String(index + 1).padStart(2, '0')}`}`,
       `- shot_purpose: ${shotFunction(shot, index, total)}`,
       `- new_information: ${audienceTakeaway(shot, index, total)}`,
-      `- emotion_upgrade: ${emotionalPressureForShot(shot, index, total)}`,
-      `- delete_cost: ${mustKeepShot(shot, index, total) ? '删除会损失关键规则、误导、冲突或钩子。' : '可和相邻镜头合并，前提是不损失观众读到的信息。'}`,
-      `- merge_suggestion: ${canMerge ? '可合并到相邻镜头，避免平均切碎。' : '保留为独立镜头。'}`,
+      `- problem: ${decisionProblemForShot(shot)}`,
+      `- decision: ${decision}`,
+      decision === 'merge' ? `- merge_into: ${mergeIntoForShot(shot, index, shotlist)}` : '',
+      `- reason: ${decision === 'keep' ? '该镜承担规则、伏笔、关系变化或结尾钩子，删除会损失观众认知。' : decision === 'merge' ? '保留信息但减少平均切碎，让节奏更像导演取舍。' : '镜头功能重要，但当前镜头类型/构图会增加 AI 生成风险。'}`,
+      `- rewrite_note: ${rewriteNoteForShot(shot)}`,
       ''
-    ]
+    ].filter(Boolean)
   })
 }
 
@@ -340,13 +457,100 @@ function composeEnvironmentBibles({ contract, shotlist }) {
 
 function anchorsForShot(shot) {
   const text = compactAction(`${shot.action ?? ''} ${sanitizeStaticShotText(shot.composition ?? '')} ${shot.blocking ?? ''}`)
-  if (/倒计时|手机|00:00:00/u.test(text)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
-  if (/刻字|手臂/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
-  if (/阿杰|凯撒/u.test(text)) return { primary: '阿杰眼神/嘴角', secondary: ['拐杖', '腿部支架'] }
+  const action = compactAction(shot.action ?? '')
+  if (/00:00:00/u.test(action)) return { primary: '手机 00:00:00', secondary: ['林默血手', '屏幕冷光'] }
+  if (/倒计时|手机/u.test(action)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
+  if (/刻字|手臂|我的记忆只有10分钟/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
+  if (/镜头拉开|另外三个人|三个人|四个方位|客厅里还有/u.test(text)) return { primary: '四人空间棋盘', secondary: ['雷队堵门', '阿杰背光角落'] }
+  if (/冷笑|凯撒|眼神诡异/u.test(text)) return { primary: /冷笑/u.test(text) ? '阿杰嘴角冷笑' : '阿杰诡异眼神', secondary: ['众人视线转向阿杰', '拐杖/腿部支架'] }
+  if (/阿杰|瘸子|蜷缩|瑟瑟/u.test(text)) return { primary: '阿杰诡异眼神', secondary: ['拐杖', '腿部支架'] }
+  if (/安娜|热水杯|倒热水|倒水|安抚/u.test(text)) return { primary: '热水杯', secondary: ['安娜手部动作', '林默警惕眼神'] }
   if (/雷队|枪/u.test(text)) return { primary: '雷队堵门', secondary: ['手枪', '出口'] }
-  if (/安娜|药|倒水/u.test(text)) return { primary: '安娜安抚动作', secondary: ['热水杯', '药瓶'] }
   if (/血手|鲜血/u.test(text)) return { primary: '林默血手', secondary: ['沙发', '低光'] }
   return { primary: '本镜头主要视觉信息', secondary: ['环境连续性'] }
+}
+
+function visualPriority(shot) {
+  const anchors = anchorsForShot(shot)
+  const text = compactAction(shot.action)
+  const background = /客厅|别墅|安娜|雷队|阿杰|三个人/u.test(text) ? '孤岛别墅客厅空间方位' : '当前环境连续性'
+  return { primary: anchors.primary, secondary: anchors.secondary.slice(0, 2).join(' / '), background }
+}
+
+function composeTextReadabilityPolicy() {
+  return [
+    '## TEXT_READABILITY_POLICY',
+    '',
+    'applies_to:',
+    '- carved_text',
+    '- phone_screen',
+    '- photo_back',
+    '- wall_blood_text',
+    '- label_text',
+    'rules:',
+    '- 文字必须是 primary anchor 才要求可读。',
+    '- 可读文字镜头必须使用 close-up / insert / tight insert。',
+    '- 文字区域占画面至少 40%-60%。',
+    '- 禁止 wide shot 承担关键文字阅读。',
+    '- 不要在同一镜要求两段以上可读文字。'
+  ]
+}
+
+function compressedDialogueSuggestion(shot) {
+  const text = compactAction(shot.action)
+  if (/雷队|老张|被杀|枪/u.test(text)) return '雷队：停电五分钟，老张死了。你手上的血怎么解释？'
+  if (/安娜|失忆症|看着我|倒热水/u.test(text)) return '安娜：别逼他。林默，看着我。'
+  if (/凯撒|幕后黑手|阿杰/u.test(text)) return '阿杰：凯撒就在这间屋子里。'
+  if (/我是谁|这是哪|记忆/u.test(text)) return '林默旁白：记忆又在消失。'
+  if (/查案|非法活体实验/u.test(text)) return '林默：我是来查非法实验的。'
+  return ''
+}
+
+function composeDialoguePolicy(shotlist) {
+  const suggestions = shotlist
+    .map((shot) => {
+      const suggestion = compressedDialogueSuggestion(shot)
+      return suggestion ? `- ${shot.shot_id}: visual_cut_dialogue: ${suggestion}` : ''
+    })
+    .filter(Boolean)
+
+  return [
+    '## DIALOGUE_POLICY',
+    '',
+    '- preserve_full_script: true',
+    '- generate_visual_cut_version: true',
+    'rules:',
+    '- 单镜台词超过 12-16 个中文字符，优先压缩成短台词、字幕、旁白或画面信息。',
+    '- 解释型台词优先转成道具、表情、阻挡关系。',
+    '- 冲突型台词保留关键词。',
+    '- 每集结尾钩子台词必须保留。',
+    '',
+    'visual_cut_dialogue:',
+    ...(suggestions.length ? suggestions : ['- none: 当前分镜未检测到需要压缩的长台词；保留短台词原则。'])
+  ]
+}
+
+function composeShotDensityController(contract, shotlist) {
+  const duration = Number(contract.target?.requestedDurationSeconds || contract.target?.durationSeconds || shotlist.length * 3)
+  const ideal = duration >= 40 ? 12 : Math.max(6, Math.min(12, Math.round(duration / 3)))
+  const minimum = Math.max(4, ideal - 2)
+  const maximum = ideal + 2
+  return [
+    '## SHOT_DENSITY_CONTROLLER',
+    '',
+    `duration: ${duration}s`,
+    'target_shots:',
+    `  minimum: ${minimum}`,
+    `  ideal: ${ideal}`,
+    `  maximum: ${maximum}`,
+    `current_full_coverage_shots: ${shotlist.length}`,
+    'average_shot_duration: 3-4s',
+    'exceptions:',
+    '- key_text_insert: 2s',
+    '- final_hook: 4s',
+    '- multi_character_reveal: 4s',
+    `recommendation: ${shotlist.length > maximum ? 'Director Cut 需要重写压缩，不要机械删镜头。' : '当前镜头密度可控；仍按信息增量检查合并。'}`
+  ]
 }
 
 function composeAnchorPolicy({ characters = [], shotlist = [] }) {
@@ -420,31 +624,100 @@ function composeStoryboardVersionB(shotlist) {
 }
 
 function composeQualityCheck(shotlist) {
+  const risks = shotlist.map((shot) => ({ shot, risk: riskTypeForShot(shot) })).filter((item) => item.risk)
+  const hasTextFail = risks.some((item) => item.risk === 'text_readability_conflict')
+  const hasSpatialRisk = risks.some((item) => item.risk === 'multi_character_spatial_conflict')
+  const hasVisualMismatch = risks.some((item) => item.risk === 'visual_priority_mismatch')
+  const mergeable = shotlist.filter((shot, index) => mergeCandidate(shot, index, shotlist.length))
   return [
     '## QUALITY_CHECK',
     '',
-    '- story_clarity: 检查前10秒是否让观众知道主角处于危险中；每段结尾是否有明确钩子。',
-    '- shot_efficiency: 检查是否存在只重复气氛、不推进信息的镜头；检查是否有可以合并的人物介绍镜头。',
-    '- prompt_control: 检查是否每镜强制出现不必要道具；Keyframe Prompt 是否混入 Motion 描述；Motion Prompt 是否包含多个主动作。',
-    '- continuity: 检查人物是否只在需要的镜头出现；场景是否绑定正确 Environment Bible；道具出现/消失是否有逻辑。',
-    `- director_cut_ratio: ${directorCutShots(shotlist).length}/${shotlist.length} shots retained for recommended director cut.`
+    'text_readability:',
+    `  status: ${hasTextFail ? 'fail' : 'pass'}`,
+    '  issues:',
+    ...(hasTextFail
+      ? risks.filter((item) => item.risk === 'text_readability_conflict').map((item) => `    - ${item.shot.shot_id} uses wide shot for readable key text; rewrite as tight insert / close-up.`)
+      : ['    - none']),
+    'shot_efficiency:',
+    `  status: ${mergeable.length ? 'warning' : 'pass'}`,
+    '  issues:',
+    ...(mergeable.length ? mergeable.slice(0, 4).map((shot) => `    - ${shot.shot_id} may merge with adjacent beat if it only repeats atmosphere.`) : ['    - none']),
+    'anchor_policy:',
+    `  status: ${hasVisualMismatch || hasSpatialRisk ? 'warning' : 'pass'}`,
+    '  issues:',
+    ...(hasVisualMismatch || hasSpatialRisk
+      ? risks
+        .filter((item) => item.risk === 'visual_priority_mismatch' || item.risk === 'multi_character_spatial_conflict')
+        .map((item) => `    - ${item.shot.shot_id} ${item.risk}: primary anchor or shot size needs rewrite.`)
+      : ['    - none']),
+    'motion_prompt:',
+    '  status: pass',
+    '  issues:',
+    '    - Motion prompts remain separated from static keyframe prompts.',
+    'director_cut:',
+    `  status: ${directorCutShots(shotlist).length > 14 ? 'warning' : 'pass'}`,
+    '  issues:',
+    `    - director_cut_ratio: ${directorCutShots(shotlist).length}/${shotlist.length} shots retained for recommended director cut.`
   ]
 }
 
-function composeAIRiskWarnings(shotlist) {
-  const warnings = []
-  for (const shot of shotlist) {
-    const text = compactAction(`${shot.action ?? ''} ${sanitizeStaticShotText(shot.composition ?? '')} ${shot.shot_size ?? ''}`)
-    if (/macro|insert/i.test(shot.shot_size ?? '') && /奔跑|争吵|多人|复杂|走位|扑/u.test(text)) warnings.push(`- ${shot.shot_id}: macro 镜头承担复杂表演，建议拆镜或改 medium close-up。`)
-    if (/wide/i.test(shot.shot_size ?? '') && /文字|刻字|00:|读清|手机屏/u.test(text)) warnings.push(`- ${shot.shot_id}: wide 镜头承担文字阅读，建议改 close-up / insert。`)
-    if (/必须作为稳定视觉锚点/u.test(text)) warnings.push(`- ${shot.shot_id}: 每镜强制出现不必要道具风险，按 ANCHOR_POLICY 限制 primary/secondary anchors。`)
+function riskDetailsForShot(shot) {
+  const risk = riskTypeForShot(shot)
+  if (!risk) return null
+  if (risk === 'macro_action_conflict') {
+    return {
+      risk_type: risk,
+      severity: 'high',
+      problem: 'macro / insert 镜头不适合同时承担惊醒、喘气、身体动作和表情。',
+      fix: '拆成 medium close-up 惊醒 + insert 血手；一个镜头只保留一个主动作。'
+    }
   }
+  if (risk === 'text_readability_conflict') {
+    return {
+      risk_type: risk,
+      severity: 'high',
+      problem: 'wide shot 无法稳定读清手臂刻字、手机屏幕或其他关键文字。',
+      fix: 'rewrite as tight insert / 85mm close-up；文字占画面 40%-60%，且作为 primary anchor。'
+    }
+  }
+  if (risk === 'multi_character_spatial_conflict') {
+    return {
+      risk_type: risk,
+      severity: 'high',
+      problem: 'medium / tight close-up 很难建立四人空间棋盘和嫌疑人方位。',
+      fix: '改为 wide / controlled 28mm / vertical deep staging；一次建立门口、沙发、角落和主角位置。'
+    }
+  }
+  if (risk === 'visual_priority_mismatch') {
+    return {
+      risk_type: risk,
+      severity: 'high',
+      problem: '阿杰冷笑/凯撒钩子应成为 primary visual priority，而不是继续强调三人方位。',
+      fix: '改为 low close-up 推向阿杰嘴角和眼睛；其他人只作为背景视线压力。'
+    }
+  }
+  return null
+}
+
+function composeAIRiskWarnings(shotlist) {
+  const warnings = shotlist
+    .map((shot) => ({ shot, detail: riskDetailsForShot(shot) }))
+    .filter((item) => item.detail)
+
   return [
     '## AI_RISK_WARNINGS',
     '',
-    warnings.length ? warnings.join('\n') : '- 暂未发现高风险镜头；仍需人工检查 macro/文字、多人物信息过载和不必要道具入画。',
-    '',
-    '重点错误类型：macro 镜头承担复杂表演；wide 镜头承担文字阅读；每镜强制出现不必要道具。'
+    ...(warnings.length
+      ? warnings.flatMap(({ shot, detail }) => [
+          `### ${shot.shot_id}`,
+          `- risk_type: ${detail.risk_type}`,
+          `- severity: ${detail.severity}`,
+          `- problem: ${detail.problem}`,
+          `- fix: ${detail.fix}`,
+          ''
+        ])
+      : ['- status: pass', '- note: 暂未发现高风险镜头；仍需人工检查 macro/文字、多人物信息过载和不必要道具入画。']),
+    '重点错误类型：macro 镜头承担复杂表演；wide 镜头承担文字阅读；每镜强制出现不必要道具；macro_action_conflict；text_readability_conflict；multi_character_spatial_conflict；visual_priority_mismatch。'
   ]
 }
 
@@ -550,18 +823,50 @@ function sanitizeStaticShotText(value) {
     .trim()
 }
 
+function localizedStaticShotDefinition(shot) {
+  const risk = riskTypeForShot(shot)
+  const text = shotAnalysisText(shot)
+  if (risk === 'text_readability_conflict') {
+    return 'tight insert / 85mm close-up, readable carved text fills 40%-60% of frame'
+  }
+  if (risk === 'macro_action_conflict') {
+    return 'medium close-up for the wake-up beat; reserve the bloody hands for a separate insert'
+  }
+  if (risk === 'multi_character_spatial_conflict') {
+    return 'wide / controlled 28mm shot, vertical deep staging to establish the room chessboard'
+  }
+  if (risk === 'visual_priority_mismatch') {
+    return 'low close-up on Ajie mouth and eyes; background characters reduced to pressure silhouettes'
+  }
+  if (/00:00:00/u.test(text)) return 'phone insert close-up, screen readable at 00:00:00'
+  return `${shot.shot_size}, ${shot.lens ?? 'same lens system'}, ${sanitizeStaticShotText(shot.composition)}`
+}
+
+function sanitizeLocalPromptText(value) {
+  return sanitizeStaticShotText(value)
+    .replace(/超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性[;；]?\s*/gu, '')
+    .replace(/^\s*[;；]\s*/u, '')
+    .trim()
+}
+
 function composeStaticKeyframePrompt(shot) {
   const priority = visualPriority(shot)
-  return [
+  const lighting = sanitizeLocalPromptText(shot.lighting ?? 'motivated low-key cinematic lighting') || 'motivated low-key cinematic lighting'
+  const continuity = sanitizeLocalPromptText(shot.continuity_from_previous ?? 'same actor, same location, same prop state') || 'same actor, same location, same prop state'
+  const lines = [
     'single cinematic keyframe, photorealistic live-action film still',
-    `Static Shot Definition: ${shot.shot_size}, ${shot.lens ?? 'same lens system'}, ${sanitizeStaticShotText(shot.composition)}`,
+    `Static Shot Definition: ${localizedStaticShotDefinition(shot)}`,
     `Visual priority: primary=${priority.primary}; secondary=${priority.secondary}; background=${priority.background}`,
     `Subject/blocking: ${compactAction(shot.blocking ?? 'spatially continuous blocking')}`,
     `Visible state: ${shotPurpose(shot)}`,
-    `Lighting: ${compactAction(shot.lighting ?? 'motivated low-key cinematic lighting')}`,
-    `Continuity: ${sanitizeStaticShotText(shot.continuity_from_previous ?? 'same actor, same location, same prop state')}`,
+    `Lighting: ${lighting}`,
+    `Continuity: ${continuity}`,
     'No motion blur, no video transition, no poster layout, no subtitles, no watermark, no extra characters.'
-  ].join(', ')
+  ]
+  if (riskTypeForShot(shot) === 'text_readability_conflict') {
+    lines.push('No extra text outside the carved words; the carved Chinese text must be the only readable text.')
+  }
+  return lines.join(', ')
 }
 
 function composeKeyframePromptList(shotlist) {
@@ -823,6 +1128,12 @@ export function composeDeliverable({ contract, draft }) {
         '## DIRECTOR_DECISION',
         '',
         ...composeDirectorDecision(draft.shotlist),
+        '',
+        ...composeTextReadabilityPolicy(),
+        '',
+        ...composeDialoguePolicy(draft.shotlist),
+        '',
+        ...composeShotDensityController(contract, draft.shotlist),
         '',
         '## ENVIRONMENT_BIBLES',
         '',

@@ -43,6 +43,9 @@ Cine Make outputs a Structured Cinematic Pipeline instead of one overloaded prom
 ```text
 SCRIPT_BEATS        # narrative beat function before shot design
 DIRECTOR_DECISION   # shot keep / merge / delete judgment
+TEXT_READABILITY_POLICY
+DIALOGUE_POLICY
+SHOT_DENSITY_CONTROLLER
 DIRECTOR_BIBLE      # global directing rules
 CHARACTER_BIBLE     # actor / costume / behavior continuity
 ENVIRONMENT_BIBLES  # multi-location spatial continuity array
@@ -60,13 +63,17 @@ global rules are not repeated per shot. Each shot carries only its local goal. K
 
 ### Director decision layer
 
-Cine Make's next layer is judgment, not longer prompts. `SCRIPT_BEATS` names what each story beat does; `DIRECTOR_DECISION` asks whether each shot adds new information, changes relationships, escalates pressure, reveals a prop, misleads the audience, strengthens the countdown/loop mechanism, or pushes the final hook. In other words, each shot must prove why it should stay.
+Cine Make's next layer is judgment, not longer prompts. `SCRIPT_BEATS` now groups real narrative beats before shots exist; it should not degrade into one beat per shot. `DIRECTOR_DECISION` uses explicit `keep / merge / delete / rewrite` outcomes and asks whether each shot adds new information, changes relationships, escalates pressure, reveals a prop, misleads the audience, strengthens the countdown/loop mechanism, or pushes the final hook. In other words, each shot must prove why it should stay.
+
+`TEXT_READABILITY_POLICY`, `DIALOGUE_POLICY`, and `SHOT_DENSITY_CONTROLLER` are small control policies, not new production phases. They make the draft catch key failures early: readable text must be a primary anchor in close-up/insert shots, long dialogue is compressed into visual-cut short lines, and a 40-50s short should usually recommend a manageable Director Cut rather than over-splitting. `QUALITY_CHECK` reports `pass / warning / fail` states with concrete issues instead of vague comments.
 
 `ENVIRONMENT_BIBLES` replaces the old single-scene assumption for multi-location scripts. Each shot can bind to an environment id and mode such as reality, hallucination, or distorted reality.
 
 `ANCHOR_POLICY` separates global, character, story, and per-shot anchors. Not every anchor enters every frame: each shot should use at most one primary anchor and at most two secondary anchors. Phone/countdown/weapon/blood-text props appear only when they serve the shot function.
 
-Draft output keeps `Storyboard Version A: Full Coverage` for review, but recommends `Storyboard Version B: Director Cut` for generation. `QUALITY_CHECK` and `AI_RISK_WARNINGS` flag common AI failures, including macro shot complex action mismatch, wide shot readable text mismatch, overloaded multi-character frames, forced unnecessary props, Keyframe prompts polluted by Motion Prompt language, and Motion Prompts with too many main actions.
+Draft output keeps `Storyboard Version A: Full Coverage` for review, but recommends `Storyboard Version B: Director Cut` for generation. Director Cut may rewrite a beat into a better shot design; it is not just a mechanical deletion list. `QUALITY_CHECK` and `AI_RISK_WARNINGS` flag common AI failures, including macro shot complex action mismatch, wide shot readable text mismatch, overloaded multi-character frames, forced unnecessary props, Keyframe prompts polluted by Motion Prompt language, and Motion Prompts with too many main actions.
+
+Keyframe output uses localized Keyframe prompts: each prompt carries only the local shot design, primary/secondary anchors, blocking, lighting, and continuity needed for that frame. Global style rules stay in the bibles and are not repeated into every image prompt.
 
 
 `storyboard-images/` contains or prepares:

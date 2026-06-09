@@ -9,6 +9,34 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const source = '小说片段：退役潜水员周祁回到废弃海洋馆，空水箱里传来鲸鱼低鸣，玻璃内侧贴着女儿画的蓝鲸。'
+const isolatedMansionFullSource = `漫剧概念设定：《孤岛碎忆》
+
+角色设定：
+林默（男主角）：私家侦探。冷静、神经质。
+安娜（女性）：心理医生，知性、冷静。一直试图“帮”林默找回记忆。
+雷队（中年男）：脾气暴躁的暴风雪山庄式警探。
+阿杰（青年男）：胆小、唯唯诺诺的瘸子，右脚有残疾。
+
+第一集剧本：【分崩离析的10分钟】
+[场景：孤岛别墅 - 客厅 - 夜]
+▲ 【画面】 窗外暴雨倾盆，一道闪电划过，照亮昏暗的客厅。
+▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。
+▲ 【音效】 惊雷声，紧接着是林默急促的呼吸声。
+林默（内心独白）：“我是谁？这是哪？该死……我的头好痛。记忆又在消失……”
+▲ 【画面】 林默急切地拉开衣袖。他的手臂上用小刀歪歪扭扭地刻着一行字：【我的记忆只有10分钟。凶手在他们中间。】
+▲ 【画面】 镜头拉开，客厅里还有另外三个人。
+雷队正拿着枪，警惕地守在门口。
+安娜正在给林默倒热水，眼神充满担忧。
+阿杰（瘸子）蜷缩在角落里，瑟瑟发抖。
+雷队（咬牙切齿）：“林默，你终于醒了。刚刚停电的5分钟里，老张被杀了。现在死无对证。”
+安娜（温柔安抚）：“雷队，别逼他。林默的‘失忆症’又犯了。林默，看着我，你还记得你来这座岛是干什么的吗？”
+▲ 【画面】 林默痛苦地捂住头，无数碎片画面闪过：警徽、带血的解剖刀、一座叫“圣路易斯”的精神病院大门。
+林默（沙哑）：“我是……来查案的。有人举报这里有非法活体实验……”
+▲ 【画面】 角落里的瘸子阿杰突然冷笑了一声。所有人的目光看向他。
+阿杰（声音颤抖，但眼神诡异）：“查案？林侦探，你别装了。其实你早就知道凶手是谁对不对？那个人……那个叫‘凯撒’的幕后黑手，就在这间屋子里！”
+▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。
+▲ 【画面】 林默眼神瞬间空洞。下一秒，他再次惊恐地看着自己的血手，仿佛第一天来到这里。
+林默（惊恐）：“你们……是谁？！”`
 
 test('draft mode exposes only deliverable.md and storyboard-images to users', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-deliverable-'))
@@ -278,3 +306,94 @@ test('draft deliverable adds story beats director decisions anchor policy and qu
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('draft director judgment v2 groups beats and outputs concrete keep merge rewrite decisions', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-director-judgment-v2-'))
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '46s', '--aspect', '9:16', isolatedMansionFullSource], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    const beats = sectionBetween(deliverable, '## SCRIPT_BEATS', '## DIRECTOR_DECISION')
+    const decisions = sectionBetween(deliverable, '## DIRECTOR_DECISION', '## DIRECTOR_BIBLE')
+    const shotDefinitions = sectionBetween(deliverable, '## STORYBOARD：Shot Definition', '## KEYFRAME_PROMPTS')
+
+    const beatCount = [...beats.matchAll(/^### B\d{2}\b/gm)].length
+    const shotCount = [...shotDefinitions.matchAll(/^### S\d{2}\b/gm)].length
+    assert.ok(beatCount > 0, 'expected grouped beats')
+    assert.ok(shotCount > beatCount, `expected fewer beats than shots, got beats=${beatCount}, shots=${shotCount}`)
+    assert.doesNotMatch(beats, /### B\d{2}\s*->\s*S\d{2}/u)
+    assert.match(beats, /script_source:/u)
+    assert.match(beats, /recommended_shots:/u)
+    assert.match(beats, /can_merge_with:/u)
+    assert.match(beats, /B02[\s\S]*林默惊醒[\s\S]*血手/u)
+    assert.match(beats, /B03[\s\S]*10分钟|B03[\s\S]*记忆规则/u)
+
+    assert.match(decisions, /decision: keep/u)
+    assert.match(decisions, /decision: merge/u)
+    assert.match(decisions, /decision: rewrite/u)
+    assert.match(decisions, /S0[34][\s\S]*text_readability_conflict[\s\S]*tight insert|S0[34][\s\S]*文字阅读[\s\S]*tight insert/u)
+    assert.match(decisions, /S0[67][\s\S]*安娜[\s\S]*热水杯[\s\S]*decision: (merge|rewrite)/u)
+    assert.match(decisions, /S0[78][\s\S]*阿杰[\s\S]*弱者伪装[\s\S]*decision: keep/u)
+    assert.match(decisions, /S(09|1[34])[\s\S]*阿杰[\s\S]*(冷笑|嘴角|诡异眼神)/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('draft director judgment v2 emits smart anchors structured risks policies quality states and local keyframes', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-director-judgment-v2-quality-'))
+  try {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--mode', 'draft', '--out', out, '--duration', '46s', '--aspect', '9:16', isolatedMansionFullSource], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+
+    assert.match(deliverable, /## TEXT_READABILITY_POLICY/)
+    assert.match(deliverable, /文字必须是 primary anchor/u)
+    assert.match(deliverable, /## DIALOGUE_POLICY/)
+    assert.match(deliverable, /visual_cut_dialogue|短台词/u)
+    assert.match(deliverable, /## SHOT_DENSITY_CONTROLLER/)
+    assert.match(deliverable, /ideal: 12|ideal_shots: 12/u)
+
+    const anchorPolicy = sectionBetween(deliverable, '## ANCHOR_POLICY', '## STORYBOARD：Shot Definition')
+    assert.match(anchorPolicy, /S0[45]: primary=(四人空间棋盘|屋内三人位置)/u)
+    assert.match(anchorPolicy, /S0[67]: primary=热水杯/u)
+    assert.match(anchorPolicy, /S(09|1[34]): primary=阿杰(嘴角冷笑|诡异眼神)/u)
+    assert.match(anchorPolicy, /S1[05]: primary=手机 00:00:00/u)
+
+    const risks = sectionBetween(deliverable, '## AI_RISK_WARNINGS', '## DIRECTOR_BIBLE')
+    assert.match(risks, /risk_type: macro_action_conflict/u)
+    assert.match(risks, /risk_type: text_readability_conflict/u)
+    assert.match(risks, /risk_type: multi_character_spatial_conflict/u)
+    assert.match(risks, /risk_type: visual_priority_mismatch/u)
+    assert.match(risks, /severity: high/u)
+    assert.match(risks, /problem:/u)
+    assert.match(risks, /fix:/u)
+
+    const quality = sectionBetween(deliverable, '## QUALITY_CHECK', '## AI_RISK_WARNINGS')
+    assert.match(quality, /text_readability:[\s\S]*status: fail/u)
+    assert.match(quality, /anchor_policy:[\s\S]*status: warning|anchor_policy:[\s\S]*status: pass/u)
+    assert.match(quality, /motion_prompt:[\s\S]*status: pass/u)
+
+    const keyframes = sectionBetween(deliverable, '## KEYFRAME_PROMPTS', '## MOTION_PROMPTS')
+    assert.doesNotMatch(keyframes, /超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性/u)
+    assert.match(keyframes, /S0[34][\s\S]*(tight insert|close-up)[\s\S]*我的记忆只有10分钟/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+function sectionBetween(text, startHeading, endHeading) {
+  const start = text.indexOf(startHeading)
+  assert.notEqual(start, -1, `missing ${startHeading}`)
+  const end = text.indexOf(endHeading, start + startHeading.length)
+  assert.notEqual(end, -1, `missing ${endHeading}`)
+  return text.slice(start, end)
+}

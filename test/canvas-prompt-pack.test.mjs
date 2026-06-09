@@ -303,6 +303,35 @@ test('canvas storyboard keyframes expose director decision metadata', async () =
   }
 })
 
+test('canvas storyboard keyframes use smart anchors grouped beats and localized prompts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-director-judgment-v2-'))
+  try {
+    const contract = await createInputContract(parseArgs(['--aspect', '9:16', isolatedMansionScript]))
+    const result = await exportCanvasStoryboardPack({ outDir: out, contract })
+    const manifest = JSON.parse(await readFile(result.manifestPath, 'utf8'))
+    const byId = new Map(manifest.nodes.map((node) => [node.id, node]))
+
+    assert.notEqual(byId.get('keyframe-s01').metadata.cineMake.anchorPolicy.primary, '倒计时手机')
+    assert.notEqual(byId.get('keyframe-s03').metadata.cineMake.anchorPolicy.primary, '倒计时手机')
+    assert.doesNotMatch(byId.get('keyframe-s03').prompt, /关键道具：手机/u)
+    assert.equal(byId.get('keyframe-s05').metadata.cineMake.anchorPolicy.primary, '四人空间棋盘')
+    assert.equal(byId.get('keyframe-s07').metadata.cineMake.anchorPolicy.primary, '热水杯')
+    assert.match(byId.get('keyframe-s13').metadata.cineMake.anchorPolicy.primary, /阿杰(嘴角冷笑|诡异眼神)/u)
+    assert.equal(byId.get('keyframe-s15').metadata.cineMake.anchorPolicy.primary, '手机 00:00:00')
+
+    assert.match(byId.get('keyframe-s04').prompt, /(tight insert|close-up)[\s\S]*我的记忆只有10分钟/u)
+    assert.doesNotMatch(JSON.stringify(manifest.nodes), /超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性/u)
+    assert.equal(byId.get('keyframe-s15').metadata.cineMake.linkedBeat, byId.get('keyframe-s16').metadata.cineMake.linkedBeat)
+
+    const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    const canvasById = new Map(projectsJson.projects[0].project.nodes.map((node) => [node.id, node]))
+    assert.deepEqual(canvasById.get('keyframe-s13').metadata.cineMake.anchorPolicy, byId.get('keyframe-s13').metadata.cineMake.anchorPolicy)
+    assert.doesNotMatch(JSON.stringify(projectsJson.projects[0].project.nodes), /超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
 function assertConnection(connections, fromNodeId, toNodeId) {
   assert.ok(connections.some((connection) => connection.fromNodeId === fromNodeId && connection.toNodeId === toNodeId), `${fromNodeId} should connect to ${toNodeId}`)
 }

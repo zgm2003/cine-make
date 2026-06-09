@@ -236,6 +236,7 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
   const environment = inferPrimaryScene(contract, draft)
   const props = inferProps(contract.sourceText, draft)
   const shots = draft.shotlist ?? []
+  const beats = deriveStoryBeatsForCanvas(shots)
 
   nodes.push(createManifestNode({
     id: 'shot-list',
@@ -262,7 +263,7 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
       requiredAnchors,
       promptLayer: 'keyframe_static',
       motionPrompt: composeMotionPrompt({ shot }),
-      linkedBeat: `B${String(index + 1).padStart(2, '0')}`,
+      linkedBeat: beatForCanvasShot(beats, shot)?.beat_id ?? `B${String(index + 1).padStart(2, '0')}`,
       shotFunction: shotFunctionForCanvas(shot, index, shots.length),
       audienceTakeaway: audienceTakeawayForCanvas(shot, index, shots.length),
       environmentId: environment.id,
@@ -775,6 +776,83 @@ function sanitizeStaticShotText(value = '') {
     .trim()
 }
 
+function shotTextForCanvas(shot) {
+  return [
+    shot.action,
+    shot.blocking,
+    sanitizeStaticShotText(shot.composition),
+    shot.shot_size,
+    shot.lens
+  ].filter(Boolean).join('\n')
+}
+
+function beatKindForCanvasShot(shot, index, total) {
+  const text = shotTextForCanvas(shot)
+  const action = String(shot.action || '')
+  if (index === 0 || /窗外暴雨|闪电划过|暴雨.*闪电/u.test(text)) return { key: 'opening_space' }
+  if (index === total - 1 || /00:00:00|时间到|倒计时|手机|归零|空洞|你们是谁|再次失忆/u.test(action)) return { key: 'reset_hook' }
+  if (/惊醒|血手|满手鲜血|大口喘气/u.test(text)) return { key: 'blood_anomaly' }
+  if (/刻字|记忆只有10分钟|我的记忆只有10分钟|手臂/u.test(text)) return { key: 'memory_rule' }
+  if (/镜头拉开|另外三个人|三个人|四个方位|嫌疑/u.test(text)) return { key: 'suspect_board' }
+  if (/冷笑|凯撒|幕后黑手|所有人的目光/u.test(text)) return { key: 'ajie_misdirect' }
+  if (/雷队|拿着枪|堵在门口|被杀|老张|死无对证/u.test(text)) return { key: 'lei_pressure' }
+  if (/安娜|倒热水|热水杯|安抚|失忆症/u.test(text)) return { key: 'anna_control' }
+  if (/阿杰|瘸子|蜷缩|瑟瑟|拐杖|腿部支架/u.test(text)) return { key: 'ajie_disguise' }
+  if (/精神病院|警徽|解剖刀|闪回|圣路易斯/u.test(text)) return { key: 'asylum_flash' }
+  if (/查案|非法活体实验|我是.*来查案/u.test(text)) return { key: 'investigation_identity' }
+  return { key: `beat_${index}` }
+}
+
+function deriveStoryBeatsForCanvas(shots = []) {
+  const beats = []
+  const total = shots.length
+  for (const [index, shot] of shots.entries()) {
+    const kind = beatKindForCanvasShot(shot, index, total)
+    let beat = beats.find((candidate) => candidate.key === kind.key)
+    if (!beat) {
+      beat = {
+        beat_id: `B${String(beats.length + 1).padStart(2, '0')}`,
+        key: kind.key,
+        shots: []
+      }
+      beats.push(beat)
+    }
+    beat.shots.push(shot)
+  }
+  return beats
+}
+
+function beatForCanvasShot(beats, shot) {
+  return beats.find((beat) => beat.shots.includes(shot))
+}
+
+function riskTypeForCanvasShot(shot) {
+  const text = shotTextForCanvas(shot)
+  if (/wide/i.test(shot.shot_size ?? '') && /刻字|文字|我的记忆只有10分钟|读清/u.test(text)) return 'text_readability_conflict'
+  if (/macro|insert/i.test(shot.shot_size ?? '') && /惊醒|大口喘气|猛地|身体/u.test(text)) return 'macro_action_conflict'
+  if (/medium close-up|tight close-up/i.test(shot.shot_size ?? '') && /四个方位|三个人|雷队|安娜|阿杰/u.test(text)) return 'multi_character_spatial_conflict'
+  if (/冷笑|凯撒/u.test(text) && /(所有人的目光|三人方位|嫌疑结构|insert-medium|wide reveal)/iu.test(text)) return 'visual_priority_mismatch'
+  return ''
+}
+
+function localizedStaticShotDefinitionForCanvas(shot) {
+  const risk = riskTypeForCanvasShot(shot)
+  const text = shotTextForCanvas(shot)
+  if (risk === 'text_readability_conflict') return 'tight insert / 85mm close-up, readable carved text fills 40%-60% of frame'
+  if (risk === 'macro_action_conflict') return 'medium close-up for the wake-up beat; reserve bloody hands for a separate insert'
+  if (risk === 'multi_character_spatial_conflict') return 'wide / controlled 28mm shot, vertical deep staging to establish the room chessboard'
+  if (risk === 'visual_priority_mismatch') return 'low close-up on Ajie mouth and eyes; background characters reduced to pressure silhouettes'
+  if (/00:00:00/u.test(text)) return 'phone insert close-up, screen readable at 00:00:00'
+  return `${shot.shot_size || ''} / ${shot.lens || ''} / ${sanitizeStaticShotText(shot.composition)}`
+}
+
+function sanitizeLocalPromptText(value = '') {
+  return sanitizeStaticShotText(value)
+    .replace(/超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性[;；]?\s*/gu, '')
+    .replace(/^\s*[;；]\s*/u, '')
+    .trim()
+}
+
 function composeShotBible({ shot, environment }) {
   return [
     `# Shot List：${shot.shot_id}`,
@@ -815,6 +893,8 @@ function composeCompactShotList({ shots, environment }) {
 
 function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
   const usedProps = props.filter((prop) => shotUsesProp(shot, prop))
+  const anchor = anchorPolicyForShot(shot)
+  const lighting = sanitizeLocalPromptText(shot.lighting || 'motivated low-key cinematic lighting') || 'motivated low-key cinematic lighting'
   return [
     '关键帧生成任务：生成一张 single cinematic keyframe / 电影概念帧 / 分镜定格。',
     'Static Shot Definition：这是一张静态图片提示词，只描述构图、人物位置、光线、场景和情绪状态。',
@@ -829,12 +909,14 @@ function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
     `场景锚点：${environment.name}`,
     `出场人物：${(shot.characters ?? []).join('、') || shot.subject || '无'}`,
     usedProps.length ? `关键道具：${usedProps.map((prop) => prop.label).join('、')}` : '',
-    `景别/镜头：${shot.shot_size || ''} / ${shot.lens || ''}`,
-    `构图：${sanitizeStaticShotText(shot.composition)}`,
+    `景别/镜头：${localizedStaticShotDefinitionForCanvas(shot)}`,
+    `visual_priority: primary=${anchor.primary}; secondary=${anchor.secondary.slice(0, 2).join(' / ')}`,
+    `构图：${sanitizeLocalPromptText(shot.composition)}`,
     `空间调度：${shot.blocking || ''}`,
     `画面状态：${shot.action || ''}`,
-    `光影：${shot.lighting || contract.target.style}`,
+    `光影：${lighting}`,
     `调度：${shot.blocking || ''}`,
+    riskTypeForCanvasShot(shot) === 'text_readability_conflict' ? '文字可读性：只允许刻字本身可读，不要额外字幕或海报字。' : '',
     '',
     'photorealistic live-action film still, grounded cinematic realism, restrained psychological thriller mood, consistent actor face and costume, consistent physical location, no motion blur, no transition, no collage.',
     '',
@@ -874,9 +956,10 @@ function microCueForShot(shot) {
 
 function shotFunctionForCanvas(shot, index, total) {
   const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
+  const action = String(shot.action || '')
   if (index === 0) return '开场 / 空间与危险建立'
   if (index === total - 1) return '结尾钩子 / 状态重置'
-  if (/刻字|10分钟|倒计时|00:00:00|手机/u.test(text)) return '信息揭示 / 核心机制强化'
+  if (/刻字|10分钟/u.test(action) || /倒计时|00:00:00|手机/u.test(action)) return '信息揭示 / 核心机制强化'
   if (/三个人|另外三人|安娜|雷队|阿杰|嫌疑/u.test(text)) return '人物关系建立 / 嫌疑结构'
   if (/质问|拿枪|逼|怒|冲突|尸体|被杀/u.test(text)) return '冲突升级'
   if (/凯撒|谎|误导|阿杰|冷笑/u.test(text)) return '误导 / 反派钩子'
@@ -886,8 +969,9 @@ function shotFunctionForCanvas(shot, index, total) {
 
 function audienceTakeawayForCanvas(shot, index, total) {
   const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
-  if (/刻字|10分钟/u.test(text)) return '林默的记忆规则和凶手假设被明确建立。'
-  if (/倒计时|归零|00:00:00|手机/u.test(text)) return '循环机制生效，林默回到无知状态。'
+  const action = String(shot.action || '')
+  if (/刻字|10分钟/u.test(action)) return '林默的记忆规则和凶手假设被明确建立。'
+  if (/倒计时|归零|00:00:00|手机/u.test(action)) return '循环机制生效，林默回到无知状态。'
   if (/血手|满手鲜血|双手/u.test(text)) return '林默可能刚参与过暴力事件，但他自己不知道。'
   if (/安娜|雷队|阿杰|三个人/u.test(text)) return '房间里形成嫌疑人棋盘。'
   if (/凯撒|阿杰/u.test(text)) return '阿杰开始把观众和林默带向外部凶手叙事。'
@@ -898,11 +982,16 @@ function audienceTakeawayForCanvas(shot, index, total) {
 
 function anchorPolicyForShot(shot) {
   const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
-  if (/倒计时|手机|00:00:00/u.test(text)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
-  if (/刻字|手臂/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
-  if (/阿杰|凯撒/u.test(text)) return { primary: '阿杰眼神/嘴角', secondary: ['拐杖', '腿部支架'] }
+  const action = String(shot.action || '')
+  if (/00:00:00/u.test(action)) return { primary: '手机 00:00:00', secondary: ['林默血手', '屏幕冷光'] }
+  if (/倒计时|手机/u.test(action)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
+  if (/刻字|手臂|我的记忆只有10分钟/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
+  if (/镜头拉开|另外三个人|三个人|四个方位|客厅里还有/u.test(text)) return { primary: '四人空间棋盘', secondary: ['雷队堵门', '阿杰背光角落'] }
+  if (/冷笑|凯撒|眼神诡异/u.test(text)) return { primary: /冷笑/u.test(text) ? '阿杰嘴角冷笑' : '阿杰诡异眼神', secondary: ['众人视线转向阿杰', '拐杖/腿部支架'] }
+  if (/阿杰|瘸子|蜷缩|瑟瑟/u.test(text)) return { primary: '阿杰诡异眼神', secondary: ['拐杖', '腿部支架'] }
+  if (/热水杯|倒热水|倒水/u.test(text)) return { primary: '热水杯', secondary: ['安娜手部动作', '林默警惕眼神'] }
   if (/雷队|枪/u.test(text)) return { primary: '雷队堵门', secondary: ['手枪', '出口'] }
-  if (/安娜|药|倒水/u.test(text)) return { primary: '安娜安抚动作', secondary: ['热水杯', '药瓶'] }
+  if (/安娜|药|安抚/u.test(text)) return { primary: '安娜安抚/控制', secondary: ['热水杯', '药瓶'] }
   if (/血手|鲜血|双手/u.test(text)) return { primary: '林默血手', secondary: ['沙发', '低光'] }
   return { primary: '本镜头主要视觉信息', secondary: ['环境连续性'] }
 }
@@ -948,6 +1037,15 @@ function shotUsesCharacter(shot, characterName) {
 }
 
 function shotUsesProp(shot, prop) {
+  if (prop.id === 'prop-phone') {
+    const directPhoneCue = [
+      shot.action,
+      shot.subject,
+      shot.dialogue_or_voiceover
+    ].filter(Boolean).join('\n')
+    return prop.triggers.some((trigger) => directPhoneCue.includes(trigger))
+  }
+
   const text = [
     shot.action,
     shot.subject,
