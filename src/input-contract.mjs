@@ -5,6 +5,7 @@ const VALID_ASPECTS = new Set(['9:16', '16:9', '1:1', '4:5', '21:9'])
 const VALID_PLATFORMS = new Set(['jimeng'])
 const DEFAULT_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
 const LIVE_ACTION_STYLE_MARKERS = /(超写实|真人|电影质感|live-action|photoreal|realistic)/i
+const ILLUSTRATED_STYLE_MARKERS = /(国漫|漫画|漫剧|动漫|二次元|插画|anime|manhua|comic|toon|webtoon|illustrat)/i
 const MAX_VISUAL_REFERENCE_IMAGES = 12
 const DEFAULT_MIN_DURATION_SECONDS = 30
 const MAX_DURATION_SECONDS = 180
@@ -12,6 +13,7 @@ const VIDEO_SEGMENT_SECONDS = 15
 const DEFAULT_SHOTS_PER_SEGMENT = 4
 const DEFAULT_MIN_SHOTS = Math.ceil(DEFAULT_MIN_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const MAX_SHOTS = Math.ceil(MAX_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
+const EXPLICIT_STORYBOARD_MARKER = /(?:^|\n)\s*(?:【\s*分镜\s*(?:\d+|[一二三四五六七八九十百]+)\s*】|分镜\s*(?:\d+|[一二三四五六七八九十百]+)(?=[\s:：、.．-]|$)|镜头\s*(?:\d+|[一二三四五六七八九十百]+)(?=[\s:：、.．-]|$)|shot\s*\d+(?=[\s:：、.．-]|$)|s\d{1,3}(?=[\s:：、.．-]|$))/giu
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
   ['visual', 'visual'],
@@ -253,6 +255,7 @@ export function parseArgs(argv) {
 
 function inferContentType(sourceText) {
   const text = sourceText.trim()
+  if (countExplicitStoryboardShots(text) > 0) return 'explicit_storyboard'
   if (/第[一二三四五六七八九十0-9]+集剧本|角色设定|^\[场景/mu.test(text) && /\[场景|▲\s*【(?:画面|音效)】/u.test(text)) {
     return 'short_drama_script'
   }
@@ -277,6 +280,17 @@ function defaultShotCount(seconds) {
 
 function countMatches(value, pattern) {
   return [...value.matchAll(pattern)].length
+}
+
+function countExplicitStoryboardShots(sourceText) {
+  return countMatches(sourceText, EXPLICIT_STORYBOARD_MARKER)
+}
+
+function sumExplicitStoryboardDurations(sourceText) {
+  const durations = [...sourceText.matchAll(/(?:^|\n)\s*(?:时长|duration)\s*[:：]?\s*(\d+)\s*(?:s|sec|secs|second|seconds|秒)?/giu)]
+    .map((match) => Number(match[1]))
+    .filter((seconds) => Number.isInteger(seconds) && seconds > 0)
+  return durations.reduce((sum, seconds) => sum + seconds, 0)
 }
 
 function narrativeUnits(sourceText) {
@@ -318,6 +332,17 @@ function inferPlotShotCount(sourceText, contentType) {
 }
 
 function inferTargetSizing({ sourceText, contentType }) {
+  if (contentType === 'explicit_storyboard') {
+    const shotCount = Math.min(MAX_SHOTS, Math.max(1, countExplicitStoryboardShots(sourceText)))
+    const durationFromSource = sumExplicitStoryboardDurations(sourceText)
+    const fallbackDuration = Math.ceil(shotCount / DEFAULT_SHOTS_PER_SEGMENT) * VIDEO_SEGMENT_SECONDS
+    return {
+      durationSeconds: Math.max(4, Math.min(MAX_DURATION_SECONDS, durationFromSource || fallbackDuration)),
+      shotCount,
+      source: 'explicit_storyboard'
+    }
+  }
+
   if (contentType === 'short_drama_script') {
     const scriptSizing = inferScriptProfileSizing(extractScriptProfile(sourceText))
     if (scriptSizing) return { ...scriptSizing, source: 'script_profile' }
@@ -334,6 +359,7 @@ function inferTargetSizing({ sourceText, contentType }) {
 
 function normalizeStyle(value) {
   const style = String(value || DEFAULT_STYLE).trim() || DEFAULT_STYLE
+  if (ILLUSTRATED_STYLE_MARKERS.test(style)) return style
   if (LIVE_ACTION_STYLE_MARKERS.test(style)) return style
   return `${style}，超写实真人电影质感`
 }

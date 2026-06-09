@@ -28,6 +28,27 @@ test('defaults to photoreal live-action cinematic storyboard packs', async () =>
   assert.equal(contract.target.storyboardCount, 4)
 })
 
+test('preserves illustrated manhua styles without adding live-action texture', async () => {
+  const options = parseArgs(['--duration', '15s', '--aspect', '9:16', '--style', '国漫现实主义风格，电影式构图，低饱和暖灰色调', '雨夜里，女孩在巷口停下脚步。'])
+  const contract = await createInputContract(options)
+
+  assert.equal(contract.target.style, '国漫现实主义风格，电影式构图，低饱和暖灰色调')
+  assert.doesNotMatch(contract.target.style, /超写实真人电影质感|photoreal|live-action|真实皮肤毛孔/i)
+})
+
+test('preserves explicit storyboard shot count instead of estimating from density', async () => {
+  const source = [1, 2, 3, 4, 5].map((index) => [
+    `【分镜${index}】楼道 中景`,
+    `时长：${index + 2}s`,
+    `画面：人物停在门口，镜头保持当前瞬间。`
+  ].join('\n')).join('\n\n')
+  const contract = await createInputContract(parseArgs(['--aspect', '9:16', source]))
+
+  assert.equal(contract.contentType, 'explicit_storyboard')
+  assert.equal(contract.target.shotCount, 5)
+  assert.equal(contract.target.storyboardCount, 5)
+})
+
 test('classifies enterprise documentary essays separately from novels', async () => {
   const source = '号声里的奋斗密码。1996年夏，我从东锅技校毕业，成为东方锅炉轻容分厂电焊工。师傅说最好听的是上班号声。2011年燃烧器车间攻坚海外项目，东锅人提前交付。2025年儿子问我最动听的旋律。'
   const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', source]))

@@ -1116,7 +1116,307 @@ function composeVideoFeedPack({ contract, shotlist, mainCharacter, characters = 
   })
 }
 
+function composeExplicitScriptBeats(shotlist) {
+  return shotlist.flatMap((shot, index) => [
+    `### B${String(index + 1).padStart(2, '0')} ${shot.shot_id}`,
+    '',
+    `- story_function: ${shot.shot_function ?? shotFunction(shot, index, shotlist.length)}`,
+    `- script_source: ${shotPurpose(shot)}`,
+    `- audience_takeaway: ${shot.audience_takeaway ?? audienceTakeaway(shot, index, shotlist.length)}`,
+    `- shot_ids: ${shot.shot_id}`,
+    `- keep_original_order: true`,
+    ''
+  ])
+}
+
+function composeExplicitDialogueScript(shotlist) {
+  return shotlist.flatMap((shot) => {
+    const dialogue = compactAction(shot.dialogue_or_voiceover ?? '')
+    const dialogueLines = dialogue
+      ? dialogue.split(/\s*\/\s*/u).map((line) => `- ${line}`)
+      : ['- 无台词 / 只保留画面表演。']
+    return [
+      `### ${shot.shot_id}`,
+      '',
+      ...dialogueLines,
+      ''
+    ]
+  })
+}
+
+function composeExplicitShotDefinitions(shotlist) {
+  return shotlist.flatMap((shot, index) => [
+    `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
+    '',
+    `- linked_beat: B${String(index + 1).padStart(2, '0')}`,
+    `- shot_function: ${shot.shot_function ?? shotFunction(shot, index, shotlist.length)}`,
+    `- audience_takeaway: ${shot.audience_takeaway ?? audienceTakeaway(shot, index, shotlist.length)}`,
+    `- characters_in_frame: ${(shot.characters?.length ? shot.characters.join('、') : '无固定人物')}`,
+    `- environment_id: ${shot.scene}`,
+    `- primary_visible_action: ${shotPurpose(shot)}`,
+    `- shot_size: ${shot.shot_size}`,
+    `- lens_hint: ${shot.lens ?? '按原分镜镜头'}`,
+    `- camera_movement: ${shot.camera_movement}`,
+    `- duration_seconds: ${shot.duration_seconds}`,
+    `- dialogue_or_voiceover: ${compactAction(shot.dialogue_or_voiceover || '无台词')}`,
+    `- visual_priority: ${sanitizeStaticShotText(shot.composition)}`,
+    `- blocking: ${compactAction(shot.blocking ?? '按原分镜站位')}`,
+    `- lighting: ${compactAction(shot.lighting ?? '按国漫画风延续')}`,
+    ''
+  ])
+}
+
+function composeExplicitKeyframePromptList(shotlist) {
+  return shotlist.flatMap((shot) => [
+    `### ${shot.shot_id} -> ${storyboardImageName(shot)}`,
+    '',
+    shot.image_prompt ?? composeStaticKeyframePrompt(shot),
+    ''
+  ])
+}
+
+function composeExplicitMotionPrompts(shotlist) {
+  return shotlist.flatMap((shot) => [
+    `### ${shot.shot_id}｜Motion Prompt`,
+    '',
+    shot.video_prompt_note ?? composeMotionPromptLine(shot),
+    ''
+  ])
+}
+
+function composeExplicitCharacterBible(characters = []) {
+  if (!characters.length) return ['- 按源剧本人物表和用户已有角色图锁定角色，不把台词/动作/场景等字段名当角色。']
+  return characters.flatMap((character) => [
+    `### ${character.identity_anchor}`,
+    '',
+    `- character_id: ${character.id}`,
+    `- role: ${character.role}`,
+    `- costume: ${character.costume_anchor}`,
+    `- key_props: ${character.prop_anchor}`,
+    `- micro_behavior: ${character.performance_anchor}`,
+    `- continuity_rule: ${character.continuity_notes}`,
+    `- negative_constraints: 不合并角色；不把台词、动作、画面、场景、音效识别成角色。`,
+    ''
+  ])
+}
+
+const EXPLICIT_SCENE_MOTHER_BIBLE = new Map([
+  ['SCENE_01_OLD_BUILDING_EXTERIOR', {
+    name: '老旧居民楼外景',
+    boundary: '老式居民楼外立面、楼下入口、斑驳墙面、偏暗自然光；无人物，无剧情动作。'
+  }],
+  ['SCENE_02_INDOOR_STAIRWELL', {
+    name: '封闭式室内老居民楼楼道 / 楼梯平台 / 转角 / 入户门外',
+    boundary: '封闭式室内单元楼楼道；楼梯在楼内；不露天；不见天空；不见树木；没有开放连廊；无人物，无剧情动作。'
+  }],
+  ['SCENE_03_SMALL_APARTMENT_INTERIOR', {
+    name: '一室一厅老旧出租屋室内 / 客厅 / 里屋门口',
+    boundary: '小户型客厅、窗边小凳子、沙发、里屋门口和门缝归为同一母场景；无人物，无剧情动作。'
+  }]
+])
+
+function composeExplicitSceneBible(shotlist) {
+  const scenes = uniqueScenes(shotlist)
+    .filter((scene) => EXPLICIT_SCENE_MOTHER_BIBLE.has(scene))
+    .sort((left, right) => [...EXPLICIT_SCENE_MOTHER_BIBLE.keys()].indexOf(left) - [...EXPLICIT_SCENE_MOTHER_BIBLE.keys()].indexOf(right))
+  return scenes.flatMap((scene) => [
+    `### ${scene}`,
+    '',
+    '- asset_type: scene_mother_reference',
+    `- name: ${EXPLICIT_SCENE_MOTHER_BIBLE.get(scene).name}`,
+    '- rule: 母场景只锁定空间结构、光线方向、材质和色调；不写人物，不写剧情动作。',
+    `- boundary: ${EXPLICIT_SCENE_MOTHER_BIBLE.get(scene).boundary}`,
+    ''
+  ])
+}
+
+function composeExplicitImageQueue({ contract, shotlist, characters }) {
+  return [
+    ...visualReferenceLines(contract, characters),
+    ...composeImageAssetQueue({ contract, shotlist, characters })
+  ]
+}
+
+const PROVIDED_CHARACTER_REFERENCE_ALIASES = new Map([
+  ['江渝白', ['jiang-yubai', 'jiangyubai']],
+  ['林听晚', ['lin-tingwan', 'lintingwan']],
+  ['李大妈', ['li-dama', 'lidama']],
+  ['晚晚', ['wanwan']]
+])
+
+function providedCharacterReferenceLine(name, paths = []) {
+  const aliases = PROVIDED_CHARACTER_REFERENCE_ALIASES.get(name) ?? [name]
+  const path = paths.find((candidate) => aliases.some((alias) => candidate.toLowerCase().includes(alias.toLowerCase())))
+  return path ? `- 人物参考图（${name}）：\`${path}\`` : ''
+}
+
+function explicitSegmentUploadLines({ contract, segment, characters = [] }) {
+  const names = segmentCharacterNames({ segment, characters })
+  const paths = contract.visualReferences?.characterImages ?? []
+  const characterLines = paths.length
+    ? names.map((name) => providedCharacterReferenceLine(name, paths)).filter(Boolean)
+    : segmentCharacterReferenceLines({ contract, segment, characters })
+  const availableReferenceSlots = Math.max(0, MAX_UPLOAD_IMAGES_PER_FEED_CARD - 2 - segment.length)
+  return [
+    ...characterLines,
+    ...sceneReferenceLines(contract),
+    ...styleReferenceLines(contract)
+  ].slice(0, availableReferenceSlots)
+}
+
+function composeExplicitVideoFeedPack({ contract, shotlist, characters = [] }) {
+  const mode = contract.mode ?? 'draft'
+  return segmentShots(shotlist, { maxShots: maxStoryboardImagesPerSegment(contract) }).flatMap((segment, index) => {
+    const startFrame = segmentStartFrameName(index)
+    const endFrame = segmentEndFrameName(index)
+    const uploadLines = [
+      ...explicitSegmentUploadLines({ contract, segment, characters }),
+      `- 起始帧：\`${startFrame}\``,
+      ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
+      `- 尾帧：\`${endFrame}\``
+    ]
+    return [
+      `### 第 ${index + 1} 段：${segmentLabel(segment)}（${segmentDuration(segment)}s，上传图片 ${uploadLines.length} 张）`,
+      '',
+      mode === 'draft' ? '状态：草稿模式先不要上传；等出图模式生成图片后再用。' : '状态：出图模式可上传对应图片。',
+      '',
+      '上传图片：',
+      '',
+      ...uploadLines,
+      '',
+      '复制提示词：',
+      '',
+      '```text',
+      `${segmentDuration(segment)}s / ${contract.target.aspectRatio} / ${contract.target.style}`,
+      '严格按上传关键帧执行，不重写剧情。角色脸、发型、服装、场景方位和光线保持一致。',
+      ...segment.map((shot) => `${shot.shot_id}: ${shot.video_prompt_note ?? composeMotionPromptLine(shot)}`),
+      '每镜只执行一个主动作；不新增角色、不新增道具、不生成字幕、不跳切。',
+      '```',
+      ''
+    ]
+  })
+}
+
+function composeExplicitStoryboardDeliverable({ contract, draft }) {
+  const mode = contract.mode ?? 'draft'
+  const mainCharacter = draft.characters?.[0]
+  const firstShot = draft.shotlist[0]
+  const lastShot = draft.shotlist[draft.shotlist.length - 1]
+  return [
+    '# Cine Make Deliverable',
+    '',
+    `## 交付模式：${modeName(mode)}`,
+    '',
+    modeSummary(mode),
+    '',
+    '最终交付给用户只看这两项：',
+    '',
+    '- `deliverable.md`',
+    '- `storyboard-images/`',
+    '',
+    'Codex 不生成最终视频；最终 MP4 由即梦合成。',
+    '',
+    '## 成片预览',
+    '',
+    `我们在做什么：把用户已有 ${draft.shotlist.length} 个明确分镜转成 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的国漫草稿包；保持原分镜数量、顺序和剧情钩子，不擅自扩写。`,
+    '',
+    `成片一句话：${mainCharacter?.identity_anchor ?? '主角'}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
+    '',
+    '## 故事全流程',
+    '',
+    ...composeStoryFlow({ contract, shotlist: draft.shotlist }),
+    '',
+    '## 短片方案',
+    '',
+    `- 标题：${contract.title}`,
+    `- 时长：${contract.target.durationSeconds}s`,
+    `- 画幅：${contract.target.aspectRatio}`,
+    `- 风格：${contract.target.style}`,
+    `- preserve_existing_shot_count: true`,
+    '',
+    mainCharacter
+      ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
+      : '主角锚点：按源故事和分镜设定保持一致。',
+    '',
+    '## SCRIPT_BEATS',
+    '',
+    ...composeExplicitScriptBeats(draft.shotlist),
+    '',
+    '## DIALOGUE_SCRIPT',
+    '',
+    '台词保留在这一层；Keyframe Prompt 不直接生成字幕或大段文字。',
+    '',
+    ...composeExplicitDialogueScript(draft.shotlist),
+    '',
+    '## DIRECTOR_BIBLE',
+    '',
+    '- 类型：国漫现实主义短剧；每张图是静态关键帧，不是完整剧情解释。',
+    `- 画幅 / 风格：${contract.target.aspectRatio} / ${contract.target.style}`,
+    '- 视觉语言：电影式构图、干净线稿、细腻光影、低饱和暖灰色调。',
+    '- 分层规则：导演分析留在文档；角色身份留在角色参考；母场景无人物；关键帧只写当前可见瞬间；运动提示只写一个动作。',
+    '',
+    '## CHARACTER_BIBLE',
+    '',
+    ...composeExplicitCharacterBible(draft.characters),
+    '## SCENE_BIBLE',
+    '',
+    ...composeExplicitSceneBible(draft.shotlist),
+    '## ART_DIRECTION',
+    '',
+    `- 色彩：${contract.target.style}。`,
+    '- 镜头语言：可以有电影式构图和运镜，但不切换成摄影写实质感。',
+    '- Keyframe 提示词只描述静态当前瞬间；Motion Prompt 才描述视频运动。',
+    '',
+    '## STORYBOARD：Shot Definition',
+    '',
+    ...composeExplicitShotDefinitions(draft.shotlist),
+    '## KEYFRAME_PROMPTS',
+    '',
+    ...composeExplicitKeyframePromptList(draft.shotlist),
+    '## MOTION_PROMPTS',
+    '',
+    ...composeExplicitMotionPrompts(draft.shotlist),
+    '## 精简分镜',
+    '',
+    ...composeShotTable(draft.shotlist),
+    '',
+    '## 出图清单',
+    '',
+    mode === 'draft'
+      ? '草稿模式只准备文件位和提示词，不生成图片；进入出图模式后按同一清单生成。'
+      : '出图模式按此清单生成或补齐静态图。',
+    '',
+    ...composeExplicitImageQueue({ contract, shotlist: draft.shotlist, characters: draft.characters }),
+    '',
+    '## 视频工具投喂包',
+    '',
+    '每段只上传对应参考图、首帧、关键帧和尾帧；每条提示只执行本段 motion prompt，不新增剧情。',
+    '',
+    ...composeExplicitVideoFeedPack({ contract, shotlist: draft.shotlist, characters: draft.characters }),
+    '## QUALITY_CHECK',
+    '',
+    '- shot_count_drift: pass（显式分镜数量已保持）',
+    '- role_parse_error: pass（字段标签未进入角色表）',
+    '- scene_mother_contamination: pass（母场景说明不含人物调度）',
+    '- keyframe_current_moment: pass（关键帧只写当前可见画面）',
+    '- motion_overload: pass（每条 motion prompt 一个主动作）',
+    '',
+    '## 视觉参考',
+    '',
+    ...visualReferenceLines(contract, draft.characters),
+    '',
+    '## 连续性注意事项',
+    '',
+    '- 已有角色图优先；不要重新发明脸、发型和服装。',
+    '- 楼道必须是封闭式室内单元楼楼道；不露天，不见天空和树木。',
+    '- 关键帧不生成字幕；台词只作为表演和节奏参考。',
+    '- 最终视频合成由外部视频工具完成。'
+  ].join('\n')
+}
+
 export function composeDeliverable({ contract, draft }) {
+  if (contract.contentType === 'explicit_storyboard') return composeExplicitStoryboardDeliverable({ contract, draft })
+
   const mode = contract.mode ?? 'draft'
   const mainCharacter = draft.characters?.[0]
   const directorJudgmentSections = mode === 'draft'

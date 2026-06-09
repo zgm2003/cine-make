@@ -1092,6 +1092,433 @@ function selectBlueprintsForContract(contract, count) {
   return selectBlueprints(count)
 }
 
+const ROLE_FIELD_LABELS = new Set([
+  '台词',
+  '对白',
+  '动作',
+  '画面',
+  '场景',
+  '旁白',
+  '音效',
+  '转场',
+  '镜头',
+  '分镜',
+  '字幕',
+  '提示词',
+  '参考图',
+  '角色',
+  '人物',
+  '服装',
+  '道具',
+  '时长'
+])
+
+function isRoleFieldLabel(value) {
+  return ROLE_FIELD_LABELS.has(String(value).trim())
+}
+
+function safeCharacterId(name, index) {
+  return `character_${String(index + 1).padStart(2, '0')}_${String(name).replace(/[^\u4e00-\u9fa5a-z0-9]+/giu, '-').replace(/^-|-$/g, '') || 'role'}`
+}
+
+function inferCharacterRole(description, index) {
+  if (/男主/u.test(description)) return 'male lead'
+  if (/女主/u.test(description)) return 'female lead'
+  if (/二房东|房东/u.test(description)) return 'landlord / conflict role'
+  if (/少女|妹妹|双胞胎/u.test(description)) return 'secret reveal role'
+  return index === 0 ? 'main character' : 'supporting character'
+}
+
+function parseExplicitCharacters(sourceText, style) {
+  const preface = sourceText.split(/\n\s*(?:【\s*分镜|分镜\s*(?:\d+|[一二三四五六七八九十百]+)|Shot\s*\d+|S\d{1,3})/iu)[0] ?? ''
+  const characters = []
+  const addCharacter = (name, description = '') => {
+    const cleanName = String(name).trim().replace(/[，,、\s]+$/u, '')
+    if (!cleanName || isRoleFieldLabel(cleanName)) return
+    if (!/^[\u4e00-\u9fa5A-Za-z0-9·]{1,12}$/u.test(cleanName)) return
+    if (characters.some((character) => character.identity_anchor === cleanName)) return
+    const index = characters.length
+    const cleanDescription = String(description).trim() || '源剧本人物设定'
+    characters.push({
+      id: safeCharacterId(cleanName, index),
+      role: inferCharacterRole(cleanDescription, index),
+      identity_anchor: cleanName,
+      costume_anchor: /连衣裙|校服|高中生|卷发|少女|大妈/u.test(cleanDescription)
+        ? cleanDescription
+        : `按已有人物参考图锁定脸型、发型、身形和服装；${cleanDescription}`,
+      prop_anchor: /钥匙|手机|房租|水壶|门缝|房门/u.test(cleanDescription) ? cleanDescription : '无固定随身道具；按镜头需要出现租赁/房门/手机等道具',
+      performance_anchor: /敏感|警惕/u.test(cleanDescription)
+        ? '敏感警惕，眼神先躲避再反击'
+        : /市侩|脑补|强硬/u.test(cleanDescription)
+          ? '市侩强硬，表情转换快'
+          : /天真|懵懂/u.test(cleanDescription)
+            ? '懵懂天真，小动作慢半拍'
+            : '克制自然，情绪通过眼神、呼吸和停顿表现',
+      preset_policy: `Treat ${cleanName} as one stable ${style} character. Do not merge this character with field labels, dialogue labels, or other roles.`,
+      continuity_notes: `后续所有镜头保持${cleanName}的脸型、发型、身形和服装稳定；已有角色图优先于文字自动补全。`,
+      reference_image: `storyboard-images/${safeCharacterId(cleanName, index)}.png`,
+      reference_prompt: `【角色参考图】角色：${cleanName}。风格：${style}。单人半身或全身，干净浅色背景，正面为主，保持脸型、发型、身形、服装稳定。人物设定：${cleanDescription}。禁止：不要加入剧情动作，不要加入其他角色，不要复杂背景，不要切换成照片质感。`
+    })
+  }
+
+  for (const line of preface.split(/\n+/u).map((part) => part.trim()).filter(Boolean)) {
+    const bullet = line.match(/^[-*•]\s*([^：:，,、\s]{1,12})[：:]\s*(.+)$/u)
+    if (bullet) {
+      addCharacter(bullet[1], bullet[2])
+      continue
+    }
+
+    const roleLine = line.match(/^(?:角色|人物)[:：]\s*(.+)$/u)
+    if (roleLine) {
+      for (const raw of roleLine[1].split(/[、,，]/u)) addCharacter(raw)
+    }
+  }
+
+  return characters
+}
+
+function explicitShotMarker(line) {
+  return String(line).trim().match(/^\s*(?:【\s*分镜\s*([\d一二三四五六七八九十百]+)\s*】|分镜\s*([\d一二三四五六七八九十百]+)|镜头\s*([\d一二三四五六七八九十百]+)|shot\s*(\d+)|s(\d{1,3}))\s*(.*)$/iu)
+}
+
+function parseExplicitStoryboardBlocks(sourceText) {
+  const blocks = []
+  let current = null
+  for (const line of sourceText.split(/\n/u)) {
+    const marker = explicitShotMarker(line)
+    if (marker) {
+      if (current) blocks.push(current)
+      current = {
+        heading: (marker[6] ?? '').trim(),
+        lines: []
+      }
+      continue
+    }
+    if (current) current.lines.push(line)
+  }
+  if (current) blocks.push(current)
+  return blocks
+}
+
+function fieldValue(lines, labelPattern) {
+  for (const line of lines) {
+    const match = line.trim().match(new RegExp(`^${labelPattern}\\s*[：:]\\s*(.+)$`, 'u'))
+    if (match) return match[1].trim()
+  }
+  return ''
+}
+
+function extractExplicitDialogue(lines) {
+  const dialogue = []
+  let inDialogue = false
+  for (const rawLine of lines) {
+    const line = rawLine.trim()
+    if (!line) continue
+
+    const inline = line.match(/^台词(?:（([^）]+)）)?\s*[：:]\s*(.+)$/u)
+    if (inline) {
+      dialogue.push(inline[1] ? `${inline[1].trim()}：${inline[2].trim()}` : inline[2].trim())
+      inDialogue = false
+      continue
+    }
+
+    if (/^台词(?:\s|$|[（(:：])/u.test(line)) {
+      inDialogue = true
+      continue
+    }
+
+    if (/^(画面|画面细节|音效|时长|场景|动作)\s*[：:]/u.test(line)) {
+      inDialogue = false
+      continue
+    }
+
+    if (inDialogue) dialogue.push(line)
+  }
+  return dialogue.join(' / ')
+}
+
+function firstSentence(value) {
+  const clean = String(value).replace(/\s+/g, ' ').trim()
+  return clean.split(/[。！？!?；;]/u).map((part) => part.trim()).filter(Boolean)[0] ?? clean
+}
+
+function stripOverlayText(value) {
+  return String(value)
+    .replace(/[，,。；;]?\s*画面弹出文字\s*[：:].*$/u, '')
+    .replace(/[，,。；;]?\s*字幕\s*[：:].*$/u, '')
+    .trim()
+}
+
+function inferSceneFromExplicitShot(heading, visual) {
+  const text = `${heading} ${visual}`
+  if (/外景|居民楼/u.test(text) && !/楼道|楼梯|室内|客厅|里屋|门缝/u.test(text)) return 'SCENE_01_OLD_BUILDING_EXTERIOR'
+  if (/楼道|楼梯|转角|入户门/u.test(text) && !/室内|客厅|里屋|窗边|沙发/u.test(text)) return 'SCENE_02_INDOOR_STAIRWELL'
+  if (/室内|客厅|一室一厅|里屋|门缝|屋内|窗边|沙发|小凳子/u.test(text)) return 'SCENE_03_SMALL_APARTMENT_INTERIOR'
+  return 'SCENE_03_SMALL_APARTMENT_INTERIOR'
+}
+
+function inferShotSizeFromHeading(heading) {
+  if (/全景/u.test(heading)) return 'wide shot / 全景'
+  if (/中景/u.test(heading)) return 'medium shot / 中景'
+  if (/半身/u.test(heading)) return 'medium close-up / 半身'
+  if (/近景/u.test(heading)) return 'close-up / 近景'
+  if (/特写/u.test(heading)) return 'tight close-up / 特写'
+  return 'medium shot / 中景'
+}
+
+function inferLensFromShotSize(shotSize) {
+  if (/wide|全景/u.test(shotSize)) return '28mm vertical wide'
+  if (/tight|特写/u.test(shotSize)) return '85mm close-up'
+  if (/close-up|近景|半身/u.test(shotSize)) return '50mm portrait lens'
+  return '35mm natural lens'
+}
+
+function inferCameraMovement(heading, visual, index, total) {
+  const text = `${heading} ${visual}`
+  if (/跟拍/u.test(text)) return 'controlled follow'
+  if (/推进|前移/u.test(text)) return 'slow push-in'
+  if (/转|侧身|避让/u.test(text)) return 'subtle rack focus'
+  if (/定格|片尾/u.test(text) || index === total - 1) return 'locked final frame'
+  return 'locked frame'
+}
+
+function namesInText(text, characters) {
+  return characters
+    .map((character) => character.identity_anchor)
+    .filter((name) => text.includes(name))
+}
+
+function explicitCharactersInFrame(text, characters) {
+  const names = new Set(namesInText(text, characters))
+  const has = (name) => characters.some((character) => character.identity_anchor === name)
+  if (/男主|江渝白/u.test(text) && has('江渝白')) names.add('江渝白')
+  if (/女主|林听晚|同班校花|女生/u.test(text) && has('林听晚')) names.add('林听晚')
+  if (/李大妈|大妈|房东|二房东/u.test(text) && has('李大妈')) names.add('李大妈')
+  if (/(晚晚|小脑袋|三人同框|容貌一致|双胞胎|里屋门口的少女|门缝[^。；\n]*少女)/u.test(text) && has('晚晚')) names.add('晚晚')
+  return characters.map((character) => character.identity_anchor).filter((name) => names.has(name))
+}
+
+function inferExplicitLighting(scene, style) {
+  if (scene === 'SCENE_01_OLD_BUILDING_EXTERIOR') return `${style}；旧居民楼外景偏暗暖灰，生活化自然光`
+  if (scene === 'SCENE_02_INDOOR_STAIRWELL') return `${style}；封闭式室内楼道昏黄顶灯，不露天，不见天空`
+  if (scene === 'SCENE_03_SMALL_APARTMENT_INTERIOR') return `${style}；室内柔和窗光与暖色生活灯`
+  return `${style}；低饱和暖灰色调，光源方向保持连续`
+}
+
+function explicitPerformanceCue(text) {
+  if (/惊愕|震惊|瞪大|难以置信/u.test(text)) return '眼神瞬间定住，呼吸短暂停顿'
+  if (/警惕|躲闪|后退|戒备/u.test(text)) return '眼神躲闪，肩颈紧绷，动作克制'
+  if (/慌张|慌忙|脸色骤变|急/u.test(text)) return '呼吸加快，手部动作抢先于身体'
+  if (/谄媚|笑容|慌张/u.test(text)) return '表情快速转换，笑容不自然'
+  return '克制自然，情绪通过眼神和停顿表现'
+}
+
+function explicitShotFunction(index, total, visual) {
+  if (index === 0) return '开场 / 空间与人物目标建立'
+  if (index === total - 1) return '结尾钩子 / 秘密揭示'
+  if (/房租|搬走|男朋友|核查/u.test(visual)) return '冲突推进 / 身份误会'
+  if (/同班|哑巴|说话|会说话/u.test(visual)) return '核心信息揭示'
+  if (/进屋|坐|泡茶|屋内/u.test(visual)) return '空间转换 / 关系压缩'
+  return '情绪推进 / 关系变化'
+}
+
+function explicitAudienceTakeaway(index, total, visual) {
+  if (index === 0) return '江渝白带着收租任务进入老居民楼。'
+  if (index === total - 1) return '晚晚出现，林听晚隐藏的秘密升级为下一集钩子。'
+  if (/说话|哑巴/u.test(visual)) return '林听晚在学校的沉默形象和现实说话形成反差。'
+  if (/李大妈|房租|搬走/u.test(visual)) return '房租冲突把江渝白和林听晚推到同一空间。'
+  if (/同班|同学/u.test(visual)) return '两人的校园关系被公开，尴尬和误会加深。'
+  return '人物关系或空间压力被推进。'
+}
+
+function cleanExplicitVisibleMoment(action) {
+  let cleaned = stripOverlayText(action)
+    .replace(/楼道回声明显[。；;，,]*/gu, '')
+    .replace(/镜头顺着声音前移[。；;，,]*/gu, '江渝白抬头看向楼上平台方向，神情被楼上动静吸引。')
+    .replace(/前方传来(?:一高一低两道女声|争执声)[。；;，,]*/gu, '江渝白抬头看向楼上平台方向，神情被楼上动静吸引。')
+    .replace(/江渝白出声[，,]*/gu, '江渝白站定')
+    .replace(/(?:随即)?开口打破尴尬氛围/gu, '嘴唇微张，表情无奈，像准备打断对话')
+    .replace(/率先发问/gu, '身体微微前倾，目光直视林听晚，嘴唇微张')
+    .replace(/语气(?:强硬|加重)[，,]*/gu, '')
+    .replace(/终于开口出声[，,]*/gu, '嘴唇微张')
+    .replace(/说话/gu, '嘴唇微张')
+    .replace(/房门发出轻响[，,]*/gu, '里屋门缝微微打开，')
+    .replace(/镜头切向内侧房门[。；;，,]*/gu, '')
+    .replace(/镜头给到/gu, '')
+    .replace(/随即|然后/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+
+  if (/李大妈率先推门走进屋内[\s\S]*林听晚欲言又止[\s\S]*江渝白迟疑/u.test(cleaned)) {
+    cleaned = '入户门半开，李大妈已经站在门内侧回头催促；林听晚站在门口低头犹豫，江渝白落后半步站在楼道里，三人形成前后层次。'
+  } else if (/拿起水壶|泡茶|使眼色/u.test(cleaned) && /李大妈|林听晚|江渝白/u.test(cleaned)) {
+    cleaned = '李大妈手持水壶停在桌边，眼神斜向林听晚；林听晚低头不动，江渝白坐在一侧观察。'
+  } else if (/深吸一口气|嘴唇微张|到底想怎么样/u.test(cleaned) && /林听晚/u.test(cleaned)) {
+    cleaned = '林听晚嘴唇微张，眼神戒备地看向江渝白；江渝白在对面露出惊讶。'
+  } else if (/故意安排人|逼我就范|只是来收租/u.test(cleaned)) {
+    cleaned = '林听晚身体前倾、脸颊涨红，正对江渝白；江渝白坐在对面一脸茫然。'
+  } else if (/小脑袋|门缝|别出来/u.test(cleaned)) {
+    cleaned = '里屋门缝微微打开，晚晚从门后探出小脑袋；林听晚脸色骤变，身体前倾挡在门前。'
+  } else if (/江渝白瞪大双眼[\s\S]*少女[\s\S]*三人同框/u.test(cleaned)) {
+    cleaned = '里屋门口，晚晚站在门边成为画面中心；林听晚急忙挡在她前方，江渝白在另一侧瞪大双眼，三人同框定格。'
+  }
+
+  return postCleanExplicitVisibleMoment(cleaned)
+}
+
+function removeRepeatedPhrase(value, phrase) {
+  const first = value.indexOf(phrase)
+  if (first === -1) return value
+  const before = value.slice(0, first + phrase.length)
+  const after = value.slice(first + phrase.length).replaceAll(phrase, '')
+  return `${before}${after}`
+}
+
+function cleanupExplicitPunctuation(value) {
+  return String(value)
+    .replace(/江渝白缓步走上楼梯，江渝白抬头/u, '江渝白缓步走上楼梯，抬头')
+    .replace(/(?<!露出)自作了然(?:的表情)?[，,。]*/u, '露出自作了然的表情。')
+    .replace(/[，,]\s*([。；;])/gu, '$1')
+    .replace(/。\s*[；;]/gu, '。')
+    .replace(/；\s*。/gu, '。')
+    .replace(/。\s*。+/gu, '。')
+    .replace(/；\s*；+/gu, '；')
+    .replace(/[，,；;]\s*$/u, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function stripTrailingExplicitPunctuation(value) {
+  return String(value).replace(/[。；;，,]+\s*$/u, '').trim()
+}
+
+function postCleanExplicitVisibleMoment(value) {
+  let cleaned = cleanupExplicitPunctuation(value)
+  cleaned = removeRepeatedPhrase(cleaned, '江渝白抬头看向楼上平台方向，神情被楼上动静吸引')
+  cleaned = cleanupExplicitPunctuation(cleaned)
+  return cleaned
+}
+
+function explicitPrimaryVisual(action) {
+  if (/(晚晚|小脑袋|三人同框|容貌一致|双胞胎|里屋门口[^。；\n]*少女|门缝[^。；\n]*少女)/u.test(action)) return '里屋门口出现的晚晚'
+  if (/老式小户型房间|陈设简单|一尘不染/u.test(action)) return '老式小户型房间的整洁陈设'
+  if (/林听晚[^。；]*嘴唇微张|第一次开口/u.test(action)) return '林听晚第一次开口的嘴唇微张和戒备眼神'
+  if (/李大妈.*挡住|挡在/u.test(action)) return '李大妈挡住林听晚'
+  if (/林听晚.*完整露出|哑巴|说话/u.test(action)) return '林听晚被江渝白看见'
+  if (/江渝白/u.test(action)) return firstSentence(action)
+  return firstSentence(action)
+}
+
+function composeExplicitImagePrompt({ contract, shot, characters }) {
+  const visibleCharacters = shot.characters?.length ? shot.characters.join('、') : '无人物或按画面需要'
+  const secondary = shot.dialogue_or_voiceover ? `台词只作表演参考，不生成字幕` : `保持${shot.scene}空间连续`
+  const primary = explicitPrimaryVisual(shot.action)
+  return [
+    `【关键帧】镜头：${shot.shot_id}`,
+    `风格：${contract.target.style}`,
+    `场景：${shot.scene}`,
+    `人物：${visibleCharacters}`,
+    `画面：${shot.action}`,
+    `构图：primary=${primary}; secondary=${secondary}; background=${shot.scene}的光线和方位连续`,
+    `光线：${shot.lighting}`,
+    `限制：只画当前瞬间，不解释剧情，不新增角色，不新增多余道具，不生成字幕，不要切换成照片质感`
+  ].map(stripTrailingExplicitPunctuation).join('。')
+}
+
+function composeExplicitMotionPrompt(shot) {
+  const names = shot.characters ?? []
+  const primary = explicitPrimaryVisual(shot.action)
+  if (/林听晚被江渝白看见/u.test(primary)) {
+    return `${shot.duration_seconds}s. ${shot.camera_movement}. 焦点从李大妈侧身让开的边缘转到林听晚惊愕的脸；江渝白只短暂停住视线。李大妈保持让开后的姿态。Micro-performance: ${explicitPerformanceCue(shot.action)}. No cut, no new action, no face change.`
+  }
+  const subject = /晚晚/u.test(primary) && names.includes('晚晚')
+    ? '晚晚'
+    : /林听晚/u.test(primary) && names.includes('林听晚')
+        ? '林听晚'
+        : /江渝白/u.test(primary) && names.includes('江渝白')
+          ? '江渝白'
+          : /李大妈/u.test(primary) && names.includes('李大妈')
+            ? '李大妈'
+            : names[0] ?? '画面主体'
+  const action = /看|抬头|望/u.test(shot.action)
+    ? `${subject}只移动一次视线`
+    : /走|进门|上楼|后退|迈步/u.test(shot.action)
+      ? `${subject}只完成一个小幅位置移动`
+      : /探出|探头|小脑袋/u.test(shot.action)
+        ? `${subject}只从遮挡后探出一点`
+        : `${subject}只做一次微表情变化`
+  const still = names.filter((name) => name !== subject)
+  const hold = still.length ? `${still.join('、')}保持原姿态不动。` : ''
+  return `${shot.duration_seconds}s. ${shot.camera_movement}. ${action}. ${hold}Micro-performance: ${explicitPerformanceCue(shot.action)}. No cut, no new action, no face change.`
+}
+
+function composeExplicitStoryboardAssets(contract) {
+  const characters = parseExplicitCharacters(contract.sourceText, contract.target.style)
+  const blocks = parseExplicitStoryboardBlocks(contract.sourceText)
+  const durations = distributeDurations(contract.target.durationSeconds, blocks.length || contract.target.shotCount)
+  const shots = blocks.map((block, index) => {
+    const heading = block.heading || `分镜${index + 1}`
+    const duration = Number(fieldValue(block.lines, '时长').match(/\d+/u)?.[0]) || durations[index] || 4
+    const visual = fieldValue(block.lines, '画面') || block.lines.map((line) => line.trim()).find((line) => line && !/^(时长|台词|音效|画面细节)\s*[：:]/u.test(line)) || heading
+    const detail = fieldValue(block.lines, '画面细节')
+    const action = cleanExplicitVisibleMoment([visual, detail].filter(Boolean).join('；')) || visual
+    const scene = inferSceneFromExplicitShot(heading, visual)
+    const shotSize = inferShotSizeFromHeading(heading)
+    const cameraMovement = inferCameraMovement(heading, visual, index, blocks.length)
+    const dialogue = extractExplicitDialogue(block.lines)
+    const textForCharacters = `${heading}\n${visual}\n${detail}\n${dialogue}\n${action}`
+    const visibleCharacters = explicitCharactersInFrame(textForCharacters, characters)
+    const shot = {
+      shot_id: shotId(index),
+      duration_seconds: duration,
+      scene,
+      subject: visibleCharacters.join('、') || characters[0]?.identity_anchor || '主体',
+      characters: visibleCharacters,
+      action,
+      performance_detail: explicitPerformanceCue(action),
+      shot_size: shotSize,
+      lens: inferLensFromShotSize(shotSize),
+      camera_movement: cameraMovement,
+      composition: `primary=${explicitPrimaryVisual(action)}; secondary=${visibleCharacters.join('、') || '环境'}; background=${scene}空间连续`,
+      blocking: visibleCharacters.length
+        ? `${visibleCharacters.join('、')}按原分镜站位；只保留当前瞬间的姿态和距离关系`
+        : '按原分镜保持空间结构和道具位置',
+      lighting: inferExplicitLighting(scene, contract.target.style),
+      dialogue_or_voiceover: dialogue,
+      continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的角色脸、服装、楼道/室内方位和光线方向`,
+      source_heading: heading
+    }
+    shot.shot_function = explicitShotFunction(index, blocks.length, action)
+    shot.audience_takeaway = explicitAudienceTakeaway(index, blocks.length, action)
+    shot.image_prompt = composeExplicitImagePrompt({ contract, shot, characters })
+    shot.video_prompt_note = composeExplicitMotionPrompt(shot)
+    return shot
+  })
+
+  const anchors = {
+    strategy: 'explicit_storyboard',
+    protagonist: characters[0]?.identity_anchor ?? shots[0]?.subject ?? '主体',
+    lostFigure: characters[1]?.identity_anchor ?? '关系角色',
+    keyObject: /房租/u.test(contract.sourceText) ? '房租/租赁身份' : '关键道具',
+    location: shots[0]?.scene ?? '主场景',
+    impossibleSign: /双胞胎|容貌一致|哑巴/u.test(contract.sourceText) ? '哑巴校花会说话与晚晚出现' : '剧情反转信号',
+    visualStyle: contract.target.style,
+    aspectRatio: contract.target.aspectRatio
+  }
+  const beats = shots.map((shot) => `${shot.shot_id} ${shot.action}`)
+
+  return {
+    directorScript: composeDirectorScript({ contract, anchors, beats }),
+    characters,
+    shotlist: shots,
+    storyboardBoard: composeStoryboardBoard(shots),
+    storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist: shots }),
+    referencePack: composeReferencePack({ contract, shotlist: shots }),
+    jimengPack: composeExternalPack({ platform: 'Jimeng', contract, anchors, shotlist: shots }),
+    continuityReview: composeContinuityReview({ anchors, shotlist: shots })
+  }
+}
+
 function composeImagePrompt({ anchors, blueprint, action, index, characters, blocking, performance, composition }) {
   const signalLabel = ['enterprise_documentary', 'folklore_fantasy', 'cultivation_transmigration'].includes(anchors.strategy) ? 'story signal' : 'impossible sign'
   const lockLine = characters?.length
@@ -1123,6 +1550,8 @@ function composeImagePrompt({ anchors, blueprint, action, index, characters, blo
 }
 
 export function composeDraftAssets(contract) {
+  if (contract.contentType === 'explicit_storyboard') return composeExplicitStoryboardAssets(contract)
+
   const scriptProfile = extractScriptProfile(contract.sourceText)
   const anchors = contract.contentType === 'enterprise_documentary'
     ? inferEnterpriseAnchors(contract)

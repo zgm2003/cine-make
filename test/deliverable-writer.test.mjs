@@ -124,6 +124,179 @@ test('debug artifacts are opt-in and isolated from the user-facing root', async 
   }
 })
 
+test('explicit storyboard draft preserves shot count roles and illustrated style', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-explicit-storyboard-'))
+  const explicitSource = `AI漫剧剧本：收租偶遇同班哑巴校花
+
+人物
+- 江渝白：男主，高中生，受家人安排前来收租
+- 林听晚：女主，同班校花，对外装作哑巴
+- 李大妈：二房东
+- 晚晚：和林听晚容貌一致的少女
+
+【分镜1】外景·老旧居民楼 全景
+时长：3s
+画面：江渝白站在楼下，单手插兜，抬头望楼。
+台词（江渝白 内心独白）：老妈非要我来收租。
+
+【分镜2】楼道·楼梯间 中景
+时长：4s
+画面：江渝白缓步走上楼梯，前方传来争执声。
+台词
+李大妈：房租今天必须交。
+林听晚：再宽限两天可以吗？
+
+【分镜3】楼道·转角处 近景
+时长：5s
+画面：李大妈挡住林听晚，江渝白停在转角探头观看。
+
+【分镜4】楼道·正面视角 半身
+时长：6s
+画面：李大妈侧身避让，林听晚完整露出，江渝白露出惊讶神情。
+
+【分镜5】里屋门缝 特写
+时长：6s
+画面：江渝白瞪大双眼，震惊地看着里屋门口的少女。林听晚又急又慌，挡在前方。三人同框定格。`
+
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'draft',
+      '--out',
+      out,
+      '--aspect',
+      '9:16',
+      '--style',
+      '国漫现实主义风格，电影式构图，低饱和暖灰色调',
+      '--character-image',
+      'refs/canvas-image-character-ref-jiang-yubai.png',
+      '--character-image',
+      'refs/canvas-image-character-ref-li-dama.png',
+      '--character-image',
+      'refs/canvas-image-character-ref-lin-tingwan.png',
+      '--character-image',
+      'refs/canvas-image-character-ref-wanwan.png',
+      explicitSource.replace(/\n/g, '\r\n')
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    const shotDefinitions = sectionBetween(deliverable, '## STORYBOARD：Shot Definition', '## KEYFRAME_PROMPTS')
+    const keyframes = sectionBetween(deliverable, '## KEYFRAME_PROMPTS', '## MOTION_PROMPTS')
+    const motion = sectionBetween(deliverable, '## MOTION_PROMPTS', '## 精简分镜')
+    const sceneBible = sectionBetween(deliverable, '## SCENE_BIBLE', '## ART_DIRECTION')
+    const videoFeed = sectionBetween(deliverable, '## 视频工具投喂包', '## QUALITY_CHECK')
+    const firstVideoSegment = sectionBetween(videoFeed, '### 第 1 段', '### 第 2 段')
+    const secondVideoSegment = sectionBetween(deliverable, '### 第 2 段', '## QUALITY_CHECK')
+    const dialogue = sectionBetween(deliverable, '## DIALOGUE_SCRIPT', '## DIRECTOR_BIBLE')
+
+    assert.equal([...shotDefinitions.matchAll(/^### S\d{2}\b/gm)].length, 5)
+    assert.equal([...keyframes.matchAll(/^### S\d{2}\b/gm)].length, 5)
+    assert.match(dialogue, /S01[\s\S]*江渝白 内心独白：老妈非要我来收租/u)
+    assert.match(dialogue, /S02[\s\S]*李大妈：房租今天必须交/u)
+    assert.match(dialogue, /S02[\s\S]*林听晚：再宽限两天可以吗/u)
+    assert.doesNotMatch(keyframes, /房租今天必须交|再宽限两天/u)
+    assert.equal([...sceneBible.matchAll(/^### SCENE_/gm)].length, 3)
+    assert.doesNotMatch(sceneBible, /室内 双人|室内 女主|室内客厅 三人|楼道·转角处/u)
+    assert.match(shotDefinitions, /### S05[\s\S]*characters_in_frame: 江渝白、林听晚、晚晚/u)
+    assert.match(shotDefinitions, /### S05[\s\S]*visual_priority: primary=里屋门口出现的晚晚/u)
+    assert.doesNotMatch(keyframes, /声音传来|回声明显|出声|语气|终于开口|房门发出轻响|镜头切向|随即|然后|前方传来/u)
+    assert.doesNotMatch(motion, /角色只/u)
+    assert.doesNotMatch(firstVideoSegment, /wanwan/u)
+    assert.match(secondVideoSegment, /wanwan/u)
+    assert.match(deliverable, /主角锚点：江渝白/)
+    assert.match(deliverable, /林听晚/)
+    assert.match(deliverable, /李大妈/)
+    assert.match(deliverable, /晚晚/)
+    assert.doesNotMatch(deliverable, /主角锚点：(?:台词|动作|场景|画面|音效)/u)
+    assert.doesNotMatch(sectionBetween(deliverable, '## CHARACTER_BIBLE', '## SCENE_BIBLE'), /identity_anchor: (?:台词|动作|场景|画面|音效)/u)
+    assert.doesNotMatch(deliverable, /林默|暴雨孤岛|10分钟记忆|真人电影质感|超写实真人电影质感|photoreal|live-action|真实皮肤毛孔/i)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('explicit storyboard post-checker prevents overcorrection artifacts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-explicit-postcheck-'))
+  const shot = (index, heading, visual, extra = '') => [
+    `【分镜${index}】${heading}`,
+    '时长：4s',
+    `画面：${visual}`,
+    extra
+  ].filter(Boolean).join('\n')
+  const source = [
+    'AI漫剧剧本：收租偶遇同班哑巴校花',
+    '',
+    '人物',
+    '- 江渝白：男主，高中生',
+    '- 林听晚：女主，同班校花，对外装作哑巴',
+    '- 李大妈：二房东',
+    '- 晚晚：和林听晚容貌一致的少女',
+    '',
+    shot(1, '外景·老旧居民楼 全景', '江渝白站在楼下，抬头望楼。'),
+    shot(2, '楼道·楼梯间 中景', '江渝白缓步走上楼梯，楼道回声明显。前方传来一高一低两道女声，镜头顺着声音前移。'),
+    shot(3, '楼道·转角处 近景', '李大妈挡住林听晚，江渝白停在转角探头观看。'),
+    shot(4, '楼道·正面视角 特写转半身', '江渝白出声，李大妈侧身避让，林听晚完整露出。林听晚杏眼圆睁，满脸惊愕。江渝白瞳孔骤缩。'),
+    shot(5, '楼道 双人近景', '李大妈上下打量江渝白。林听晚耳根泛红，眼神躲闪。'),
+    shot(6, '楼道 中景', '李大妈看看江渝白，又看看脸红的林听晚，自作了然，语气强硬。'),
+    shot(7, '楼道 半身镜头', '江渝白表情变得认真。林听晚愣在原地。'),
+    shot(8, '楼道 近景', '李大妈堆起笑容。林听晚悄悄后退半步。'),
+    shot(9, '入户门 跟拍镜头', '李大妈率先推门走进屋内，回头催促。林听晚欲言又止，咬着唇犹豫片刻，跟着进门。江渝白迟疑后迈步入内。'),
+    shot(10, '室内·一室一厅 全景', '老式小户型房间，陈设简单但打扫得一尘不染。李大妈坐在沙发上，林听晚远远坐在窗边小凳子上，刻意保持距离。', '画面细节：室内整洁温馨，透着独居少女的气息'),
+    shot(11, '室内客厅 三人中景', '李大妈拿起水壶给江渝白泡茶，一边说话一边偷偷给林听晚使眼色。林听晚低头沉默。'),
+    shot(12, '室内 双人特写', '江渝白看着一唱一和的两人，表情无奈。随即开口打破尴尬氛围。李大妈眼睛一亮。'),
+    shot(13, '室内 半身镜头', '李大妈起身，摆手示意，走向门口。'),
+    shot(14, '室内 双人对坐 近景', '屋内只剩两人，气氛尴尬。江渝白转头看向脸色发白的林听晚，率先发问。林听晚身体紧绷。'),
+    shot(15, '室内 女主特写', '林听晚深吸一口气，抬眼看向江渝白，眼神充满戒备与不悦，终于开口出声。音效：少女清亮的嗓音。'),
+    shot(16, '室内 双人镜头', '林听晚语气加重，情绪激动。江渝白满脸茫然。'),
+    shot(17, '室内·里屋门缝 特写', '房门发出轻响，镜头切向内侧房门。一颗小脑袋从门缝探出来，女孩和林听晚容貌一模一样。林听晚脸色骤变。', '台词\n林听晚（慌张）：晚晚！别出来！'),
+    shot(18, '结尾定格画面 双人+少女 全景', '江渝白瞪大双眼，震惊地看着里屋门口的少女。林听晚又急又慌，挡在前方。三人同框定格，画面弹出文字：双胞胎？秘密才刚刚开始……')
+  ].join('\r\n\r\n')
+
+  try {
+    const result = spawnSync(process.execPath, [
+      'src/cli.mjs',
+      '--mode',
+      'draft',
+      '--out',
+      out,
+      '--aspect',
+      '9:16',
+      '--style',
+      '国漫现实主义风格，电影式构图，低饱和暖灰色调',
+      source
+    ], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
+    const shotDefinitions = sectionBetween(deliverable, '## STORYBOARD：Shot Definition', '## KEYFRAME_PROMPTS')
+    const keyframes = sectionBetween(deliverable, '## KEYFRAME_PROMPTS', '## MOTION_PROMPTS')
+    const motion = sectionBetween(deliverable, '## MOTION_PROMPTS', '## 精简分镜')
+
+    assert.match(shotDefinitions, /### S10[\s\S]*characters_in_frame: 林听晚、李大妈/u)
+    assert.doesNotMatch(sectionBetween(shotDefinitions, '### S10', '### S11'), /晚晚/u)
+    assert.match(shotDefinitions, /### S10[\s\S]*visual_priority: primary=老式小户型房间的整洁陈设/u)
+    assert.match(shotDefinitions, /### S15[\s\S]*characters_in_frame: 江渝白、林听晚/u)
+    assert.doesNotMatch(sectionBetween(shotDefinitions, '### S15', '### S16'), /晚晚/u)
+    assert.match(shotDefinitions, /### S15[\s\S]*visual_priority: primary=林听晚第一次开口的嘴唇微张和戒备眼神/u)
+    assert.equal([...sectionBetween(shotDefinitions, '### S02', '### S03').matchAll(/江渝白抬头看向楼上平台方向，神情被楼上动静吸引/g)].length, 1)
+    assert.doesNotMatch(deliverable, /，。|。。|；。/)
+    assert.doesNotMatch(deliverable, /。；/)
+    assert.doesNotMatch(keyframes, /开口打破尴尬氛围|率先发问|说话|语气|终于开口|声音传来|房门发出轻响|镜头切向|随即|然后/u)
+    assert.match(motion, /S04[\s\S]*焦点从李大妈侧身让开的边缘转到林听晚惊愕的脸/u)
+    assert.doesNotMatch(sectionBetween(motion, '### S10', '### S11'), /晚晚/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
+
 test('visual mode prepares an image-output queue and keeps references optional', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-visual-'))
   try {
