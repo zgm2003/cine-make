@@ -117,7 +117,7 @@ When triggered by a story-to-video-preproduction request:
    ```bash
    node src/cli.mjs canvas-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
    ```
-   This is the preferred manual Canvas generation path. It creates a compact foundation pack: style bible -> style reference image, character bible -> character reference image, and environment bible -> environment reference image. Text nodes are upstream resources/chips, not generation targets. The layout should read left-to-right rather than a tall top-down dependency tree. Do not create Shot List, Keyframes, text-to-text chain connections, or video segment nodes in this first foundation pack. Do not run `--mode visual`; Do not create `storyboard-images/`.
+   This is the preferred manual Canvas generation path. It creates a compact foundation pack: style bible -> style reference image, character bible -> character reference image, and environment bible -> environment reference image. Text nodes are upstream resources/chips, not generation targets. Character reference image nodes must connect only to their own Character Bible, not to environment or style nodes, so they stay white/light-gray studio turnaround sheets. The layout should read left-to-right rather than a tall top-down dependency tree. Do not create Shot List, Keyframes, text-to-text chain connections, or video segment nodes in this first foundation pack. Do not run `--mode visual`; Do not create `storyboard-images/`.
 3. Otherwise, run the compiler in draft mode first:
    ```bash
    node src/cli.mjs --mode draft --out <run-dir> --aspect <ratio> --style <style> "<source material>"

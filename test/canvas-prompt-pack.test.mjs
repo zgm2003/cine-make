@@ -95,15 +95,15 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.ok(manifest.nodes.length <= 14, `expected compact foundation Canvas pack, got ${manifest.nodes.length} nodes`)
 
     const manifestById = new Map(manifest.nodes.map((node) => [node.id, node]))
-    assert.equal(manifestById.get('style-bible').title, '风格设定：World Bible / Art Direction')
-    assert.equal(manifestById.get('character-linmo').title, '人设：林默')
-    assert.equal(manifestById.get('character-anna').title, '人设：安娜')
-    assert.equal(manifestById.get('character-leidui').title, '人设：雷队')
-    assert.equal(manifestById.get('character-ajie').title, '人设：阿杰')
-    assert.equal(manifestById.get('environment-island-villa-living-room-night').title, '场景设定：孤岛别墅客厅 / 暴雨夜')
-    assert.equal(manifestById.get('character-ref-linmo').title, '角色参考图：林默')
-    assert.equal(manifestById.get('environment-ref-island-villa-living-room-night').title, '场景参考图：孤岛别墅客厅 / 暴雨夜')
-    assert.equal(manifestById.get('style-reference').title, '风格参考图：整体视觉')
+    assert.equal(manifestById.get('style-bible').title, '资料：风格设定（非生成）')
+    assert.equal(manifestById.get('character-linmo').title, '资料：林默人设（非生成）')
+    assert.equal(manifestById.get('character-anna').title, '资料：安娜人设（非生成）')
+    assert.equal(manifestById.get('character-leidui').title, '资料：雷队人设（非生成）')
+    assert.equal(manifestById.get('character-ajie').title, '资料：阿杰人设（非生成）')
+    assert.equal(manifestById.get('environment-island-villa-living-room-night').title, '资料：孤岛别墅客厅 / 暴雨夜（非生成）')
+    assert.equal(manifestById.get('character-ref-linmo').title, '生成：林默角色参考图')
+    assert.equal(manifestById.get('environment-ref-island-villa-living-room-night').title, '生成：孤岛别墅客厅 / 暴雨夜场景参考图')
+    assert.equal(manifestById.get('style-reference').title, '生成：整体风格参考图')
     assert.equal(manifestById.has('shot-s02'), false)
     assert.equal(manifestById.has('shot-list'), false)
     assert.equal(manifestById.has('keyframe-s02'), false)
@@ -111,8 +111,9 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.equal(manifestById.has('video-segment-01'), false)
 
     assertConnection(manifest.connections, 'style-bible', 'style-reference')
-    assertConnection(manifest.connections, 'style-bible', 'character-ref-linmo')
     assertConnection(manifest.connections, 'character-linmo', 'character-ref-linmo')
+    assertNoConnection(manifest.connections, 'style-bible', 'character-ref-linmo')
+    assertNoConnection(manifest.connections, 'environment-island-villa-living-room-night', 'character-ref-linmo')
     assertConnection(manifest.connections, 'style-bible', 'environment-ref-island-villa-living-room-night')
     assertConnection(manifest.connections, 'environment-island-villa-living-room-night', 'environment-ref-island-villa-living-room-night')
     for (const connection of manifest.connections) {
@@ -134,12 +135,14 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.deepEqual(item.project.viewport, { x: 0, y: 0, k: 1 })
 
     const byId = new Map(item.project.nodes.map((node) => [node.id, node]))
-    assertTextNode(byId.get('style-bible'), /心理悬疑/u, /10分钟/u, /低饱和/u, /practical lighting|motivated lighting/i)
-    assertTextNode(byId.get('character-linmo'), /林默/u, /黑色湿呢大衣/u, /微动作/u)
-    assertTextNode(byId.get('environment-island-villa-living-room-night'), /孤岛别墅客厅/u, /暴雨夜/u, /声音感/u)
+    assertTextNode(byId.get('style-bible'), /资料节点/u, /右侧图片节点/u, /心理悬疑/u, /10分钟/u, /低饱和/u, /practical lighting|motivated lighting/i)
+    assertTextNode(byId.get('character-linmo'), /资料节点/u, /不是出图提示词/u, /林默/u, /黑色湿呢大衣/u, /微动作/u)
+    assertTextNode(byId.get('environment-island-villa-living-room-night'), /资料节点/u, /不是出图提示词/u, /孤岛别墅客厅/u, /暴雨夜/u, /声音感/u)
     assertImagePromptNode(
       byId.get('character-ref-linmo'),
+      { size: '16:9' },
       /真人电影角色定妆照/u,
+      /白色或浅灰摄影棚背景/u,
       /专业影视角色设定参考图/u,
       /三视图全身定妆照/u,
       /真实皮肤纹理/u,
@@ -149,8 +152,9 @@ test('exports a compact foundation Canvas graph for character scene and style re
       /负面提示词/u,
       /anime, manga, cartoon/u
     )
-    assertImagePromptNode(byId.get('environment-ref-island-villa-living-room-night'), /场景参考图/u, /孤岛别墅客厅/u, /暴雨夜/u)
-    assertImagePromptNode(byId.get('style-reference'), /风格参考图/u, /低饱和/u, /暴雨夜/u)
+    assert.deepEqual(byId.get('character-ref-linmo').metadata.inputOrder, ['character-linmo'])
+    assertImagePromptNode(byId.get('environment-ref-island-villa-living-room-night'), { size: '9:16' }, /场景参考图/u, /孤岛别墅客厅/u, /暴雨夜/u)
+    assertImagePromptNode(byId.get('style-reference'), { size: '9:16' }, /风格参考图/u, /低饱和/u, /暴雨夜/u)
 
     for (const node of item.project.nodes) {
       assert.equal(Object.hasOwn(node, 'role'), false)
@@ -187,14 +191,18 @@ function assertNoConnection(connections, fromNodeId, toNodeId) {
   assert.equal(connections.some((connection) => connection.fromNodeId === fromNodeId && connection.toNodeId === toNodeId), false, `${fromNodeId} should not connect to ${toNodeId}`)
 }
 
-function assertImagePromptNode(node, ...patterns) {
+function assertImagePromptNode(node, optionsOrPattern, ...patterns) {
+  const options = optionsOrPattern && typeof optionsOrPattern === 'object' && !(optionsOrPattern instanceof RegExp)
+    ? optionsOrPattern
+    : { size: '9:16' }
+  if (optionsOrPattern instanceof RegExp) patterns.unshift(optionsOrPattern)
   assert.ok(node, 'expected canvas image prompt node to exist')
   assert.equal(node.type, 'image')
   assert.equal(node.metadata.content, '')
   assert.equal(node.metadata.status, 'idle')
   assert.equal(node.metadata.generationMode, 'image')
   assert.equal(node.metadata.generationType, 'generation')
-  assert.equal(node.metadata.size, '9:16')
+  assert.equal(node.metadata.size, options.size)
   assert.equal(node.metadata.quality, 'auto')
   assert.equal(node.metadata.count, 1)
   for (const pattern of patterns) assert.match(node.metadata.prompt, pattern)

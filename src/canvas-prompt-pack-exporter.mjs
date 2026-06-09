@@ -7,6 +7,8 @@ const CANVAS_APP = 'infinite-canvas'
 const CANVAS_VERSION = 3
 const IMAGE_NODE_WIDTH = 300
 const IMAGE_NODE_HEIGHT = 420
+const LANDSCAPE_IMAGE_NODE_WIDTH = 420
+const LANDSCAPE_IMAGE_NODE_HEIGHT = 260
 const TEXT_NODE_WIDTH = 340
 const TEXT_NODE_HEIGHT = 260
 const VIDEO_NODE_WIDTH = 360
@@ -111,7 +113,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   nodes.push(createManifestNode({
     id: 'style-bible',
     role: 'style_bible',
-    title: '风格设定：World Bible / Art Direction',
+    title: '资料：风格设定（非生成）',
     canvasType: 'text',
     row: 0,
     column: 0,
@@ -121,7 +123,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   nodes.push(createManifestNode({
     id: 'style-reference',
     role: 'style_reference',
-    title: '风格参考图：整体视觉',
+    title: '生成：整体风格参考图',
     canvasType: 'image',
     row: 0,
     column: 1,
@@ -136,7 +138,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     nodes.push(createManifestNode({
       id: character.id,
       role: 'character_bible',
-      title: `人设：${character.name}`,
+      title: `资料：${character.name}人设（非生成）`,
       canvasType: 'text',
       row,
       column: 0,
@@ -145,14 +147,14 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     nodes.push(createManifestNode({
       id: refId,
       role: 'character_reference',
-      title: `角色参考图：${character.name}`,
+      title: `生成：${character.name}角色参考图`,
       canvasType: 'image',
       row,
       column: 1,
       prompt: composeCharacterReferencePrompt({ character, contract }),
-      inputOrder: ['style-bible', character.id]
+      imageSize: '16:9',
+      inputOrder: [character.id]
     }))
-    connect(connections, 'style-bible', refId, 'style_rules')
     connect(connections, character.id, refId, 'character_bible')
   })
 
@@ -161,7 +163,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   nodes.push(createManifestNode({
     id: environment.id,
     role: 'environment_bible',
-    title: environment.title,
+    title: `资料：${environment.name}（非生成）`,
     canvasType: 'text',
     row: environmentRow,
     column: 0,
@@ -171,7 +173,7 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   nodes.push(createManifestNode({
     id: environmentRefId,
     role: 'environment_reference',
-    title: `场景参考图：${environment.name}`,
+    title: `生成：${environment.name}场景参考图`,
     canvasType: 'image',
     row: environmentRow,
     column: 1,
@@ -262,9 +264,10 @@ function inferProps(sourceText, draft) {
   return PROP_CATALOG.filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
 }
 
-function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, inputOrder }) {
+function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder }) {
   const isVideo = canvasType === 'video'
   const isText = canvasType === 'text'
+  const isLandscapeImage = canvasType === 'image' && imageSize === '16:9'
   return {
     id,
     role,
@@ -274,11 +277,12 @@ function createManifestNode({ id, role, title, canvasType, row, column, prompt, 
       x: column * GAP_X,
       y: row * ROW_HEIGHT
     },
-    width: isVideo ? VIDEO_NODE_WIDTH : isText ? TEXT_NODE_WIDTH : IMAGE_NODE_WIDTH,
-    height: isVideo ? VIDEO_NODE_HEIGHT : isText ? TEXT_NODE_HEIGHT : IMAGE_NODE_HEIGHT,
+    width: isVideo ? VIDEO_NODE_WIDTH : isText ? TEXT_NODE_WIDTH : isLandscapeImage ? LANDSCAPE_IMAGE_NODE_WIDTH : IMAGE_NODE_WIDTH,
+    height: isVideo ? VIDEO_NODE_HEIGHT : isText ? TEXT_NODE_HEIGHT : isLandscapeImage ? LANDSCAPE_IMAGE_NODE_HEIGHT : IMAGE_NODE_HEIGHT,
     prompt,
     content,
     seconds,
+    imageSize,
     inputOrder
   }
 }
@@ -368,7 +372,7 @@ function toCanvasNode(node, manifest) {
       status: 'idle',
       generationMode: 'image',
       generationType: 'generation',
-      size: manifest.target.aspectRatio,
+      size: node.imageSize || manifest.target.aspectRatio,
       quality: 'auto',
       count: 1,
       inputOrder: node.inputOrder
@@ -473,7 +477,7 @@ function composeStyleBible({ contract, environment, props }) {
   return [
     '# 风格设定 / World Bible / Art Direction',
     '',
-    '这个节点只作为右侧参考图生成节点的上游文本，不需要单独生成图片。',
+    '注意：这是资料节点，不是出图提示词，不需要点击生成。请从右侧图片节点开始生成。',
     '',
     composeWorldBible({ contract, environment }),
     '',
@@ -494,6 +498,8 @@ function composeStyleBible({ contract, environment, props }) {
 function composeCharacterBible(character) {
   return [
     `# Character Bible：${character.name}`,
+    '',
+    '注意：这是资料节点，不是出图提示词，不需要点击生成。请点击右侧“生成：角色参考图”图片节点。',
     '',
     character.identity ? `身份：${character.identity}` : '',
     character.height ? `身高：${character.height}` : '',
@@ -538,6 +544,8 @@ function inferMicroAction(character) {
 function composeEnvironmentBible({ environment }) {
   return [
     `# Environment Bible：${environment.name}`,
+    '',
+    '注意：这是资料节点，不是出图提示词，不需要点击生成。请点击右侧“生成：场景参考图”图片节点。',
     '',
     '## 建筑 / 空间',
     environment.description,
@@ -587,14 +595,13 @@ function composeCharacterReferencePrompt({ character, contract }) {
   if (character.prompt?.trim()) return character.prompt.trim()
 
   return [
-    '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，非插画，非漫画，非CG。',
+    '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，满版构图，不留顶部空白，不要大面积空白边框，4K超高画质，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，复杂服装刺绣、褶皱、湿痕和材质细节，非插画，非漫画，非CG。',
     '',
-    '画面为专业影视角色设定参考图：左侧是角色半身近景特写，右侧是角色正面、侧面、背面三视图全身定妆照，旁边整齐摆放核心道具。画面上方预留干净信息栏，用于后期添加角色名称、身高和道具说明。',
+    '画面为专业影视角色设定参考图：左侧从左上区域开始生成高清正面人脸半身大图，占据左边画面约2/3大小（如果没有清晰人脸，就用角色本身的形象大图），人物头顶接近画面上边缘但不裁切，85mm镜头，超高画质，毛孔清晰可见；右侧生成角色正面、侧面、背面三视小图，也就是三视图全身定妆照，旁边整齐摆放核心道具。只显示角色名称和身高，不显示年龄；顶部必须被人物、三视图或道具排版占满，不要空白标题栏，不要让画面上方出现空白。',
     '',
     `角色名称：${character.name}`,
     character.height ? `身高：${character.height}` : '',
     character.identity ? `身份：${character.identity}` : '',
-    character.age ? `年龄：${character.age}` : '',
     character.appearance ? `外貌：${character.appearance}。` : '',
     character.costume ? `服装：${character.costume}。` : '',
     character.bodyDetails ? `身体细节：${character.bodyDetails}。` : '',
@@ -603,7 +610,7 @@ function composeCharacterReferencePrompt({ character, contract }) {
     '',
     character.mood ? `整体气质：${character.mood}。` : '整体气质：真实、克制、阴冷，不要夸张奇幻化。',
     '',
-    'photorealistic, live action film still, cinematic portrait photography, realistic human face, realistic skin pores, natural imperfections, practical costume design, studio character reference photo, character turnaround, front view, side view, back view, prop reference, high detail, sharp focus, 35mm lens, dramatic low key lighting, muted colors, psychological thriller mood, realistic wet fabric.',
+    'photorealistic, live action film still, cinematic portrait photography, realistic human face, realistic skin pores, natural imperfections, practical costume design, studio character reference photo, full-bleed character sheet, no top blank space, no empty header bar, left large 85mm portrait half-body occupying about two thirds of the image, right small character turnaround, front view, side view, back view, prop reference, show name and height only, no age text, high detail, sharp focus, 4K, dramatic low key lighting, muted colors, psychological thriller mood, realistic wet fabric.',
     '',
     '负面提示词：anime, manga, cartoon, illustration, comic style, concept art, 3d render, CGI, doll face, plastic skin, perfect skin, over smooth skin, fantasy armor, cyberpunk, exaggerated features, monster, deformed hands, extra fingers, bad anatomy, blurry text, unreadable text, watermark, logo, low resolution.'
   ].filter(Boolean).join('\n')

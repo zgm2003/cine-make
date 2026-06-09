@@ -113,14 +113,13 @@ function composeCharacterReferencePrompt(character) {
         : ''
 
   return [
-    '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，非插画，非漫画，非CG。',
+    '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，满版构图，不留顶部空白，不要大面积空白边框，4K超高画质，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，复杂服装刺绣、褶皱、湿痕和材质细节，非插画，非漫画，非CG。',
     '',
-    '画面为专业影视角色设定参考图：左侧是角色半身近景特写，右侧是角色正面、侧面、背面三视图全身定妆照，旁边整齐摆放核心道具。画面上方预留干净信息栏，用于后期添加角色名称、身高和道具说明。',
+    '画面为专业影视角色设定参考图：左侧从左上区域开始生成高清正面人脸半身大图，占据左边画面约2/3大小（如果没有清晰人脸，就用角色本身的形象大图），人物头顶接近画面上边缘但不裁切，85mm镜头，超高画质，毛孔清晰可见；右侧生成角色正面、侧面、背面三视小图，也就是三视图全身定妆照，旁边整齐摆放核心道具。只显示角色名称和身高，不显示年龄；顶部必须被人物、三视图或道具排版占满，不要空白标题栏，不要让画面上方出现空白。',
     '',
     `角色名称：${character.name}`,
     `身高：${character.height}`,
     `身份：${character.identity}`,
-    `年龄：${character.age}`,
     `外貌：${character.appearance}。`,
     `服装：${character.costume}。`,
     `身体细节：${character.bodyDetails}。`,
@@ -129,7 +128,7 @@ function composeCharacterReferencePrompt(character) {
     '',
     `整体气质：${character.mood}。`,
     '',
-    `photorealistic, live action film still, cinematic portrait photography, realistic human face, realistic skin pores, natural imperfections, practical costume design, studio character reference photo, character turnaround, front view, side view, back view, prop reference, high detail, sharp focus, 35mm lens, dramatic low key lighting, muted colors, psychological thriller mood, realistic wet fabric, realistic blood stains${clinical}.`,
+    `photorealistic, live action film still, cinematic portrait photography, realistic human face, realistic skin pores, natural imperfections, practical costume design, studio character reference photo, full-bleed character sheet, no top blank space, no empty header bar, left large 85mm portrait half-body occupying about two thirds of the image, right small character turnaround, front view, side view, back view, prop reference, show name and height only, no age text, high detail, sharp focus, 4K, dramatic low key lighting, muted colors, psychological thriller mood, realistic wet fabric, realistic blood stains${clinical}.`,
     '',
     '负面提示词：anime, manga, cartoon, illustration, comic style, concept art, 3d render, CGI, doll face, plastic skin, perfect skin, over smooth skin, fantasy armor, cyberpunk, exaggerated features, monster, deformed hands, extra fingers, bad anatomy, blurry text, unreadable text, watermark, logo, low resolution.'
   ].join('\n')
@@ -176,6 +175,13 @@ function parseCast(sourceText) {
     seen.add(name)
     cast.push(enrichCharacter({ name, label, description }))
   }
+
+  for (const name of Object.keys(KNOWN_CHARACTER_DETAILS)) {
+    if (seen.has(name) || !String(sourceText).includes(name)) continue
+    seen.add(name)
+    cast.push(enrichCharacter({ name, label: KNOWN_CHARACTER_DETAILS[name].identity, description: KNOWN_CHARACTER_DETAILS[name].identity }))
+  }
+
   return cast
 }
 

@@ -141,7 +141,13 @@ test('composeDraftAssets extracts isolated-mansion cast into cinematic character
   assert.match(serialized, /character-anna\.png/)
   assert.match(serialized, /character-leidui\.png/)
   assert.match(serialized, /character-ajie\.png/)
-  assert.match(serialized, /上方预留干净信息栏/)
+  assert.match(draft.characters[0].reference_prompt, /满版构图/)
+  assert.match(draft.characters[0].reference_prompt, /不留顶部空白/)
+  assert.match(draft.characters[0].reference_prompt, /左侧.*2\/3/u)
+  assert.match(draft.characters[0].reference_prompt, /只显示角色名称和身高/)
+  assert.doesNotMatch(draft.characters[0].reference_prompt, /年龄：/)
+  assert.doesNotMatch(draft.characters[0].reference_prompt, /预留干净信息栏/)
+  assert.doesNotMatch(draft.characters[0].reference_prompt, /预留.*信息栏/)
   assert.match(serialized, /character turnaround/)
   assert.match(serialized, /prop reference/)
   assert.match(serialized, /anime, manga, cartoon/)
@@ -157,6 +163,30 @@ test('composeDraftAssets extracts isolated-mansion cast into cinematic character
   assert.match(leiShot.blocking, /雷队.*门口/u)
   assert.match(leiShot.image_prompt, /character locks: 雷队/u)
   assert.doesNotMatch(leiShot.image_prompt, /preset lock: protagonist .*林默/u)
+})
+
+test('composeDraftAssets keeps known isolated-mansion character names stable in later script fragments', async () => {
+  const laterFragment = [
+    '片段2',
+    '[场景：孤岛别墅 - 客厅 - 夜]',
+    '▲ 【画面】 紧接上集。林默满手是血，惊恐地连连后退，身体撞在桌角上。',
+    '▲ 【画面】 暴躁的雷队一步跨上前，一把揪住林默的衣领，将他按在墙上。',
+    '雷队（怒吼，吐沫星子横飞）：',
+    '“你又在装什么疯？！老张死在浴室里，身上中了十七刀！”',
+    '▲ 【画面】 心理医生安娜上前，拍开雷队的手，从林默的大衣口袋里掏出一叠拍立得照片。',
+    '安娜（眉头紧锁，看着林默）：',
+    '“林默，这是你自己在失忆前拍下的。”',
+    '[场景：别墅 - 阴暗的走廊/角落]',
+    '▲ 【画面】 瘸子阿杰一瘸一拐地走出来，他的右脚完全变形，拖在地上走，脸色惨白。',
+    '阿杰（声音颤抖，指着雷队）：',
+    '“不……不是林侦探干的。我知道是谁……是‘凯撒’。”'
+  ].join('\n')
+  const contract = await createInputContract(parseArgs(['--duration', '60s', '--aspect', '9:16', laterFragment]))
+  const draft = composeDraftAssets(contract)
+  const names = draft.characters.map((character) => character.identity_anchor)
+
+  assert.deepEqual(names, ['林默', '安娜', '雷队', '阿杰'])
+  assert.equal(names.some((name) => /上前|浑身|尸体旁/u.test(name)), false)
 })
 
 test('short-drama script mentioning a devil does not switch to folklore fantasy template', async () => {
