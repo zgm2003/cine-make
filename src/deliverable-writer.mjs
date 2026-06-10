@@ -1503,12 +1503,245 @@ export function composeStandaloneVideoFeedPack({ contract, draft }) {
   ].join('\n')
 }
 
+function listValue(value, fallback = '未标注') {
+  if (Array.isArray(value)) return value.filter(Boolean).join('、') || fallback
+  return String(value ?? '').trim() || fallback
+}
+
+function sanitizeDeliverable(text) {
+  return text
+    .replace(/，。/gu, '。')
+    .replace(/。。/gu, '。')
+    .replace(/；。/gu, '。')
+    .replace(/。；/gu, '；')
+}
+
+function renderProjectUnderstandingSection({ contract, draft, mainCharacter, explicit = false }) {
+  const understanding = draft.projectUnderstanding ?? {}
+  const previewLines = explicit
+    ? [
+        `我们在做什么：把用户已有 ${draft.shotlist.length} 个明确分镜转成 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的国漫草稿包；保持原分镜数量、顺序和剧情钩子，不擅自扩写。`,
+        '',
+        `成片一句话：${mainCharacter?.identity_anchor ?? '主角'}从“${shotPurpose(draft.shotlist[0])}”进入故事，最后停在“${shotPurpose(draft.shotlist.at(-1))}”的悬念点上。`
+      ]
+    : composeFilmPreview({ contract, draft, mainCharacter })
+
+  return [
+    '# 1. 项目理解',
+    '',
+    `- 题材：${understanding.topic ?? contract.contentType}`,
+    `- 世界观：${understanding.worldview ?? '按源剧本设定'}`,
+    `- 核心看点：${understanding.coreConflict ?? '按源剧情推进冲突和反转'}`,
+    `- 情绪基调：${understanding.emotionalTone ?? '由日常进入异常，再收束到悬念'}`,
+    `- 视觉重点：${understanding.visualFocus ?? '人物、空间、关键道具和结尾钩子'}`,
+    `- 叙事重点：${understanding.narrativeFocus ?? '不改剧情顺序，不改台词核心含义'}`,
+    `- 主要角色：${understanding.mainCharacters ?? '按源剧本角色表'}`,
+    `- 核心场景：${understanding.coreScenes ?? '主场景'}`,
+    `- 核心道具：${understanding.coreProps ?? '关键道具'}`,
+    `- 反转/悬念/爆点：${understanding.highlights ?? '按源剧情识别'}`,
+    '',
+    '## 成片预览',
+    '',
+    ...previewLines,
+    '',
+    '## 故事全流程',
+    '',
+    ...composeStoryFlow({ contract, shotlist: draft.shotlist }),
+    '',
+    '## 短片方案',
+    '',
+    `- 标题：${contract.title}`,
+    `- 时长：${contract.target.durationSeconds}s`,
+    `- 画幅：${contract.target.aspectRatio}`,
+    `- 风格：${contract.target.style}`,
+    ...(explicit ? ['- preserve_existing_shot_count: true'] : []),
+    '',
+    mainCharacter
+      ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
+      : '主角锚点：按源故事和分镜设定保持一致。'
+  ]
+}
+
+function renderGlobalVisualStyleSection(draft) {
+  const style = draft.globalVisualStyle ?? {}
+  return [
+    '# 2. 全局视觉风格',
+    '',
+    `- 画风：${style.paintingStyle ?? '电影感AI短剧画风，角色一致性优先'}`,
+    `- 质感：${style.texture ?? '服装、道具、空间材质清楚'}`,
+    `- 光线：${style.lighting ?? '实景动机光，方向稳定'}`,
+    `- 色彩：${style.color ?? '低饱和电影色彩，关键道具颜色稳定'}`,
+    `- 镜头语言：${style.cameraLanguage ?? '先空间后人物，再用特写交代信息'}`,
+    `- 场景气质：${style.sceneTemperament ?? '空间结构稳定可复用'}`,
+    `- 人物表现方式：${style.characterPerformance ?? '用眼神、呼吸、手指和站位表现情绪'}`,
+    `- 节奏风格：${style.rhythm ?? '每镜一个信息点，结尾保留悬念停顿'}`
+  ]
+}
+
+function renderAssetPlanSection(draft, { compact = false } = {}) {
+  const plan = draft.assetPlan ?? {}
+  const characters = plan.characters?.length ? plan.characters : []
+  const scenes = plan.scenes?.length ? plan.scenes : []
+  const props = plan.props?.length ? plan.props : []
+  const effects = plan.effects?.length ? plan.effects : []
+
+  if (compact) {
+    return [
+      '# 3. 资产规划',
+      '',
+      '## 3.1 人物资产',
+      characters.length
+        ? `- 人物资产：${characters.map((character) => `${character.name}（${character.identity}，识别点：${character.coreIdentifier}，三视图：${character.needsTurnaround ? '是' : '否'}）`).join('；')}`
+        : '- 人物资产：按源剧本和已有参考图锁定主角脸、发型、服装与核心道具。',
+      '## 3.2 场景资产',
+      scenes.length
+        ? `- 场景资产：${scenes.map((scene) => `${scene.name}（${scene.type}，${scene.keyElements}，${scene.reusability}）`).join('；')}`
+        : '- 场景资产：先生成母场景图，锁定空间结构、光线方向和道具位置。',
+      '## 3.3 道具资产',
+      props.length
+        ? `- 道具资产：${props.map((prop) => `${prop.name}（${prop.function}）`).join('；')}`
+        : '- 道具资产：暂无独立道具；按每镜关键物保持连续。',
+      '## 3.4 特效资产（如有）',
+      effects.length
+        ? `- 特效资产：${effects.map((effect) => `${effect.name}（${effect.visualRule}）`).join('；')}`
+        : '- 特效资产：无强特效；仅保留光影、尘埃、风、布料、发丝等环境动态。'
+    ]
+  }
+
+  return [
+    '# 3. 资产规划',
+    '',
+    '## 3.1 人物资产',
+    '',
+    ...(characters.length ? characters.flatMap((character) => [
+      `### ${character.name}`,
+      `- 身份：${character.identity}`,
+      `- 外貌关键词：${character.appearanceKeywords}`,
+      `- 服装关键词：${character.costumeKeywords}`,
+      `- 神态基调：${character.expressionBase}`,
+      `- 核心识别点：${character.coreIdentifier}`,
+      `- 是否需要三视图：${character.needsTurnaround ? '是' : '否'}`,
+      `- 是否需要核心道具同框：${character.needsPropsInFrame ? '是' : '否'}`,
+      ...(character.referenceImage ? [`- 参考图文件：\`${character.referenceImage}\``] : []),
+      ''
+    ]) : ['- 主角：按源剧本和已有参考图锁定同一张脸、发型、服装与核心道具。', '']),
+    '## 3.2 场景资产',
+    '',
+    ...(scenes.length ? scenes.flatMap((scene) => [
+      `### ${scene.name}`,
+      `- 场景类型：${scene.type}`,
+      `- 时代属性：${scene.era}`,
+      `- 空间结构：${scene.structure}`,
+      `- 核心家具/建筑元素：${scene.keyElements}`,
+      `- 光线氛围：${scene.lighting}`,
+      `- 色调氛围：${scene.color}`,
+      `- 可复用性：${scene.reusability}`,
+      ''
+    ]) : ['- 主场景：先生成母场景图，锁定空间结构、光线方向和道具位置。', '']),
+    '## 3.3 道具资产',
+    '',
+    ...(props.length ? props.map((prop) => `- ${prop.name}：${prop.function}；${prop.visualRule}`) : ['- 暂无独立道具；按每镜关键物保持连续。']),
+    '',
+    '## 3.4 特效资产（如有）',
+    '',
+    ...(effects.length ? effects.map((effect) => `- ${effect.name}：${effect.visualRule}`) : ['- 无强特效；仅保留光影、尘埃、风、布料、发丝等环境动态。'])
+  ]
+}
+
+function renderDirectorAtomsSection(draft, { compact = false } = {}) {
+  const atoms = draft.directorAtoms ?? []
+  if (compact) {
+    return [
+      '# 4. 导演视角拆剧',
+      '',
+      ...(atoms.length ? atoms.map((atom, index) => `- 镜头原子${index + 1}｜${atom.shotNumber}：镜头功能=${atom.shotFunction}；景别=${atom.shotSize}；机位=${atom.cameraPosition}；运镜=${atom.cameraMovement}；画面主体=${atom.visualSubject}；人物动作=${atom.characterAction}；表情情绪=${atom.expressionEmotion}；人物站位=${atom.blocking}；空间关系=${atom.spatialRelation}；关键道具=${atom.keyProps}；画面重点=${atom.visualFocus}；衔接=${atom.nextConnection}`) : ['- 暂无镜头原子；请检查源剧本是否成功拆分。'])
+    ]
+  }
+  return [
+    '# 4. 导演视角拆剧',
+    '',
+    ...(atoms.length ? atoms.flatMap((atom, index) => [
+      `### 镜头原子 ${index + 1}｜${atom.shotNumber}`,
+      `1. 镜头编号：${atom.shotNumber}`,
+      `2. 镜头功能：${atom.shotFunction}`,
+      `3. 景别：${atom.shotSize}`,
+      `4. 机位：${atom.cameraPosition}`,
+      `5. 运镜：${atom.cameraMovement}`,
+      `6. 画面主体：${atom.visualSubject}`,
+      `7. 人物动作：${atom.characterAction}`,
+      `8. 表情情绪：${atom.expressionEmotion}`,
+      `9. 人物站位：${atom.blocking}`,
+      `10. 空间关系：${atom.spatialRelation}`,
+      `11. 关键道具：${atom.keyProps}`,
+      `12. 画面重点：${atom.visualFocus}`,
+      `13. 与下一镜头的衔接关系：${atom.nextConnection}`,
+      ''
+    ]) : ['- 暂无镜头原子；请检查源剧本是否成功拆分。'])
+  ]
+}
+
+function renderFormalStoryboardsSection(draft, { compact = false } = {}) {
+  const boards = draft.formalStoryboards ?? []
+  if (compact) {
+    return [
+      '# 5. 正式分镜输出',
+      '',
+      ...(boards.length ? boards.flatMap((board, index) => [
+        `【分镜${index + 1}】`,
+        `- 场景/时长/景别/机位/运镜：${board.scene} / ${board.duration} / ${board.shotSize} / ${board.cameraPosition} / ${board.cameraMovement}`,
+        `- 画面/动作/情绪/站位/空间/道具：${board.frame}；${board.characterAction}；${board.expressionEmotion}；${board.blocking}；${board.spatialRelation}；${board.keyProps}`,
+        `- 镜头分析：${board.shotAnalysis}`,
+        `- 即梦静帧提示词：${board.jimengStillPrompt}`,
+        `- 即梦视频提示词：${board.jimengVideoPrompt}`,
+        ''
+      ]) : ['- 暂无正式分镜；请检查 shotlist。'])
+    ]
+  }
+  return [
+    '# 5. 正式分镜输出',
+    '',
+    ...(boards.length ? boards.flatMap((board, index) => [
+      `【分镜${index + 1}】`,
+      `- 场景：${board.scene}`,
+      `- 时长：${board.duration}`,
+      `- 景别：${board.shotSize}`,
+      `- 机位：${board.cameraPosition}`,
+      `- 运镜：${board.cameraMovement}`,
+      `- 画面：${board.frame}`,
+      `- 人物动作：${board.characterAction}`,
+      `- 表情情绪：${board.expressionEmotion}`,
+      `- 人物站位：${board.blocking}`,
+      `- 空间关系：${board.spatialRelation}`,
+      `- 关键道具：${board.keyProps}`,
+      `- 镜头分析：${board.shotAnalysis}`,
+      `- 即梦静帧提示词：${board.jimengStillPrompt}`,
+      `- 即梦视频提示词：${board.jimengVideoPrompt}`,
+      ''
+    ]) : ['- 暂无正式分镜；请检查 shotlist。'])
+  ]
+}
+
+function renderConsistencySection(draft) {
+  const checklist = draft.consistencyChecklist?.length ? draft.consistencyChecklist : [
+    '人物外观统一：同一张脸、发型、体型和服装材质。',
+    '服装统一：同一场戏内颜色、材质和状态不漂移。',
+    '场景结构统一：入口、门窗、家具、光线方向保持一致。',
+    '核心道具统一：只在服务镜头功能时出现。',
+    '画风统一：角色、场景、分镜和视频提示词保持同一美术系统。',
+    '光线逻辑统一：每个高光来自场内明确光源。',
+    '特效逻辑统一：按剧情源头出现，不随机铺满画面。'
+  ]
+  return [
+    '# 6. 一致性提醒',
+    '',
+    ...checklist.map((item) => `- ${item.replace(/^- /u, '')}`)
+  ]
+}
+
 function composeExplicitStoryboardDeliverable({ contract, draft }) {
   const mode = contract.mode ?? 'draft'
   const mainCharacter = draft.characters?.[0]
-  const firstShot = draft.shotlist[0]
-  const lastShot = draft.shotlist[draft.shotlist.length - 1]
-  return [
+  return sanitizeDeliverable([
     '# Cine Make Deliverable',
     '',
     `## 交付模式：${modeName(mode)}`,
@@ -1526,27 +1759,15 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '',
     'Codex 不生成最终视频；最终 MP4 由即梦合成。',
     '',
-    '## 成片预览',
+    ...renderProjectUnderstandingSection({ contract, draft, mainCharacter, explicit: true }),
     '',
-    `我们在做什么：把用户已有 ${draft.shotlist.length} 个明确分镜转成 ${contract.target.durationSeconds}s、${contract.target.aspectRatio}、${contract.target.style} 的国漫草稿包；保持原分镜数量、顺序和剧情钩子，不擅自扩写。`,
+    ...renderGlobalVisualStyleSection(draft),
     '',
-    `成片一句话：${mainCharacter?.identity_anchor ?? '主角'}从“${shotPurpose(firstShot)}”进入故事，最后停在“${shotPurpose(lastShot)}”的悬念点上。`,
+    ...renderAssetPlanSection(draft),
     '',
-    '## 故事全流程',
+    ...renderDirectorAtomsSection(draft),
     '',
-    ...composeStoryFlow({ contract, shotlist: draft.shotlist }),
-    '',
-    '## 短片方案',
-    '',
-    `- 标题：${contract.title}`,
-    `- 时长：${contract.target.durationSeconds}s`,
-    `- 画幅：${contract.target.aspectRatio}`,
-    `- 风格：${contract.target.style}`,
-    `- preserve_existing_shot_count: true`,
-    '',
-    mainCharacter
-      ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
-      : '主角锚点：按源故事和分镜设定保持一致。',
+    ...renderFormalStoryboardsSection(draft),
     '',
     '## SCRIPT_BEATS',
     '',
@@ -1611,6 +1832,8 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '- keyframe_current_moment: pass（关键帧只写当前可见画面）',
     '- motion_overload: pass（每条 motion prompt 一个主动作）',
     '',
+    ...renderConsistencySection(draft),
+    '',
     '## 视觉参考',
     '',
     ...visualReferenceLines(contract, draft.characters),
@@ -1621,7 +1844,7 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '- 楼道必须是封闭式室内单元楼楼道；不露天，不见天空和树木。',
     '- 关键帧不生成字幕；对白原文锁定，字幕轨只做拆行和时间分配。',
     '- 最终视频合成由外部视频工具完成。'
-  ].join('\n')
+  ].join('\n'))
 }
 
 export function composeDeliverable({ contract, draft }) {
@@ -1662,7 +1885,7 @@ export function composeDeliverable({ contract, draft }) {
       ]
     : []
 
-  return [
+  return sanitizeDeliverable([
     '# Cine Make Deliverable',
     '',
     `## 交付模式：${modeName(mode)}`,
@@ -1676,44 +1899,37 @@ export function composeDeliverable({ contract, draft }) {
     '',
     'Codex 不生成最终视频；最终 MP4 由即梦合成。',
     '',
-    '## 成片预览',
+    ...renderProjectUnderstandingSection({ contract, draft, mainCharacter }),
     '',
-    ...composeFilmPreview({ contract, draft, mainCharacter }),
+    ...renderGlobalVisualStyleSection(draft),
     '',
-    '## 故事全流程',
+    ...renderAssetPlanSection(draft, { compact: mode === 'visual' }),
     '',
-    ...composeStoryFlow({ contract, shotlist: draft.shotlist }),
+    ...renderDirectorAtomsSection(draft, { compact: mode === 'visual' }),
     '',
-    '## 短片方案',
-    '',
-    `- 标题：${contract.title}`,
-    `- 时长：${contract.target.durationSeconds}s`,
-    `- 画幅：${contract.target.aspectRatio}`,
-    `- 风格：${contract.target.style}`,
-    '',
-    mainCharacter
-      ? `主角锚点：${mainCharacter.identity_anchor}；服装/道具保持：${mainCharacter.costume_anchor} / ${mainCharacter.prop_anchor}。`
-      : '主角锚点：按源故事和分镜设定保持一致。',
+    ...renderFormalStoryboardsSection(draft, { compact: mode === 'visual' }),
     '',
     ...directorJudgmentSections,
     '## DIRECTOR_BIBLE',
     '',
     ...composeDirectorBible({ contract }),
     '',
-    '## CHARACTER_BIBLE',
-    '',
-    ...composeCharacterBibleLines({ characters: draft.characters, mainCharacter }),
-    '## SCENE_BIBLE',
-    '',
-    ...composeSceneBible({ shotlist: draft.shotlist }),
-    '## ART_DIRECTION',
-    '',
-    ...composeArtDirection({ contract }),
-    '',
-    '## STORYBOARD：Shot Definition',
-    '',
-    ...composeShotDefinitions(draft.shotlist),
-    '',
+    ...(mode === 'visual' ? [] : [
+      '## CHARACTER_BIBLE',
+      '',
+      ...composeCharacterBibleLines({ characters: draft.characters, mainCharacter }),
+      '## SCENE_BIBLE',
+      '',
+      ...composeSceneBible({ shotlist: draft.shotlist }),
+      '## ART_DIRECTION',
+      '',
+      ...composeArtDirection({ contract }),
+      '',
+      '## STORYBOARD：Shot Definition',
+      '',
+      ...composeShotDefinitions(draft.shotlist),
+      ''
+    ]),
     '## KEYFRAME_PROMPTS',
     '',
     ...composeKeyframePromptList(draft.shotlist),
@@ -1754,6 +1970,9 @@ export function composeDeliverable({ contract, draft }) {
       : '当前是出图模式：按下面分段上传图片并复制提示词。',
     '',
     ...composeVideoFeedPack({ contract, shotlist: draft.shotlist, mainCharacter, characters: draft.characters }),
+    '',
+    ...renderConsistencySection(draft),
+    '',
     '## 视觉参考',
     '',
     ...visualReferenceLines(contract, draft.characters),
@@ -1764,7 +1983,7 @@ export function composeDeliverable({ contract, draft }) {
     '- 每张故事板图只表达一个关键帧，不要求图片模型生成运动。',
     '- 视频工具只负责运动、镜头和转场，不让它重新发明剧情。',
     '- Codex 不生成最终视频。'
-  ].join('\n')
+  ].join('\n'))
 }
 
 export function composeStoryboardImagesReadme({ contract, draft }) {

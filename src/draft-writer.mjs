@@ -1574,6 +1574,7 @@ function composeExplicitStoryboardAssets(contract) {
     aspectRatio: contract.target.aspectRatio
   }
   const beats = shots.map((shot) => `${shot.shot_id} ${shot.action}`)
+  const directorPackage = composeDirectorPackage(contract, { shotlist: shots, characters })
 
   return {
     directorScript: composeDirectorScript({ contract, anchors, beats }),
@@ -1583,7 +1584,329 @@ function composeExplicitStoryboardAssets(contract) {
     storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist: shots }),
     referencePack: composeReferencePack({ contract, shotlist: shots }),
     jimengPack: composeExternalPack({ platform: 'Jimeng', contract, anchors, shotlist: shots }),
-    continuityReview: composeContinuityReview({ anchors, shotlist: shots })
+    continuityReview: composeContinuityReview({ anchors, shotlist: shots }),
+    ...directorPackage
+  }
+}
+
+function compactDirectorText(value, fallback = '未标注') {
+  const text = String(value ?? '').replace(/\s+/g, ' ').trim()
+  return text || fallback
+}
+
+function stripStableAnchorInstruction(value, fallback = '未标注') {
+  const cleaned = compactDirectorText(value, fallback)
+    .replace(/[；;，,]?\s*[^。；;]*必须作为稳定视觉锚点/gu, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return cleaned || fallback
+}
+
+function visibleShotPurpose(shot) {
+  const action = compactDirectorText(shot?.action, '推进当前剧情信息')
+  return firstSentence(action.split('；源剧情：')[0].split('；空间调度：')[0])
+}
+
+function inferTopic(contract) {
+  const text = `${contract.contentType ?? ''}\n${contract.sourceText ?? ''}\n${contract.target?.style ?? ''}`
+  if (contract.contentType === 'enterprise_documentary') return '企业纪实 / 主题短片'
+  if (contract.contentType === 'explicit_storyboard') return /校园|同班|校花|高中/u.test(text) ? '都市校园漫剧 / 情感悬念' : '显式分镜漫剧'
+  if (/仙侠|修仙|筑基|灵气|法器|宗门|玄幻/u.test(text)) return '仙侠玄幻 / 修行动作'
+  if (/科幻|机械|赛博|AI|星舰|末世|废土/u.test(text)) return '科幻末世 / 高概念悬疑'
+  if (/悬疑|凶手|失忆|精神病院|尸体|查案|孤岛/u.test(text)) return '悬疑惊悚 / 心理短剧'
+  if (/校园|同班|校花|高中|收租|房租/u.test(text)) return '都市校园 / 情感反转短剧'
+  if (/古风|王爷|朝堂|权谋/u.test(text)) return '古风权谋 / 情感对峙'
+  return '现实奇观 / AI短剧'
+}
+
+function inferWorldview(contract) {
+  const text = `${contract.contentType ?? ''}\n${contract.sourceText ?? ''}\n${contract.target?.style ?? ''}`
+  if (/仙侠|修仙|筑基|灵气|法器|玄幻/u.test(text)) return '玄幻 / 仙侠规则世界'
+  if (/科幻|赛博|星舰|机械|末世|废土/u.test(text)) return '科幻 / 末世或工业幻想世界'
+  if (/穿越|魂穿|重生|系统|导航/u.test(text)) return '现实与超自然机制混合'
+  if (/鬼|祭祖|香火|祠堂|怪物/u.test(text)) return '现实与民俗奇幻混合'
+  return '现实空间为主，异常或反转由剧情道具和人物关系触发'
+}
+
+function inferEmotionTone(contract, shotlist) {
+  const text = `${contract.sourceText ?? ''}\n${shotlist.map((shot) => shot.action).join('\n')}`
+  if (/尸体|凶手|血|枪|倒计时|失忆|精神病院/u.test(text)) return '从不安、警觉推进到高压质问和结尾钩子'
+  if (/收租|校花|哑巴|同班|门缝|容貌一致/u.test(text)) return '从日常误入、尴尬旁观推进到身份反转和关系悬念'
+  if (/企业|工厂|焊|攻坚|传承/u.test(text)) return '从个人记忆推进到集体奋斗和代际传承'
+  if (/修仙|筑基|灵气|导航/u.test(text)) return '从信息落差、机缘焦虑推进到行动目标出现'
+  return '从现实观察推进到异常显形，最后停在悬念未解的位置'
+}
+
+function inferCoreConflict(shotlist) {
+  const first = visibleShotPurpose(shotlist[0])
+  const last = visibleShotPurpose(shotlist.at(-1))
+  return `主角从“${first}”进入事件，被迫面对“${last}”带来的关系、真相或行动选择。`
+}
+
+function inferVisualFocus(contract, shotlist) {
+  const scenes = [...new Set(shotlist.map((shot) => shot.scene).filter(Boolean))]
+  const props = extractProjectProps({ contract, shotlist, characters: [] }).slice(0, 5).map((item) => item.name).join('、') || '关键道具'
+  return `${scenes[0] ?? '主场景'}的空间结构、人物站位、${props}、光线方向和结尾悬念画面。`
+}
+
+function composeProjectUnderstanding(contract, { shotlist, characters }) {
+  return {
+    topic: inferTopic(contract),
+    worldview: inferWorldview(contract),
+    coreConflict: inferCoreConflict(shotlist),
+    emotionalTone: inferEmotionTone(contract, shotlist),
+    narrativeFocus: `按原剧情顺序拆成 ${shotlist.length} 个可拍镜头单元，不改人物关系，不改台词核心含义。`,
+    visualFocus: inferVisualFocus(contract, shotlist),
+    mainCharacters: characters.length ? characters.map((character) => character.identity_anchor ?? character.name).join('、') : (shotlist[0]?.subject ?? '主角'),
+    coreScenes: [...new Set(shotlist.map((shot) => shot.scene).filter(Boolean))].join('、') || '主场景',
+    coreProps: extractProjectProps({ contract, shotlist, characters }).slice(0, 8).map((item) => item.name).join('、') || '关键道具',
+    highlights: inferHighlights(contract)
+  }
+}
+
+function inferHighlights(contract) {
+  const text = contract.sourceText ?? ''
+  const flags = []
+  if (/反转|容貌一致|双胞胎|幕后|真相|重置|失忆|凯撒/u.test(text)) flags.push('反转')
+  if (/凶手|门缝|倒计时|突然|诡异|消失|出现/u.test(text)) flags.push('悬念')
+  if (/爆炸|大战|攻坚|尸体|血|枪|雷电/u.test(text)) flags.push('爆点')
+  if (/仙侠|灵气|深海|星舰|末世|祠堂|香火/u.test(text)) flags.push('奇观')
+  if (/质问|对峙|怒吼|安抚|争执|逼问/u.test(text)) flags.push('情感对峙')
+  return flags.length ? flags.join(' / ') : '以剧情信息递进和人物微表情为核心，无额外大场面'
+}
+
+function composeGlobalVisualStyle(contract, { shotlist }) {
+  const topic = inferTopic(contract)
+  const style = contract.target?.style ?? '电影感短剧'
+  const isAnimated = /国漫|漫剧|二次元|动画|漫画/u.test(style)
+  const isSuspense = /悬疑|惊悚|血|凶手|失忆|孤岛/u.test(`${topic}\n${contract.sourceText ?? ''}`)
+  const isFantasy = /仙侠|玄幻|灵气|法术|香火|鬼|祭祖/u.test(`${topic}\n${contract.sourceText ?? ''}`)
+  return {
+    paintingStyle: isAnimated ? `${style}，角色线条稳定，电影式构图` : `${style}，真实镜头逻辑，角色一致性优先`,
+    texture: isAnimated ? '干净国漫画面质感，服装褶皱、道具边缘和场景材质清晰' : '超写实电影质感，皮肤/布料/金属/玻璃/雨雾材质清楚',
+    lighting: isSuspense ? '低照度局部光源，门缝、窗光、屏幕光或实景灯作为动机光' : isFantasy ? '环境主光叠加灵气/烟雾/法术边缘光，保持方向统一' : '自然光或室内实景光，保持同一空间光线方向',
+    color: isSuspense ? '低饱和蓝灰、暖黄局部光、高亮信号色只给关键道具' : isFantasy ? '冷暖对比、金色/青色能量点缀，不让特效盖过人物' : '低饱和生活色，肤色自然，道具颜色稳定',
+    cameraLanguage: '先交代空间，再收束到人物/道具；广角负责空间，近景负责关系，特写负责信息揭示',
+    sceneTemperament: [...new Set(shotlist.map((shot) => shot.scene).filter(Boolean))].join('、') || '主场景稳定可复用',
+    characterPerformance: '克制表演，情绪通过眼神、呼吸、手指、肩颈和站位变化体现',
+    rhythm: shotlist.length > 12 ? '快节奏短剧拆镜，但每镜只承担一个信息点' : '中速推进，给关键道具、反应和结尾钩子留停顿'
+  }
+}
+
+function extractProjectProps({ contract, shotlist, characters }) {
+  const text = [
+    contract.sourceText,
+    ...shotlist.flatMap((shot) => [shot.action, shot.composition, shot.blocking, shot.dialogue_or_voiceover, shot.screen_text]),
+    ...characters.flatMap((character) => [character.prop_anchor, ...(character.props ?? [])])
+  ].filter(Boolean).join('\n')
+  const candidates = [
+    '手机', '倒计时', '手臂刻字', '血手', '鲜血', '枪', '热水杯', '茶壶', '钥匙', '房租', '租户名单',
+    '门缝', '拍立得照片', '警徽', '解剖刀', '蓝鲸画纸', '蓝鲸', '香炉', '法器', '令牌', '筑基丹',
+    '拐杖', '腿部支架', '图纸', '焊枪', '饭盒'
+  ]
+  const found = []
+  for (const name of candidates) {
+    if (text.includes(name)) {
+      found.push({
+        name,
+        function: /手机|倒计时|刻字|房租|蓝鲸|香炉|筑基丹|枪|警徽|解剖刀/u.test(name) ? '推动剧情信息或反转识别' : '强化人物关系、空间真实感或连续性',
+        visualRule: `${name}只在服务当前镜头功能时入画，位置和外观保持一致`
+      })
+    }
+  }
+  if (!found.length && characters[0]?.prop_anchor) {
+    found.push({
+      name: characters[0].prop_anchor,
+      function: '人物识别和剧情连续性',
+      visualRule: '作为角色固定识别点，按镜头需要出现'
+    })
+  }
+  return found
+}
+
+function extractEffects(contract) {
+  const text = `${contract.sourceText ?? ''}\n${contract.target?.style ?? ''}`
+  const effects = []
+  if (/雨|暴雨|雷|闪电/u.test(text)) effects.push({ name: '雨水/闪电', visualRule: '只作为环境动态和光线触发，不遮挡人物表情' })
+  if (/雾|烟|香火|青烟/u.test(text)) effects.push({ name: '烟雾/香火', visualRule: '保留层次和方向，不能把角色脸遮死' })
+  if (/灵气|法术|光阵|雷电|火焰|残影/u.test(text)) effects.push({ name: '灵气/法术特效', visualRule: '贴合道具或动作源头，亮度不压过主体' })
+  if (/深海|鲸鱼|水箱|海洋馆/u.test(text)) effects.push({ name: '深海光/水体光影', visualRule: '作为异常信号照亮空间边缘，保持蓝绿色方向光' })
+  if (/爆炸|战斗|枪|血/u.test(text)) effects.push({ name: '冲突特效/血迹', visualRule: '控制尺度，服务信息揭示，不做随机血浆或爆炸' })
+  return effects.length ? effects : [{ name: '无强特效', visualRule: '仅保留光影、尘埃、风、布料和细微环境动态' }]
+}
+
+function composeAssetPlan(contract, { shotlist, characters }) {
+  return {
+    characters: characters.length ? characters.map((character) => ({
+      name: character.identity_anchor ?? character.name ?? '角色',
+      identity: character.role ?? character.identity ?? character.identity_anchor ?? '故事角色',
+      appearanceKeywords: compactDirectorText(character.appearance_anchor ?? character.appearance ?? character.description, '按源剧本和参考图锁定脸型、发型、身形'),
+      costumeKeywords: compactDirectorText(character.costume_anchor ?? character.costume, '固定服装材质、颜色和轮廓'),
+      expressionBase: compactDirectorText(character.performance_anchor ?? character.micro_performance, '克制表演，眼神和手部细节表达情绪'),
+      coreIdentifier: compactDirectorText(character.prop_anchor ?? (character.props ?? []).join('、'), '脸型、发型、服装和当前关系位置'),
+      needsTurnaround: true,
+      needsPropsInFrame: Boolean(character.prop_anchor || character.props?.length),
+      referenceImage: character.reference_image ?? ''
+    })) : [{
+      name: shotlist[0]?.subject ?? '主角',
+      identity: '按源剧本识别的主角',
+      appearanceKeywords: '同一张脸、同一发型、同一体型',
+      costumeKeywords: '同一服装材质和颜色',
+      expressionBase: '克制表演，眼神和呼吸体现情绪',
+      coreIdentifier: '人物脸、服装、站位关系',
+      needsTurnaround: true,
+      needsPropsInFrame: true,
+      referenceImage: 'storyboard-images/character-reference.png'
+    }],
+    scenes: [...new Set(shotlist.map((shot) => shot.scene || '主场景'))].map((scene, index) => ({
+      name: scene,
+      type: index === 0 ? '核心母场景' : '转场/局部空间',
+      era: /古|仙|宗门|祠堂/u.test(scene) ? '架空/古风' : '现代或按源剧本时代',
+      structure: '锁定入口、主体站位、前景遮挡、背景纵深和关键道具位置',
+      keyElements: inferSceneElements(scene, contract.sourceText),
+      lighting: composeGlobalVisualStyle(contract, { shotlist }).lighting,
+      color: composeGlobalVisualStyle(contract, { shotlist }).color,
+      reusability: '可作为后续分镜母图复用，换机位不换空间结构'
+    })),
+    props: extractProjectProps({ contract, shotlist, characters }),
+    effects: extractEffects(contract)
+  }
+}
+
+function inferSceneElements(scene, sourceText = '') {
+  const text = `${scene}\n${sourceText}`
+  if (/楼道|居民楼|楼梯/u.test(text)) return '楼梯、转角、入户门、墙面旧漆、门牌、窄走廊纵深'
+  if (/客厅|室内|小户型/u.test(text)) return '沙发、茶几、里屋门口、窗边、门缝、生活杂物'
+  if (/别墅|孤岛/u.test(text)) return '沙发、茶几、门口、背光角落、窗外暴雨'
+  if (/海洋馆|水箱/u.test(text)) return '废弃水箱、玻璃、检修门、潮湿地面、深海光'
+  if (/工厂|车间/u.test(text)) return '厂房门、焊光、钢材、图纸、工位灯'
+  if (/祠堂|神龛/u.test(text)) return '神龛、烛火、供桌、香炉、木梁阴影'
+  return '入口、主体活动区、前景遮挡、背景纵深、关键道具落点'
+}
+
+function inferCameraPosition(shot) {
+  const text = `${shot.shot_size ?? ''} ${shot.lens ?? ''} ${shot.camera_movement ?? ''} ${shot.composition ?? ''}`.toLowerCase()
+  if (/low angle|ground-level|低机位|仰/u.test(text)) return '低机位 / 仰拍'
+  if (/back shot|behind|背/u.test(text)) return '背面 / 跟随视角'
+  if (/macro|insert|俯|object/u.test(text)) return '俯拍或贴近道具插入'
+  if (/reflection|倒影/u.test(text)) return '侧面 / 倒影视角'
+  if (/wide|establish|全景/u.test(text)) return '45度或正面全景机位'
+  return '正面或45度平视机位'
+}
+
+function inferSpatialRelation(shot) {
+  const blocking = compactDirectorText(shot.blocking, '')
+  if (blocking) return blocking
+  const scene = shot.scene ?? '主场景'
+  return `${shot.subject ?? '主体'}位于${scene}的主要行动区，前景/背景保留可识别空间层次。`
+}
+
+function inferKeyPropsForShot(shot, props) {
+  const text = `${shot.action ?? ''}\n${shot.composition ?? ''}\n${shot.blocking ?? ''}\n${shot.screen_text ?? ''}`
+  const matched = props.filter((prop) => text.includes(prop.name)).map((prop) => prop.name)
+  if (matched.length) return matched.slice(0, 3).join('、')
+  const compositionAnchor = String(shot.composition ?? '').match(/(?:key object|primary)=([^;；,，]+)/iu)?.[1]?.trim()
+  return compositionAnchor || '本镜头关键道具按剧情需要出现'
+}
+
+function composeDirectorAtoms(shotlist, props) {
+  return shotlist.map((shot, index) => ({
+    shotNumber: shot.shot_id ?? shotId(index),
+    shotFunction: shot.shot_function ?? (index === 0 ? '交代环境 / 引出人物' : index === shotlist.length - 1 ? '制造悬念 / 结尾钩子' : '推进动作 / 强化情绪'),
+    shotSize: compactDirectorText(shot.shot_size, '中景'),
+    cameraPosition: inferCameraPosition(shot),
+    cameraMovement: compactDirectorText(shot.camera_movement, '定镜'),
+    visualSubject: compactDirectorText(shot.subject, '画面主体'),
+    characterAction: visibleShotPurpose(shot),
+    expressionEmotion: compactDirectorText(shot.performance_detail, '通过眼神、呼吸、手指和肩颈表达情绪'),
+    blocking: compactDirectorText(shot.blocking, inferSpatialRelation(shot)),
+    spatialRelation: inferSpatialRelation(shot),
+    keyProps: inferKeyPropsForShot(shot, props),
+    visualFocus: stripStableAnchorInstruction(shot.composition, visibleShotPurpose(shot)),
+    nextConnection: index === shotlist.length - 1 ? '尾帧停在可接下一段的悬念位置' : `动作或视线衔接到 ${shotlist[index + 1]?.shot_id ?? '下一镜'}`
+  }))
+}
+
+function composeShotAnalysis(shot, index, total) {
+  const size = compactDirectorText(shot.shot_size, '中景')
+  const movement = compactDirectorText(shot.camera_movement, '定镜')
+  const purpose = shot.shot_function ?? (index === 0 ? '建立空间和人物处境' : index === total - 1 ? '留下结尾钩子' : '推进剧情信息')
+  return `使用${size}承接“${visibleShotPurpose(shot)}”，${movement}让观众先看清${shot.subject ?? '主体'}与空间/道具的关系；本镜作用是${purpose}，衔接上保持人物站位和光线方向不漂移。`
+}
+
+function composeJimengStillPrompt({ contract, shot, props }) {
+  return [
+    `单张AI漫剧关键帧，画风：${contract.target?.style ?? '电影感短剧'}`,
+    `场景：${shot.scene ?? '主场景'}`,
+    `景别：${shot.shot_size ?? '中景'}`,
+    `机位：${inferCameraPosition(shot)}`,
+    `画面主体：${shot.subject ?? '主体'}`,
+    `人物站位：${inferSpatialRelation(shot)}`,
+    `当前画面：${visibleShotPurpose(shot)}`,
+    `表情动作：${compactDirectorText(shot.performance_detail, '克制表情，手部和眼神有明确情绪')}`,
+    `关键道具：${inferKeyPropsForShot(shot, props)}`,
+    `光线：${compactDirectorText(shot.lighting, '实景动机光，方向稳定')}`,
+    `构图：${stripStableAnchorInstruction(shot.composition, '主体、道具、空间三层清楚')}`,
+    '限制：只生成当前瞬间，不加字幕，不加对白气泡，不新增角色，不改变人物脸、发型、服装和场景结构'
+  ].join('；')
+}
+
+function composeJimengVideoPrompt({ shot }) {
+  return [
+    `${shot.duration_seconds ?? 4}s视频镜头`,
+    `镜头运动：从${inferCameraPosition(shot)}按“${compactDirectorText(shot.camera_movement, '定镜')}”执行，速度克制，不跳切`,
+    `人物动作：${visibleShotPurpose(shot)}，只完成这一个主动作`,
+    `表情变化：${compactDirectorText(shot.performance_detail, '眼神、呼吸、手指张力发生一次细微变化')}`,
+    `环境动态：保持${shot.scene ?? '主场景'}的光线方向，允许尘埃、雨雾、布料或发丝轻微响应`,
+    `焦点路径：先锁定${shot.subject ?? '主体'}，再落到本镜关键道具或异常信号，最后停在可衔接下一镜的位置`,
+    `连续性：不新增剧情，不新增角色，不改变脸、发型、服装、道具位置和空间结构`
+  ].join('；')
+}
+
+function composeFormalStoryboards(contract, shotlist, props) {
+  return shotlist.map((shot, index) => ({
+    id: shot.shot_id ?? shotId(index),
+    scene: compactDirectorText(shot.scene, '主场景'),
+    duration: `${shot.duration_seconds ?? 4}s`,
+    shotSize: compactDirectorText(shot.shot_size, '中景'),
+    cameraPosition: inferCameraPosition(shot),
+    cameraMovement: compactDirectorText(shot.camera_movement, '定镜'),
+    frame: visibleShotPurpose(shot),
+    characterAction: visibleShotPurpose(shot),
+    expressionEmotion: compactDirectorText(shot.performance_detail, '克制表演，眼神和手部细节表达情绪'),
+    blocking: compactDirectorText(shot.blocking, inferSpatialRelation(shot)),
+    spatialRelation: inferSpatialRelation(shot),
+    keyProps: inferKeyPropsForShot(shot, props),
+    shotAnalysis: composeShotAnalysis(shot, index, shotlist.length),
+    jimengStillPrompt: composeJimengStillPrompt({ contract, shot, props }),
+    jimengVideoPrompt: composeJimengVideoPrompt({ shot })
+  }))
+}
+
+function composeConsistencyChecklist(contract, { shotlist, characters, props, effects }) {
+  const characterNames = characters.map((character) => character.identity_anchor ?? character.name).filter(Boolean).join('、') || (shotlist[0]?.subject ?? '主角')
+  const scenes = [...new Set(shotlist.map((shot) => shot.scene).filter(Boolean))].join('、') || '主场景'
+  return [
+    `人物外观统一：${characterNames}保持同一张脸、发型、体型和服装材质；已有角色图优先于文字。`,
+    '服装统一：同一场戏内服装颜色、破损、湿度、血迹或配饰状态不得漂移。',
+    `场景结构统一：${scenes}的入口、门窗、家具/建筑元素、前景遮挡和光线方向保持一致。`,
+    `核心道具统一：${props.map((prop) => prop.name).slice(0, 6).join('、') || '关键道具'}只在服务镜头功能时出现，外观和位置连续。`,
+    `画风统一：${contract.target?.style ?? '电影感短剧'}贯穿角色、场景、分镜和即梦提示词。`,
+    '光线逻辑统一：每个高光来自场内明确光源，切镜后方向不反跳。',
+    `特效逻辑统一：${effects.map((effect) => effect.name).join('、')}按源头出现，不随机铺满画面。`
+  ]
+}
+
+function composeDirectorPackage(contract, { shotlist, characters = [] }) {
+  const props = extractProjectProps({ contract, shotlist, characters })
+  const effects = extractEffects(contract)
+  return {
+    projectUnderstanding: composeProjectUnderstanding(contract, { shotlist, characters }),
+    globalVisualStyle: composeGlobalVisualStyle(contract, { shotlist, characters }),
+    assetPlan: composeAssetPlan(contract, { shotlist, characters }),
+    directorAtoms: composeDirectorAtoms(shotlist, props),
+    formalStoryboards: composeFormalStoryboards(contract, shotlist, props),
+    consistencyChecklist: composeConsistencyChecklist(contract, { shotlist, characters, props, effects })
   }
 }
 
@@ -1715,15 +2038,19 @@ export function composeDraftAssets(contract) {
     }
   })
 
+  const characters = composeCharacters(anchors, useScriptProfile ? scriptProfile : null)
+  const directorPackage = composeDirectorPackage(contract, { shotlist, characters })
+
   return {
     directorScript: composeDirectorScript({ contract, anchors, beats }),
-    characters: composeCharacters(anchors, useScriptProfile ? scriptProfile : null),
+    characters,
     shotlist,
     storyboardBoard: composeStoryboardBoard(shotlist),
     storyboardPrompts: composeStoryboardPrompts({ anchors, shotlist }),
     referencePack: composeReferencePack({ contract, shotlist }),
     jimengPack: composeExternalPack({ platform: 'Jimeng', contract, anchors, shotlist }),
-    continuityReview: composeContinuityReview({ anchors, shotlist })
+    continuityReview: composeContinuityReview({ anchors, shotlist }),
+    ...directorPackage
   }
 }
 

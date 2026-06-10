@@ -74,6 +74,67 @@ test('composeDraftAssets creates production assets from a story contract', async
   assert.match(draft.continuityReview, /Codex does not render the final video/)
 })
 
+test('composeDraftAssets returns structured CINE-MAKE director package fields', async () => {
+  const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', '--platform', 'jimeng', source]))
+  const draft = composeDraftAssets(contract)
+
+  assert.equal(typeof draft.projectUnderstanding.topic, 'string')
+  assert.equal(typeof draft.projectUnderstanding.worldview, 'string')
+  assert.equal(typeof draft.projectUnderstanding.coreConflict, 'string')
+  assert.equal(typeof draft.globalVisualStyle.paintingStyle, 'string')
+  assert.ok(Array.isArray(draft.assetPlan.characters))
+  assert.ok(Array.isArray(draft.assetPlan.scenes))
+  assert.ok(Array.isArray(draft.assetPlan.props))
+  assert.ok(Array.isArray(draft.assetPlan.effects))
+  assert.equal(draft.directorAtoms.length, draft.shotlist.length)
+  assert.equal(draft.formalStoryboards.length, draft.shotlist.length)
+
+  const atom = draft.directorAtoms[0]
+  for (const key of [
+    'shotNumber',
+    'shotFunction',
+    'shotSize',
+    'cameraPosition',
+    'cameraMovement',
+    'visualSubject',
+    'characterAction',
+    'expressionEmotion',
+    'blocking',
+    'spatialRelation',
+    'keyProps',
+    'visualFocus',
+    'nextConnection'
+  ]) {
+    assert.equal(typeof atom[key], 'string', `${key} should be a string`)
+    assert.ok(atom[key].length > 0, `${key} should not be empty`)
+  }
+
+  const storyboard = draft.formalStoryboards[0]
+  for (const key of [
+    'scene',
+    'duration',
+    'shotSize',
+    'cameraPosition',
+    'cameraMovement',
+    'frame',
+    'characterAction',
+    'expressionEmotion',
+    'blocking',
+    'spatialRelation',
+    'keyProps',
+    'shotAnalysis',
+    'jimengStillPrompt',
+    'jimengVideoPrompt'
+  ]) {
+    assert.equal(typeof storyboard[key], 'string', `${key} should be a string`)
+    assert.ok(storyboard[key].length > 0, `${key} should not be empty`)
+  }
+
+  assert.doesNotMatch(storyboard.jimengStillPrompt, /镜头(?:推进|移动|摇|拉|跟|环绕)|慢慢|随后/u)
+  assert.match(storyboard.jimengVideoPrompt, /镜头|焦点|动作|环境/u)
+  assert.match(draft.consistencyChecklist.join('\n'), /人物外观统一/u)
+})
+
 test('composeDraftAssets extracts common short-drama anchors', async () => {
   const hospitalSource = '小说片段：凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。'
   const contract = await createInputContract(parseArgs(['--duration', '30s', '--aspect', '9:16', hospitalSource]))
