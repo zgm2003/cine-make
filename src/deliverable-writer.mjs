@@ -507,26 +507,21 @@ function compressedDialogueSuggestion(shot) {
 }
 
 function composeDialoguePolicy(shotlist) {
-  const suggestions = shotlist
-    .map((shot) => {
-      const suggestion = compressedDialogueSuggestion(shot)
-      return suggestion ? `- ${shot.shot_id}: visual_cut_dialogue: ${suggestion}` : ''
-    })
-    .filter(Boolean)
-
   return [
     '## DIALOGUE_POLICY',
     '',
     '- preserve_full_script: true',
-    '- generate_visual_cut_version: true',
+    '- preserve_client_dialogue_exactly: true',
+    '- generate_visual_cut_version: split_only',
     'rules:',
-    '- 单镜台词超过 12-16 个中文字符，优先压缩成短台词、字幕、旁白或画面信息。',
+    '- 甲方/原剧本台词是锁定资产，不得改写、删句、替换表达或自动短句化。',
+    '- 单镜台词过长时，只能按标点拆成字幕节奏行；每一行必须来自原文连续片段。',
     '- 解释型台词优先转成道具、表情、阻挡关系。',
-    '- 冲突型台词保留关键词。',
-    '- 每集结尾钩子台词必须保留。',
+    '- 冲突型台词保留原句，不只保留关键词。',
+    '- 每集结尾钩子台词和屏幕文字必须原文保留。',
     '',
     'visual_cut_dialogue:',
-    ...(suggestions.length ? suggestions : ['- none: 当前分镜未检测到需要压缩的长台词；保留短台词原则。'])
+    '- split_only: 当前分镜如有对白，只做原文拆行；没有原始对白时不自动编写台词。'
   ]
 }
 
@@ -1271,9 +1266,9 @@ function composeExplicitVideoFeedPack({ contract, shotlist, characters = [] }) {
     const endFrame = segmentEndFrameName(index)
     const uploadLines = [
       ...explicitSegmentUploadLines({ contract, segment, characters }),
-      `- 起始帧：\`${startFrame}\``,
+      `- 起始帧（reuse_only）：\`${startFrame}\``,
       ...segment.map((shot) => `- \`${storyboardImageName(shot)}\``),
-      `- 尾帧：\`${endFrame}\``
+      `- 尾帧（reuse_only）：\`${endFrame}\``
     ]
     return [
       `### 第 ${index + 1} 段：${segmentLabel(segment)}（${segmentDuration(segment)}s，上传图片 ${uploadLines.length} 张）`,
@@ -1289,12 +1284,223 @@ function composeExplicitVideoFeedPack({ contract, shotlist, characters = [] }) {
       '```text',
       `${segmentDuration(segment)}s / ${contract.target.aspectRatio} / ${contract.target.style}`,
       '严格按上传关键帧执行，不重写剧情。角色脸、发型、服装、场景方位和光线保持一致。',
+      ...explicitSegmentDialoguePromptLines(segment),
       ...segment.map((shot) => `${shot.shot_id}: ${shot.video_prompt_note ?? composeMotionPromptLine(shot)}`),
-      '每镜只执行一个主动作；不新增角色、不新增道具、不生成字幕、不跳切。',
+      '每镜只执行一个主动作；不新增角色、不新增道具、不跳切；配音/字幕只按上方原文对白轨执行，不改词，不额外编台词。',
       '```',
       ''
     ]
   })
+}
+
+function explicitDialogueLines(shot) {
+  const dialogue = compactAction(shot.dialogue_or_voiceover ?? '')
+  return dialogue ? dialogue.split(/\s*\/\s*/u).map((line) => line.trim()).filter(Boolean) : []
+}
+
+function parseExplicitDialogueLine(line) {
+  const match = String(line).match(/^([^：:]+)[：:](.+)$/u)
+  if (!match) return { speaker: '旁白', text: String(line).trim(), raw: String(line).trim() }
+  const speaker = match[1].replace(/（[^）]+）/gu, '').trim()
+  return { speaker, text: match[2].trim(), raw: String(line).trim() }
+}
+
+function explicitDialogueFunction(text) {
+  if (/逼我就范|查房租|手段/u.test(text)) return '误会升级'
+  if (/晚晚|别出来|双胞胎|秘密/u.test(text)) return '秘密揭示'
+  if (/不会说话|会说话|哑巴|装作/u.test(text)) return '身份反差'
+  if (/房租|搬走|租金/u.test(text)) return '冲突推进'
+  if (/内心|老妈/u.test(text)) return '开场信息'
+  return '关系推进'
+}
+
+function explicitDeliveryNote(raw, text) {
+  const parenthetical = String(raw).match(/（([^）]+)）/u)?.[1]
+  if (parenthetical) return parenthetical
+  if (/逼我就范|情绪激动|手段/u.test(text)) return '压低怒意，短句推进'
+  if (/惊讶|果然/u.test(text)) return '短促停顿后反应'
+  if (/晚晚|别出来/u.test(text)) return '慌张抢话'
+  return '自然口语，避免拖长'
+}
+
+function splitDialogueTextVerbatim(text, maxChars = 18) {
+  const source = String(text ?? '').trim()
+  if (!source) return []
+  const clauses = source.match(/[^，,。！？!?；;]+[，,。！？!?；;]?/gu) ?? [source]
+  const chunks = []
+  for (const clause of clauses) {
+    const cleanClause = clause.trim()
+    if (!cleanClause) continue
+    const chars = [...cleanClause]
+    if (chars.length <= maxChars) {
+      chunks.push(cleanClause)
+      continue
+    }
+    for (let index = 0; index < chars.length; index += maxChars) {
+      chunks.push(chars.slice(index, index + maxChars).join(''))
+    }
+  }
+  return chunks
+}
+
+function visualCutDialogueEntries(shot) {
+  const entries = []
+  for (const line of explicitDialogueLines(shot)) {
+    const parsed = parseExplicitDialogueLine(line)
+    const { speaker, text } = parsed
+    for (const chunk of splitDialogueTextVerbatim(text)) {
+      entries.push({ speaker, text: chunk, source: parsed, preserve_source_text: true })
+    }
+  }
+  return entries
+}
+
+function explicitSegmentDialoguePromptLines(segment) {
+  const lines = []
+  for (const shot of segment) {
+    const fullDialogue = explicitDialogueLines(shot)
+    const subtitleEntries = visualCutDialogueEntries(shot)
+    const screenText = compactAction(shot.screen_text ?? '')
+    if (!fullDialogue.length && !subtitleEntries.length && !screenText) continue
+    if (fullDialogue.length) {
+      lines.push(`${shot.shot_id} full_script_dialogue:`)
+      lines.push(...fullDialogue.map((line) => `- ${line}`))
+    }
+    if (subtitleEntries.length) {
+      lines.push(`${shot.shot_id} subtitle_track:`)
+      lines.push(...subtitleEntries.map((entry) => `- ${entry.speaker}：${entry.text}`))
+    }
+    if (screenText) {
+      lines.push(`${shot.shot_id} screen_text: ${screenText}`)
+      lines.push(`${shot.shot_id} ending_hook_text: ${screenText}`)
+    }
+  }
+  return lines.length
+    ? [
+        '对白/配音轨（原文锁定）：',
+        '以下台词必须原文发声或进入后期字幕，只允许按行拆分，不得改词、删句或替换表达。',
+        ...lines,
+        '画面运动与对白同步；无对白镜头只保留呼吸、停顿和环境声。'
+      ]
+    : [
+        '对白/配音轨（原文锁定）：',
+        '本段无原始对白；只保留环境声、呼吸和表演停顿，不新增台词。'
+      ]
+}
+
+function formatDialogueRecord(entry, { prefix = '- ' } = {}) {
+  const raw = entry.raw ?? `${entry.speaker}：${entry.text}`
+  return [
+    `${prefix}speaker: ${entry.speaker}`,
+    `  text: ${raw}`,
+    `  dialogue_function: ${explicitDialogueFunction(raw)}`,
+    '  must_keep: true',
+    `  delivery_note: ${explicitDeliveryNote(raw, raw)}`
+  ]
+}
+
+export function composeDialogueTrack({ contract, draft }) {
+  const shotlist = draft.shotlist ?? []
+  return [
+    '# Dialogue Track',
+    '',
+    `source: ${contract.title}`,
+    '用途：独立对白轨；给剪辑、配音和字幕参考，不投喂图片模型。',
+    '规则：甲方/原剧本对白原文锁定；visual_cut_dialogue 只允许按字幕节奏拆行，不改词、不删句、不替换表达。',
+    '',
+    ...shotlist.flatMap((shot) => {
+      const fullEntries = explicitDialogueLines(shot).map(parseExplicitDialogueLine)
+      const cutEntries = visualCutDialogueEntries(shot)
+      return [
+        `## ${shot.shot_id}`,
+        '',
+        'full_script_dialogue:',
+        ...(fullEntries.length ? fullEntries.flatMap((entry) => formatDialogueRecord(entry)) : ['- none']),
+        '',
+        'visual_cut_dialogue:',
+        ...(cutEntries.length
+          ? cutEntries.flatMap((entry) => [
+              `- speaker: ${entry.speaker}`,
+              `  text: ${entry.speaker}：${entry.text}`,
+              '  preserve_source_text: true',
+              `  dialogue_function: ${explicitDialogueFunction(entry.text)}`,
+              '  must_keep: true',
+              `  delivery_note: ${explicitDeliveryNote(entry.source?.raw ?? entry.text, entry.text)}`
+            ])
+          : ['- none']),
+        ''
+      ]
+    })
+  ].join('\n')
+}
+
+export function composeSubtitleTrack({ contract, draft }) {
+  const shotlist = draft.shotlist ?? []
+  const lines = shotlist.flatMap((shot) => {
+    const subtitles = visualCutDialogueEntries(shot)
+    const screenText = compactAction(shot.screen_text ?? '')
+    if (!subtitles.length && !screenText) return []
+    return [
+      `## ${shot.shot_id}`,
+      '',
+      ...subtitles.map((subtitle) => `- subtitle: ${subtitle.speaker}：${subtitle.text}`),
+      ...(screenText
+        ? [
+            `- screen_text: ${screenText}`,
+            `- ending_hook_text: ${screenText}`
+          ]
+        : []),
+      ''
+    ]
+  })
+  return [
+    '# Subtitle Track',
+    '',
+    `source: ${contract.title}`,
+    '用途：后期字幕轨；Keyframe Prompt 仍禁止直接生成字幕。',
+    '规则：字幕只做原文拆行和节奏分配，不改写甲方台词。',
+    '',
+    ...(lines.length ? lines : ['- 无字幕台词。'])
+  ].join('\n')
+}
+
+export function composeAudioTrack({ contract, draft }) {
+  const shotlist = draft.shotlist ?? []
+  return [
+    '# Audio Track',
+    '',
+    `source: ${contract.title}`,
+    '用途：配音、环境声和音效提示；不进入 Keyframe Prompt。',
+    '',
+    ...shotlist.flatMap((shot) => {
+      const dialogue = explicitDialogueLines(shot)
+      const sfx = compactAction(shot.audio_or_sfx ?? '')
+      return [
+        `## ${shot.shot_id}`,
+        '',
+        `- dialogue: ${dialogue.length ? dialogue.join(' / ') : '无'}`,
+        `- sound_effect: ${sfx || '按场景环境声轻处理'}`,
+        ''
+      ]
+    })
+  ].join('\n')
+}
+
+export function composeStandaloneVideoFeedPack({ contract, draft }) {
+  const shotlist = draft.shotlist ?? []
+  const characters = draft.characters ?? []
+  const mainCharacter = characters[0]
+  const body = contract.contentType === 'explicit_storyboard'
+    ? composeExplicitVideoFeedPack({ contract, shotlist, characters })
+    : composeVideoFeedPack({ contract, shotlist, mainCharacter, characters })
+  return [
+    '# Video Feed Pack',
+    '',
+    `source: ${contract.title}`,
+    '用途：独立视频工具投喂包；草稿模式只准备，不代表图片或视频已生成。',
+    '',
+    ...body
+  ].join('\n')
 }
 
 function composeExplicitStoryboardDeliverable({ contract, draft }) {
@@ -1309,10 +1515,14 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '',
     modeSummary(mode),
     '',
-    '最终交付给用户只看这两项：',
+    '显式分镜草稿包输出以下用户可读文件：',
     '',
     '- `deliverable.md`',
     '- `storyboard-images/`',
+    '- `dialogue-track.md`',
+    '- `subtitle-track.md`',
+    '- `audio-track.md`',
+    '- `video-feed-pack.md`',
     '',
     'Codex 不生成最终视频；最终 MP4 由即梦合成。',
     '',
@@ -1344,7 +1554,7 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '',
     '## DIALOGUE_SCRIPT',
     '',
-    '台词保留在这一层；Keyframe Prompt 不直接生成字幕或大段文字。',
+    '台词原文锁定在这一层；字幕轨只能拆行，不改写；Keyframe Prompt 不直接生成字幕或大段文字。',
     '',
     ...composeExplicitDialogueScript(draft.shotlist),
     '',
@@ -1409,7 +1619,7 @@ function composeExplicitStoryboardDeliverable({ contract, draft }) {
     '',
     '- 已有角色图优先；不要重新发明脸、发型和服装。',
     '- 楼道必须是封闭式室内单元楼楼道；不露天，不见天空和树木。',
-    '- 关键帧不生成字幕；台词只作为表演和节奏参考。',
+    '- 关键帧不生成字幕；对白原文锁定，字幕轨只做拆行和时间分配。',
     '- 最终视频合成由外部视频工具完成。'
   ].join('\n')
 }

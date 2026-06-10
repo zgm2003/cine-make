@@ -63,6 +63,33 @@ const isolatedMansionScript = `漫剧概念设定：《孤岛碎忆》
 场景主要有：孤岛别墅、夜晚
 主要元素内容：手机、茶壶、枪、警徽、带血的解剖刀`
 
+const explicitGuomanStoryboard = `AI漫剧剧本：收租偶遇同班哑巴校花
+
+人物
+- 江渝白：男主，高中生
+- 林听晚：女主，同班校花，对外装作哑巴
+- 李大妈：二房东
+- 晚晚：和林听晚容貌一致的少女
+
+【分镜1】外景·老旧居民楼 全景
+时长：3s
+画面：江渝白站在楼下，抬头望楼。
+
+【分镜2】楼道·楼梯间 中景
+时长：4s
+画面：江渝白缓步走上楼梯，前方传来一高一低两道女声。
+台词
+李大妈：房租今天必须交，别再拖了！
+林听晚：李阿姨，再宽限两天可以吗？
+
+【分镜3】室内·一室一厅 全景
+时长：4s
+画面：老式小户型房间，陈设简单但打扫得一尘不染。李大妈坐在沙发上，林听晚远远坐在窗边小凳子上。
+
+【分镜4】结尾定格画面 双人+少女 全景
+时长：5s
+画面：江渝白瞪大双眼，震惊地看着里屋门口的少女。林听晚又急又慌，挡在前方。三人同框定格，画面弹出文字：双胞胎？秘密才刚刚开始……`
+
 test('exports a compact foundation Canvas graph for character scene and style references', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-pack-'))
   try {
@@ -246,6 +273,73 @@ test('exports a merge-friendly storyboard Canvas pack that reuses locked foundat
     ])
   } finally {
     await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('explicit guoman storyboard Canvas packs keep mother scenes and illustrated style', async () => {
+  const foundationOut = await mkdtemp(join(tmpdir(), 'cine-make-canvas-explicit-foundation-'))
+  const storyboardOut = await mkdtemp(join(tmpdir(), 'cine-make-canvas-explicit-storyboard-'))
+  try {
+    const contract = await createInputContract(parseArgs([
+      '--aspect',
+      '9:16',
+      '--style',
+      '国漫现实主义风格，电影式构图，低饱和暖灰色调，干净线稿，细腻光影',
+      explicitGuomanStoryboard
+    ]))
+    const foundation = await exportCanvasPromptPack({ outDir: foundationOut, contract })
+    const storyboard = await exportCanvasStoryboardPack({ outDir: storyboardOut, contract })
+    const foundationManifest = JSON.parse(await readFile(foundation.manifestPath, 'utf8'))
+    const storyboardManifest = JSON.parse(await readFile(storyboard.manifestPath, 'utf8'))
+
+    const environmentRefs = foundationManifest.nodes.filter((node) => node.role === 'environment_reference')
+    assert.deepEqual(environmentRefs.map((node) => node.id).sort(), [
+      'environment-ref-old-building-exterior',
+      'environment-ref-small-apartment-interior',
+      'environment-ref-stairwell'
+    ])
+    assert.equal(environmentRefs.every((node) => /上午|白天/u.test(node.prompt)), true)
+    assert.doesNotMatch(JSON.stringify(foundationManifest), /入口处略暗|昏黄楼道|偏暗暖灰|旧居民楼外景偏暗/u)
+    assert.doesNotMatch(JSON.stringify(foundationManifest), /孤岛别墅|暴雨夜|photoreal|live-action|真人电影/iu)
+
+    const keyframes = storyboardManifest.nodes.filter((node) => node.role === 'keyframe')
+    assert.equal(keyframes.length, 4)
+    assert.equal(
+      keyframes.find((node) => node.id === 'keyframe-s01').metadata.cineMake.environmentId,
+      'environment-old-building-exterior'
+    )
+    const s01Prompt = keyframes.find((node) => node.id === 'keyframe-s01').prompt
+    assert.match(s01Prompt, /确认地址|单元门牌|准备进门收租/u)
+    assert.doesNotMatch(s01Prompt, /站在楼下，抬头望楼|仰头看整栋楼|马路中央/u)
+    assert.doesNotMatch(s01Prompt, /倒计时手机|林默血手|屏幕冷光/u)
+    assert.match(s01Prompt, /visual_priority: primary=江渝白到达楼下确认地址/u)
+    assert.doesNotMatch(s01Prompt, /按原分镜站位/u)
+    assert.match(s01Prompt, /身体半侧向单元门|远离道路中央/u)
+    assert.equal(
+      keyframes.find((node) => node.id === 'keyframe-s02').metadata.cineMake.environmentId,
+      'environment-stairwell'
+    )
+    assert.equal(
+      keyframes.find((node) => node.id === 'keyframe-s03').metadata.cineMake.environmentId,
+      'environment-small-apartment-interior'
+    )
+    assert.deepEqual(
+      keyframes.find((node) => node.id === 'keyframe-s04').requiredAnchors.map((anchor) => anchor.anchorId).sort(),
+      [
+        'character-ref-jiang-yubai',
+        'character-ref-lin-tingwan',
+        'character-ref-wanwan',
+        'environment-ref-small-apartment-interior',
+        'style-reference'
+      ].sort()
+    )
+    assert.doesNotMatch(JSON.stringify(storyboardManifest), /孤岛别墅|暴雨夜|photoreal|live-action|真人电影/iu)
+    assert.doesNotMatch(JSON.stringify(storyboardManifest), /入口处略暗|昏黄楼道|偏暗暖灰|旧居民楼外景偏暗/u)
+    assert.match(JSON.stringify(storyboardManifest), /上午白天自然光|上午白天楼道自然反射光|上午柔和窗光/u)
+    assert.match(JSON.stringify(storyboardManifest), /双胞胎？秘密才刚刚开始……/u)
+  } finally {
+    await rm(foundationOut, { recursive: true, force: true })
+    await rm(storyboardOut, { recursive: true, force: true })
   }
 })
 

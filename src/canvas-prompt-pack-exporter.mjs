@@ -122,7 +122,8 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
   const nodes = []
   const connections = []
   const characters = normalizeCharacters(draft.characters)
-  const environment = inferPrimaryScene(contract, draft)
+  const environments = inferEnvironments(contract, draft)
+  const environment = environments[0]
   const props = inferProps(contract.sourceText, draft)
 
   nodes.push(createManifestNode({
@@ -175,31 +176,33 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
     connect(connections, character.id, refId, 'character_bible')
   })
 
-  const environmentRow = characters.length + 1
-  const environmentRefId = environmentReferenceNodeId(environment)
-  nodes.push(createManifestNode({
-    id: environment.id,
-    role: 'environment_bible',
-    title: `资料：${environment.name}（非生成）`,
-    canvasType: 'text',
-    row: environmentRow,
-    column: 0,
-    content: composeEnvironmentBible({ environment })
-  }))
+  environments.forEach((sceneEnvironment, environmentIndex) => {
+    const environmentRow = characters.length + 1 + environmentIndex
+    const environmentRefId = environmentReferenceNodeId(sceneEnvironment)
+    nodes.push(createManifestNode({
+      id: sceneEnvironment.id,
+      role: 'environment_bible',
+      title: `资料：${sceneEnvironment.name}（非生成）`,
+      canvasType: 'text',
+      row: environmentRow,
+      column: 0,
+      content: composeEnvironmentBible({ environment: sceneEnvironment })
+    }))
 
-  nodes.push(createManifestNode({
-    id: environmentRefId,
-    role: 'environment_reference',
-    title: `生成：${environment.name}场景参考图`,
-    canvasType: 'image',
-    row: environmentRow,
-    column: 1,
-    prompt: composeEnvironmentReferencePrompt({ environment, contract }),
-    anchor: environmentReferenceAnchor(environment),
-    inputOrder: ['style-bible', environment.id]
-  }))
-  connect(connections, 'style-bible', environmentRefId, 'style_rules')
-  connect(connections, environment.id, environmentRefId, 'environment_bible')
+    nodes.push(createManifestNode({
+      id: environmentRefId,
+      role: 'environment_reference',
+      title: `生成：${sceneEnvironment.name}场景参考图`,
+      canvasType: 'image',
+      row: environmentRow,
+      column: 1,
+      prompt: composeEnvironmentReferencePrompt({ environment: sceneEnvironment, contract }),
+      anchor: environmentReferenceAnchor(sceneEnvironment),
+      inputOrder: ['style-bible', sceneEnvironment.id]
+    }))
+    connect(connections, 'style-bible', environmentRefId, 'style_rules')
+    connect(connections, sceneEnvironment.id, environmentRefId, 'environment_bible')
+  })
 
   return {
     schemaVersion: 1,
@@ -233,7 +236,8 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
   const nodes = []
   const connections = []
   const characters = normalizeCharacters(draft.characters)
-  const environment = inferPrimaryScene(contract, draft)
+  const environments = inferEnvironments(contract, draft)
+  const environment = environments[0]
   const props = inferProps(contract.sourceText, draft)
   const shots = draft.shotlist ?? []
   const beats = deriveStoryBeatsForCanvas(shots)
@@ -250,7 +254,8 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
   }))
 
   shots.forEach((shot, index) => {
-    const requiredAnchors = requiredAnchorsForShot({ shot, characters, environment })
+    const shotEnvironment = environmentForShot(shot, environments)
+    const requiredAnchors = requiredAnchorsForShot({ shot, characters, environment: shotEnvironment })
     nodes.push(createManifestNode({
       id: keyframeNodeId(shot, index),
       role: 'keyframe',
@@ -258,7 +263,7 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
       canvasType: 'image',
       row: index,
       column: 1,
-      prompt: composeKeyframePrompt({ shot, contract, environment, props }),
+      prompt: composeKeyframePrompt({ shot, contract, environment: shotEnvironment, props }),
       inputOrder: requiredAnchors.map((anchor) => anchor.anchorId),
       requiredAnchors,
       promptLayer: 'keyframe_static',
@@ -266,7 +271,7 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
       linkedBeat: beatForCanvasShot(beats, shot)?.beat_id ?? `B${String(index + 1).padStart(2, '0')}`,
       shotFunction: shotFunctionForCanvas(shot, index, shots.length),
       audienceTakeaway: audienceTakeawayForCanvas(shot, index, shots.length),
-      environmentId: environment.id,
+      environmentId: shotEnvironment.id,
       anchorPolicy: anchorPolicyForShot(shot),
       mergeStrategy: 'append'
     }))
@@ -304,7 +309,7 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
 
 function normalizeCharacters(characters = []) {
   return characters.map((character, index) => ({
-    id: character.id || `character-${slugId(character.identity_anchor || character.identity || String(index + 1))}`,
+    id: normalizedCharacterId(character, index),
     name: character.identity_anchor || character.name || character.identity || `角色${index + 1}`,
     identity: character.identity || '',
     height: character.height || '',
@@ -317,6 +322,63 @@ function normalizeCharacters(characters = []) {
     props: character.props ?? [],
     prompt: character.reference_prompt || ''
   }))
+}
+
+function normalizedCharacterId(character, index) {
+  const fallbackName = character.identity_anchor || character.name || character.identity || String(index + 1)
+  const id = String(character.id || '')
+  if (/^character-[a-z0-9-]+$/u.test(id)) return id
+  return `character-${slugId(fallbackName)}`
+}
+
+function inferEnvironments(contract, draft) {
+  if (contract.contentType === 'explicit_storyboard') {
+    const sceneIds = new Set((draft.shotlist ?? []).map((shot) => shot.scene).filter(Boolean))
+    const explicitEnvironments = explicitStoryboardEnvironments().filter((environment) => (
+      environment.sourceSceneIds.some((sceneId) => sceneIds.has(sceneId))
+    ))
+    if (explicitEnvironments.length) return explicitEnvironments
+  }
+  return [inferPrimaryScene(contract, draft)]
+}
+
+function explicitStoryboardEnvironments() {
+  return [
+    {
+      id: 'environment-old-building-exterior',
+      sourceSceneIds: ['SCENE_01_OLD_BUILDING_EXTERIOR'],
+      title: '场景设定：老旧居民楼外景',
+      name: '老旧居民楼外景',
+      description: '略显陈旧的老式居民楼外立面，墙面斑驳但生活化，楼门入口清楚，周围是普通居民区地面和门牌；无人物、无剧情动作。',
+      lighting: '上午白天自然光，外墙和单元门清楚可见，柔和暖灰生活光，画面明亮但不过曝。',
+      atmosphere: '生活化、安静、旧但干净，不夸张破败，不做夜景氛围。',
+      continuity: '楼体外立面、单元门位置、墙面颜色和入口方向保持一致；不要变成高档公寓、开放连廊、商业街、夜景、亮灯夜窗或黑暗楼栋。'
+    },
+    {
+      id: 'environment-stairwell',
+      sourceSceneIds: ['SCENE_02_INDOOR_STAIRWELL'],
+      title: '场景设定：封闭式室内老居民楼楼道 / 楼梯平台',
+      name: '封闭式室内老居民楼楼道 / 楼梯平台',
+      description: '封闭式室内单元楼楼道，楼梯在楼内，不露天，不见天空，不见树木；水泥墙面旧但干净，窄楼梯平台，铁栏杆，入户门外空间可复用。',
+      lighting: '上午白天楼道自然反射光，顶灯只作弱补光，台阶和墙面清楚可见，低饱和暖灰。',
+      atmosphere: '狭窄、安静、有生活痕迹但不脏乱，不做恐怖片暗场。',
+      continuity: '楼梯转角、平台、铁栏杆、入户门方位保持一致；不要变成室外楼梯、开放走廊、带天空的连廊、夜景或黑暗楼道。'
+    },
+    {
+      id: 'environment-small-apartment-interior',
+      sourceSceneIds: ['SCENE_03_SMALL_APARTMENT_INTERIOR'],
+      title: '场景设定：一室一厅出租屋室内 / 客厅 / 里屋门口',
+      name: '一室一厅出租屋室内 / 客厅 / 里屋门口',
+      description: '老式一室一厅出租屋室内，客厅陈设简单但打扫得一尘不染，沙发、窗边小凳、茶几、里屋门口的方位清楚；可支持客厅对话和里屋门缝揭示。',
+      lighting: '上午柔和窗光进入室内，暖色生活光只作辅助，人物和家具清楚可见，低饱和暖灰。',
+      atmosphere: '整洁、压抑、生活化，带一点独居少女的温度，但不是夜景或恐怖片暗场。',
+      continuity: '沙发、窗边小凳、茶几、里屋门口位置不能乱跳；晚晚只在里屋门口相关镜头出现；不要生成夜晚室内或黑暗房间。'
+    }
+  ]
+}
+
+function environmentForShot(shot, environments) {
+  return environments.find((environment) => environment.sourceSceneIds?.includes(shot.scene)) ?? environments[0]
 }
 
 function inferPrimaryScene(contract, draft) {
@@ -534,6 +596,27 @@ function composeScriptBreakdown({ contract, draft, characters, environment, prop
 }
 
 function composeWorldBible({ contract, environment }) {
+  if (isIllustratedStyle(contract) || contract.contentType === 'explicit_storyboard') {
+    return [
+      '# World Bible',
+      '',
+      '## 类型',
+      '国漫现实主义短剧 / 生活冲突 / 秘密揭示。',
+      '',
+      '## 世界规则',
+      '- 故事发生在老旧居民楼和一室一厅出租屋内，空间少而稳定。',
+      '- 人物脸、服装和身形以已锁定人物主图为准。',
+      '- 场景母图只锁定空间结构，不承担剧情动作。',
+      '- 分镜关键帧只画当前可见瞬间，不生成字幕或对白气泡。',
+      '',
+      '## 情绪基调',
+      '克制、生活化、紧张、暖灰、压抑；秘密揭示来自人物关系和空间遮挡。',
+      '',
+      `## 主场景规则\n${environment.description}`,
+      '',
+      `## 默认画幅和风格\n${contract.target.aspectRatio} / ${contract.target.style}`
+    ].join('\n')
+  }
   return [
     '# World Bible',
     '',
@@ -556,6 +639,34 @@ function composeWorldBible({ contract, environment }) {
 }
 
 function composeArtDirection({ contract, environment }) {
+  if (isIllustratedStyle(contract) || contract.contentType === 'explicit_storyboard') {
+    return [
+      '# Art Direction',
+      '',
+      '## 色彩规则',
+      '- 低饱和暖灰为主。',
+      '- 楼道使用昏黄顶灯和局部阴影。',
+      '- 室内使用柔和窗光和暖色生活灯。',
+      '- 不使用过度饱和、奇幻发光或照片质感。',
+      '',
+      '## 光影规则',
+      '- 光源必须来自楼道灯、窗光或室内生活灯。',
+      '- 时间感统一为上午 / 白天，不做夜景。',
+      '- 国漫现实主义风格，干净线稿和细腻光影。',
+      '- 每个场景保持固定方位，不随机换成其他建筑。',
+      '',
+      '## 镜头语言',
+      '- 全景负责空间关系。',
+      '- 中近景负责冲突和人物关系。',
+      '- 特写负责表情、门缝、秘密揭示。',
+      '- 关键帧不写动作过程，只保留可画定格。',
+      '',
+      '## 场景统一',
+      `${environment.name} 的入口、墙面、门窗、家具或栏杆位置必须持续一致。`,
+      '',
+      `## 基础风格\n${contract.target.style}`
+    ].join('\n')
+  }
   return [
     '# Art Direction',
     '',
@@ -624,7 +735,9 @@ function composeStyleBible({ contract, environment, props }) {
     '## 基础参考图阶段规则',
     '- 当前版本只生成人物参考图、场景参考图和整体风格参考图。',
     '- 暂不生成分镜、关键帧、视频段。',
-    '- 所有参考图必须共享同一套心理悬疑、暴雨夜、低饱和蓝灰、practical lighting / motivated lighting 规则。'
+    isIllustratedStyle(contract) || contract.contentType === 'explicit_storyboard'
+      ? '- 所有参考图必须共享同一套国漫现实主义、低饱和暖灰、电影式构图、干净线稿和细腻光影规则。'
+      : '- 所有参考图必须共享同一套心理悬疑、暴雨夜、低饱和蓝灰、practical lighting / motivated lighting 规则。'
   ].join('\n')
 }
 
@@ -684,16 +797,16 @@ function composeEnvironmentBible({ environment }) {
     environment.description,
     '',
     '## 灯光',
-    '窗外闪电和暴雨冷光为主，室内少量暖黄灯为辅；光源必须来自窗、灯、手机屏、闪电。',
+    environment.lighting || '窗外闪电和暴雨冷光为主，室内少量暖黄灯为辅；光源必须来自窗、灯、手机屏、闪电。',
     '',
     '## 空气',
-    '潮湿、灰尘、冷雾、雨水反光；地面和玻璃持续有湿痕。',
+    environment.atmosphere || '潮湿、灰尘、冷雾、雨水反光；地面和玻璃持续有湿痕。',
     '',
     '## 声音感',
-    '暴雨拍窗、远处雷声、木地板轻响、手机闹钟、电流低鸣。即使生成图片，也要让空间像有声音。',
+    environment.sound || '按空间保留轻微环境声感；即使生成图片，也要让空间像有声音。',
     '',
     '## 连续性规则',
-    '沙发、茶几、门口、窗户、角落方位不能乱跳；不要突然变成医院、办公室、走廊或白天。'
+    environment.continuity || '沙发、茶几、门口、窗户、角落方位不能乱跳；不要突然变成医院、办公室、走廊或白天。'
   ].join('\n')
 }
 
@@ -710,6 +823,21 @@ function composePropBible(prop) {
 }
 
 function composeStyleReferencePrompt({ contract, environment }) {
+  if (isIllustratedStyle(contract)) {
+    return [
+      '风格参考图生成任务：生成一张整体国漫现实主义 mood frame，不是分镜，不要出现具体剧情动作。',
+      '',
+      '必须读取直接上游文本：风格设定 / World Bible / Art Direction。',
+      '',
+      `画幅：${contract.target.aspectRatio}`,
+      `主场景气质：${environment.name}`,
+      `风格：${contract.target.style}`,
+      '画面内容：上午白天的老旧居民楼生活质感、低饱和暖灰、电影式构图、干净线稿、细腻光影、真实空间比例，画面清楚明亮但不过曝。',
+      '用途：作为后续人物参考图、场景参考图和关键帧的统一视觉锚点。',
+      '',
+      '负面：不要夜景、黑暗楼栋、亮灯夜窗、恐怖片暗场、字幕、水印、logo、照片质感、真实皮肤毛孔、过度饱和、奇幻特效、海报排版。'
+    ].join('\n')
+  }
   return [
     '风格参考图生成任务：生成一张整体视觉 mood frame，不是分镜，不要出现具体剧情动作。',
     '',
@@ -726,6 +854,20 @@ function composeStyleReferencePrompt({ contract, environment }) {
 
 function composeCharacterReferencePrompt({ character, contract }) {
   if (character.prompt?.trim()) return character.prompt.trim()
+
+  if (isIllustratedStyle(contract)) {
+    return [
+      `【角色参考图】角色：${character.name}`,
+      `风格：${contract.target.style}`,
+      '画面：单人半身或全身，干净浅色背景，正面为主，可附小比例三视图，角色身份清楚。',
+      character.identity ? `身份：${character.identity}` : '',
+      character.appearance ? `外观：${character.appearance}。` : '',
+      character.costume ? `服装：${character.costume}。` : '',
+      character.expression ? `表情基准：${character.expression}。` : '',
+      '连续性：后续所有镜头保持脸型、发型、身形、服装稳定。',
+      '禁止：不要加入剧情动作，不要加入其他角色，不要复杂背景，不要照片质感，不要对白气泡。'
+    ].filter(Boolean).join('\n')
+  }
 
   return [
     '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，满版构图，不留顶部空白，不要大面积空白边框，4K超高画质，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，复杂服装刺绣、褶皱、湿痕和材质细节，非插画，非漫画，非CG。',
@@ -750,6 +892,23 @@ function composeCharacterReferencePrompt({ character, contract }) {
 }
 
 function composeEnvironmentReferencePrompt({ environment, contract }) {
+  if (isIllustratedStyle(contract)) {
+    return [
+      `场景参考图生成任务：生成 ${environment.name} 的国漫母场景设定图。`,
+      '',
+      '必须读取直接上游文本：风格设定 + 当前 Environment Bible。',
+      '',
+      `画幅：${contract.target.aspectRatio}`,
+      `风格：${contract.target.style}`,
+      `场景：${environment.name}`,
+      `空间定义：${environment.description}`,
+      `光线：${environment.lighting || '低饱和暖灰色调，电影式构图，细腻光影。'}`,
+      '构图：空场景，无人物，无剧情动作；上午白天生活光，画面清楚可见；重点建立空间结构、入口、家具/栏杆/门窗方位。',
+      '用途：作为后续分镜和关键帧的空间连续性锚点。',
+      '',
+      '负面：不要夜景、黑暗楼栋、亮灯夜窗、恐怖片暗场；不要人物、不要对白、不要字幕、水印、logo；不要把室内楼道画成露天；不要新增不相关豪宅或医院。'
+    ].join('\n')
+  }
   return [
     `场景参考图生成任务：生成 ${environment.name} 的电影场景设定图。`,
     '',
@@ -886,7 +1045,8 @@ function composeCompactShotList({ shots, environment }) {
       `- 镜头：${shot.shot_size || ''} / ${shot.lens || ''} / ${shot.camera_movement || ''}`,
       `- 构图：${sanitizeStaticShotText(shot.composition)}`,
       `- 调度：${shot.blocking || ''}`,
-      `- 画面动作：${shot.action || ''}`
+      `- 画面动作：${shot.action || ''}`,
+      shot.screen_text ? `- 后期屏幕文字：${shot.screen_text}` : ''
     ].join('\n'))
   ].join('\n\n')
 }
@@ -918,10 +1078,28 @@ function composeKeyframePrompt({ shot, contract, environment, props = [] }) {
     `调度：${shot.blocking || ''}`,
     riskTypeForCanvasShot(shot) === 'text_readability_conflict' ? '文字可读性：只允许刻字本身可读，不要额外字幕或海报字。' : '',
     '',
-    'photorealistic live-action film still, grounded cinematic realism, restrained psychological thriller mood, consistent actor face and costume, consistent physical location, no motion blur, no transition, no collage.',
+    keyframeStyleLine(contract),
     '',
-    '负面：不要字幕、水印、logo、乱加未连接角色、突然换脸、换服装、换场景、把客厅变成其他地点、不要模拟视频运动。'
+    keyframeNegativeLine(contract)
   ].filter(Boolean).join('\n')
+}
+
+function isIllustratedStyle(contract) {
+  return /国漫|漫画|二次元|anime|manhua|comic|toon|webtoon|插画/u.test(contract.target?.style ?? '')
+}
+
+function keyframeStyleLine(contract) {
+  if (isIllustratedStyle(contract)) {
+    return `${contract.target.style}，电影式构图，干净线稿，细腻光影，角色脸和服装严格参考已锁定人物主图，空间结构严格参考已锁定场景主图，no motion blur, no transition, no collage.`
+  }
+  return 'photorealistic live-action film still, grounded cinematic realism, restrained psychological thriller mood, consistent actor face and costume, consistent physical location, no motion blur, no transition, no collage.'
+}
+
+function keyframeNegativeLine(contract) {
+  if (isIllustratedStyle(contract)) {
+    return '负面：不要字幕、水印、logo、对白气泡、乱加未连接角色、突然换脸、换服装、换场景、照片质感、真实皮肤毛孔、不要模拟视频运动。'
+  }
+  return '负面：不要字幕、水印、logo、乱加未连接角色、突然换脸、换服装、换场景、把客厅变成其他地点、不要模拟视频运动。'
 }
 
 function composeMotionPrompt({ shot }) {
@@ -983,6 +1161,9 @@ function audienceTakeawayForCanvas(shot, index, total) {
 function anchorPolicyForShot(shot) {
   const text = [shot.action, shot.blocking, sanitizeStaticShotText(shot.composition)].filter(Boolean).join('\n')
   const action = String(shot.action || '')
+  if (/确认地址|单元门牌|准备进门收租/u.test(text)) {
+    return { primary: '江渝白到达楼下确认地址', secondary: ['租户名单', '单元门牌'] }
+  }
   if (/00:00:00/u.test(action)) return { primary: '手机 00:00:00', secondary: ['林默血手', '屏幕冷光'] }
   if (/倒计时|手机/u.test(action)) return { primary: '倒计时手机', secondary: ['林默血手', '屏幕冷光'] }
   if (/刻字|手臂|我的记忆只有10分钟/u.test(text)) return { primary: '手臂刻字', secondary: ['血手', '袖口'] }
@@ -1139,6 +1320,10 @@ function slugId(value) {
   const ascii = text.match(/[a-z0-9]+/g)
   if (ascii?.length) return ascii.slice(0, 6).join('-')
   return text
+    .replace(/江渝白/gu, 'jiang-yubai')
+    .replace(/林听晚/gu, 'lin-tingwan')
+    .replace(/李大妈/gu, 'li-dama')
+    .replace(/晚晚/gu, 'wanwan')
     .replace(/林默/gu, 'linmo')
     .replace(/安娜/gu, 'anna')
     .replace(/雷队/gu, 'leidui')

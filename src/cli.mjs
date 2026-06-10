@@ -15,7 +15,14 @@ import { writeAgentPlanArtifacts } from './task-writer.mjs'
 import { getReadyTasks, writeTaskPrompt } from './task-runner.mjs'
 import { formatValidationResult, validateRunDirectory } from './run-validator.mjs'
 import { composeDraftAssets } from './draft-writer.mjs'
-import { composeDeliverable, composeStoryboardImagesReadme } from './deliverable-writer.mjs'
+import {
+  composeAudioTrack,
+  composeDeliverable,
+  composeDialogueTrack,
+  composeStandaloneVideoFeedPack,
+  composeStoryboardImagesReadme,
+  composeSubtitleTrack
+} from './deliverable-writer.mjs'
 import { createEpisodePlan } from './episode-planner.mjs'
 import { writeVideoTaskArtifacts } from './video-task-writer.mjs'
 import { createNovelProject } from './novel/project-writer.mjs'
@@ -499,6 +506,12 @@ async function writeDraftProductionAssets({ outDir, contract }) {
 async function writeUserFacingArtifacts({ outDir, contract, draft }) {
   await writeFile(join(outDir, 'deliverable.md'), `${composeDeliverable({ contract, draft })}\n`, 'utf8')
   await writeFile(join(outDir, 'storyboard-images', 'README.md'), `${composeStoryboardImagesReadme({ contract, draft })}\n`, 'utf8')
+  if (contract.contentType === 'explicit_storyboard') {
+    await writeFile(join(outDir, 'dialogue-track.md'), `${composeDialogueTrack({ contract, draft })}\n`, 'utf8')
+    await writeFile(join(outDir, 'subtitle-track.md'), `${composeSubtitleTrack({ contract, draft })}\n`, 'utf8')
+    await writeFile(join(outDir, 'audio-track.md'), `${composeAudioTrack({ contract, draft })}\n`, 'utf8')
+    await writeFile(join(outDir, 'video-feed-pack.md'), `${composeStandaloneVideoFeedPack({ contract, draft })}\n`, 'utf8')
+  }
 }
 
 async function writeInternalArtifacts({ outDir, contract }) {

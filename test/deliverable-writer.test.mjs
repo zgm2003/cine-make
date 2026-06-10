@@ -239,7 +239,7 @@ test('explicit storyboard post-checker prevents overcorrection artifacts', async
     '',
     shot(1, '外景·老旧居民楼 全景', '江渝白站在楼下，抬头望楼。'),
     shot(2, '楼道·楼梯间 中景', '江渝白缓步走上楼梯，楼道回声明显。前方传来一高一低两道女声，镜头顺着声音前移。'),
-    shot(3, '楼道·转角处 近景', '李大妈挡住林听晚，江渝白停在转角探头观看。'),
+    shot(3, '楼道·转角处 近景', '李大妈挡住林听晚，江渝白停在转角探头观看。', '台词\n李大妈：大房东要来人检查，我没法通融，今天交不上就只能搬走。'),
     shot(4, '楼道·正面视角 特写转半身', '江渝白出声，李大妈侧身避让，林听晚完整露出。林听晚杏眼圆睁，满脸惊愕。江渝白瞳孔骤缩。'),
     shot(5, '楼道 双人近景', '李大妈上下打量江渝白。林听晚耳根泛红，眼神躲闪。'),
     shot(6, '楼道 中景', '李大妈看看江渝白，又看看脸红的林听晚，自作了然，语气强硬。'),
@@ -251,8 +251,8 @@ test('explicit storyboard post-checker prevents overcorrection artifacts', async
     shot(12, '室内 双人特写', '江渝白看着一唱一和的两人，表情无奈。随即开口打破尴尬氛围。李大妈眼睛一亮。'),
     shot(13, '室内 半身镜头', '李大妈起身，摆手示意，走向门口。'),
     shot(14, '室内 双人对坐 近景', '屋内只剩两人，气氛尴尬。江渝白转头看向脸色发白的林听晚，率先发问。林听晚身体紧绷。'),
-    shot(15, '室内 女主特写', '林听晚深吸一口气，抬眼看向江渝白，眼神充满戒备与不悦，终于开口出声。音效：少女清亮的嗓音。'),
-    shot(16, '室内 双人镜头', '林听晚语气加重，情绪激动。江渝白满脸茫然。'),
+    shot(15, '室内 女主特写', '林听晚深吸一口气，抬眼看向江渝白，眼神充满戒备与不悦，终于开口出声。音效：少女清亮的嗓音。', '台词\n林听晚：江渝白，你到底想怎么样？\n江渝白（惊讶）：你果然会说话！'),
+    shot(16, '室内 双人镜头', '林听晚语气加重，情绪激动。江渝白满脸茫然。', '台词\n林听晚：你故意安排人来查房租，逼我就范是吗？我知道你平日里行事张扬，没想到会用这种手段！\n江渝白：我安静一下！我只是来收租的！'),
     shot(17, '室内·里屋门缝 特写', '房门发出轻响，镜头切向内侧房门。一颗小脑袋从门缝探出来，女孩和林听晚容貌一模一样。林听晚脸色骤变。', '台词\n林听晚（慌张）：晚晚！别出来！'),
     shot(18, '结尾定格画面 双人+少女 全景', '江渝白瞪大双眼，震惊地看着里屋门口的少女。林听晚又急又慌，挡在前方。三人同框定格，画面弹出文字：双胞胎？秘密才刚刚开始……')
   ].join('\r\n\r\n')
@@ -279,19 +279,54 @@ test('explicit storyboard post-checker prevents overcorrection artifacts', async
     const shotDefinitions = sectionBetween(deliverable, '## STORYBOARD：Shot Definition', '## KEYFRAME_PROMPTS')
     const keyframes = sectionBetween(deliverable, '## KEYFRAME_PROMPTS', '## MOTION_PROMPTS')
     const motion = sectionBetween(deliverable, '## MOTION_PROMPTS', '## 精简分镜')
+    const rootEntries = await readdir(out)
 
     assert.match(shotDefinitions, /### S10[\s\S]*characters_in_frame: 林听晚、李大妈/u)
     assert.doesNotMatch(sectionBetween(shotDefinitions, '### S10', '### S11'), /晚晚/u)
     assert.match(shotDefinitions, /### S10[\s\S]*visual_priority: primary=老式小户型房间的整洁陈设/u)
+    assert.match(shotDefinitions, /### S14[\s\S]*characters_in_frame: 江渝白、林听晚/u)
+    assert.match(shotDefinitions, /### S14[\s\S]*visual_priority: primary=江渝白逼问 \/ 林听晚紧张防御/u)
+    assert.doesNotMatch(sectionBetween(shotDefinitions, '### S14', '### S15'), /林听晚第一次开口/u)
     assert.match(shotDefinitions, /### S15[\s\S]*characters_in_frame: 江渝白、林听晚/u)
     assert.doesNotMatch(sectionBetween(shotDefinitions, '### S15', '### S16'), /晚晚/u)
     assert.match(shotDefinitions, /### S15[\s\S]*visual_priority: primary=林听晚第一次开口的嘴唇微张和戒备眼神/u)
-    assert.equal([...sectionBetween(shotDefinitions, '### S02', '### S03').matchAll(/江渝白抬头看向楼上平台方向，神情被楼上动静吸引/g)].length, 1)
+    assert.equal([...sectionBetween(shotDefinitions, '### S02', '### S03').matchAll(/抬头看向楼上平台方向，神情被楼上动静吸引/g)].length, 1)
+    assert.equal([...sectionBetween(keyframes, '### S12', '### S13').matchAll(/表情无奈/g)].length, 1)
     assert.doesNotMatch(deliverable, /，。|。。|；。/)
     assert.doesNotMatch(deliverable, /。；/)
     assert.doesNotMatch(keyframes, /开口打破尴尬氛围|率先发问|说话|语气|终于开口|声音传来|房门发出轻响|镜头切向|随即|然后/u)
     assert.match(motion, /S04[\s\S]*焦点从李大妈侧身让开的边缘转到林听晚惊愕的脸/u)
     assert.doesNotMatch(sectionBetween(motion, '### S10', '### S11'), /晚晚/u)
+    assert.ok(rootEntries.includes('dialogue-track.md'))
+    assert.ok(rootEntries.includes('subtitle-track.md'))
+    assert.ok(rootEntries.includes('audio-track.md'))
+    assert.ok(rootEntries.includes('video-feed-pack.md'))
+    const dialogueTrack = await readFile(join(out, 'dialogue-track.md'), 'utf8')
+    const subtitleTrack = await readFile(join(out, 'subtitle-track.md'), 'utf8')
+    const videoFeedPack = await readFile(join(out, 'video-feed-pack.md'), 'utf8')
+    assert.match(dialogueTrack, /S17[\s\S]*full_script_dialogue[\s\S]*林听晚（慌张）：晚晚！别出来！/u)
+    assert.match(dialogueTrack, /S16[\s\S]*speaker: 林听晚[\s\S]*dialogue_function: 误会升级[\s\S]*must_keep: true[\s\S]*delivery_note:/u)
+    assert.match(dialogueTrack, /S16[\s\S]*full_script_dialogue[\s\S]*你故意安排人来查房租，逼我就范是吗/u)
+    assert.match(dialogueTrack, /S16[\s\S]*visual_cut_dialogue[\s\S]*林听晚：你故意安排人来查房租，[\s\S]*林听晚：逼我就范是吗？[\s\S]*林听晚：我知道你平日里行事张扬，[\s\S]*林听晚：没想到会用这种手段！[\s\S]*江渝白：我安静一下！[\s\S]*江渝白：我只是来收租的！/u)
+    assert.match(dialogueTrack, /S16[\s\S]*preserve_source_text: true/u)
+    assert.match(subtitleTrack, /S15[\s\S]*subtitle: 林听晚：江渝白，[\s\S]*subtitle: 林听晚：你到底想怎么样？/u)
+    assert.match(subtitleTrack, /S16[\s\S]*subtitle: 林听晚：你故意安排人来查房租，[\s\S]*subtitle: 林听晚：逼我就范是吗？[\s\S]*subtitle: 林听晚：我知道你平日里行事张扬，[\s\S]*subtitle: 林听晚：没想到会用这种手段！[\s\S]*subtitle: 江渝白：我安静一下！[\s\S]*subtitle: 江渝白：我只是来收租的！/u)
+    assert.doesNotMatch(subtitleTrack, /你故意查我房租|想逼我就范|只是来收租！/u)
+    assert.match(subtitleTrack, /S18[\s\S]*ending_hook_text: 双胞胎？秘密才刚刚开始……/u)
+    assert.match(subtitleTrack, /S18[\s\S]*screen_text: 双胞胎？秘密才刚刚开始……/u)
+    assert.deepEqual(
+      [...subtitleTrack.matchAll(/subtitle: (.+)$/gmu)].map((match) => match[1]).filter((line) => [...line].length > 24),
+      []
+    )
+    assert.match(await readFile(join(out, 'audio-track.md'), 'utf8'), /S15[\s\S]*少女清亮的嗓音/u)
+    assert.doesNotMatch(keyframes, /台词/u)
+    assert.match(keyframes, /无文字、无对白气泡、无屏幕字幕/u)
+    assert.match(videoFeedPack, /起始帧（reuse_only）：`storyboard-images\/segment-01-start\.png`/u)
+    assert.match(videoFeedPack, /尾帧（reuse_only）：`storyboard-images\/segment-01-end\.png`/u)
+    assert.match(videoFeedPack, /第 1 段[\s\S]*上传图片/u)
+    assert.match(videoFeedPack, /第 6 段：S16-S18[\s\S]*对白\/配音轨（原文锁定）[\s\S]*S16 full_script_dialogue[\s\S]*林听晚：你故意安排人来查房租，逼我就范是吗？我知道你平日里行事张扬，没想到会用这种手段！[\s\S]*江渝白：我安静一下！我只是来收租的！/u)
+    assert.match(videoFeedPack, /第 6 段：S16-S18[\s\S]*S16 subtitle_track[\s\S]*林听晚：你故意安排人来查房租，[\s\S]*林听晚：逼我就范是吗？[\s\S]*林听晚：我知道你平日里行事张扬，[\s\S]*林听晚：没想到会用这种手段！[\s\S]*江渝白：我安静一下！[\s\S]*江渝白：我只是来收租的！/u)
+    assert.doesNotMatch(videoFeedPack, /你故意查我房租|想逼我就范|我只是来收租！/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

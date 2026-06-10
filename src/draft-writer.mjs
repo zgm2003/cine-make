@@ -1237,6 +1237,28 @@ function extractExplicitDialogue(lines) {
   return dialogue.join(' / ')
 }
 
+function extractExplicitAudio(lines, ...textParts) {
+  const audio = []
+  const explicit = fieldValue(lines, '(?:音效|声音|音频)')
+  if (explicit) audio.push(explicit)
+  for (const part of textParts) {
+    const text = String(part ?? '')
+    for (const match of text.matchAll(/(?:音效|声音|音频)\s*[：:]\s*([^。；;\n]+[。]?)/gu)) {
+      audio.push(match[1].trim())
+    }
+  }
+  return [...new Set(audio.filter(Boolean))].join(' / ')
+}
+
+function extractExplicitScreenText(...textParts) {
+  for (const part of textParts) {
+    const text = String(part ?? '')
+    const match = text.match(/(?:画面弹出文字|字幕|屏幕文字)\s*[：:]\s*([^。\n]+(?:……)?)/u)
+    if (match) return match[1].trim()
+  }
+  return ''
+}
+
 function firstSentence(value) {
   const clean = String(value).replace(/\s+/g, ' ').trim()
   return clean.split(/[。！？!?；;]/u).map((part) => part.trim()).filter(Boolean)[0] ?? clean
@@ -1246,6 +1268,7 @@ function stripOverlayText(value) {
   return String(value)
     .replace(/[，,。；;]?\s*画面弹出文字\s*[：:].*$/u, '')
     .replace(/[，,。；;]?\s*字幕\s*[：:].*$/u, '')
+    .replace(/[，,。；;]?\s*音效\s*[：:].*$/u, '')
     .trim()
 }
 
@@ -1299,9 +1322,9 @@ function explicitCharactersInFrame(text, characters) {
 }
 
 function inferExplicitLighting(scene, style) {
-  if (scene === 'SCENE_01_OLD_BUILDING_EXTERIOR') return `${style}；旧居民楼外景偏暗暖灰，生活化自然光`
-  if (scene === 'SCENE_02_INDOOR_STAIRWELL') return `${style}；封闭式室内楼道昏黄顶灯，不露天，不见天空`
-  if (scene === 'SCENE_03_SMALL_APARTMENT_INTERIOR') return `${style}；室内柔和窗光与暖色生活灯`
+  if (scene === 'SCENE_01_OLD_BUILDING_EXTERIOR') return `${style}；上午白天自然光，旧居民楼外景清楚可见，生活化暖灰，不是夜景`
+  if (scene === 'SCENE_02_INDOOR_STAIRWELL') return `${style}；上午白天楼道自然反射光，顶灯只作弱补光，不露天，不见天空，不是夜景`
+  if (scene === 'SCENE_03_SMALL_APARTMENT_INTERIOR') return `${style}；上午柔和窗光进入室内，暖色生活光只作辅助，不是夜景`
   return `${style}；低饱和暖灰色调，光源方向保持连续`
 }
 
@@ -1332,6 +1355,7 @@ function explicitAudienceTakeaway(index, total, visual) {
 }
 
 function cleanExplicitVisibleMoment(action) {
+  const original = String(action)
   let cleaned = stripOverlayText(action)
     .replace(/楼道回声明显[。；;，,]*/gu, '')
     .replace(/镜头顺着声音前移[。；;，,]*/gu, '江渝白抬头看向楼上平台方向，神情被楼上动静吸引。')
@@ -1351,8 +1375,12 @@ function cleanExplicitVisibleMoment(action) {
 
   if (/李大妈率先推门走进屋内[\s\S]*林听晚欲言又止[\s\S]*江渝白迟疑/u.test(cleaned)) {
     cleaned = '入户门半开，李大妈已经站在门内侧回头催促；林听晚站在门口低头犹豫，江渝白落后半步站在楼道里，三人形成前后层次。'
+  } else if (/江渝白[\s\S]*站在楼下[\s\S]*抬头望楼|江渝白[\s\S]*抬头望楼/u.test(cleaned)) {
+    cleaned = '江渝白半侧身站在老居民楼单元门前台阶旁，一手拿折起的租户名单确认地址，另一手自然垂下；他微微抬眼看向单元门牌和楼上方向，像刚到楼下准备进门收租。'
   } else if (/拿起水壶|泡茶|使眼色/u.test(cleaned) && /李大妈|林听晚|江渝白/u.test(cleaned)) {
     cleaned = '李大妈手持水壶停在桌边，眼神斜向林听晚；林听晚低头不动，江渝白坐在一侧观察。'
+  } else if (/率先发问|屋内只剩两人|身体紧绷/u.test(original) && /江渝白/u.test(original) && /林听晚/u.test(original)) {
+    cleaned = '江渝白身体微微前倾，目光直视林听晚，像在逼问；林听晚肩颈紧绷，双手收紧，防御地避开视线。'
   } else if (/深吸一口气|嘴唇微张|到底想怎么样/u.test(cleaned) && /林听晚/u.test(cleaned)) {
     cleaned = '林听晚嘴唇微张，眼神戒备地看向江渝白；江渝白在对面露出惊讶。'
   } else if (/故意安排人|逼我就范|只是来收租/u.test(cleaned)) {
@@ -1374,6 +1402,28 @@ function removeRepeatedPhrase(value, phrase) {
   return `${before}${after}`
 }
 
+function sentenceDedupeCore(value) {
+  return String(value)
+    .replace(/^(江渝白|林听晚|李大妈|晚晚)/u, '')
+    .replace(/[，,。；;！？!?、\s]/gu, '')
+}
+
+function removeAdjacentDuplicateSentences(value) {
+  const parts = String(value).match(/[^。！？!?；;]+[。！？!?；;]?/gu) ?? [String(value)]
+  const kept = []
+  for (const part of parts) {
+    const sentence = part.trim()
+    if (!sentence) continue
+    const core = sentenceDedupeCore(sentence)
+    const previous = kept.length ? sentenceDedupeCore(kept[kept.length - 1]) : ''
+    const isDuplicate = core.length >= 8 && previous.length >= 8 && (
+      core === previous || previous.includes(core) || core.includes(previous)
+    )
+    if (!isDuplicate) kept.push(sentence)
+  }
+  return kept.join('')
+}
+
 function cleanupExplicitPunctuation(value) {
   return String(value)
     .replace(/江渝白缓步走上楼梯，江渝白抬头/u, '江渝白缓步走上楼梯，抬头')
@@ -1383,6 +1433,7 @@ function cleanupExplicitPunctuation(value) {
     .replace(/；\s*。/gu, '。')
     .replace(/。\s*。+/gu, '。')
     .replace(/；\s*；+/gu, '；')
+    .replace(/[，,]\s*[，,]+/gu, '，')
     .replace(/[，,；;]\s*$/u, '')
     .replace(/\s+/g, ' ')
     .trim()
@@ -1395,6 +1446,8 @@ function stripTrailingExplicitPunctuation(value) {
 function postCleanExplicitVisibleMoment(value) {
   let cleaned = cleanupExplicitPunctuation(value)
   cleaned = removeRepeatedPhrase(cleaned, '江渝白抬头看向楼上平台方向，神情被楼上动静吸引')
+  cleaned = removeAdjacentDuplicateSentences(cleaned)
+  cleaned = removeRepeatedPhrase(cleaned, '表情无奈')
   cleaned = cleanupExplicitPunctuation(cleaned)
   return cleaned
 }
@@ -1402,6 +1455,10 @@ function postCleanExplicitVisibleMoment(value) {
 function explicitPrimaryVisual(action) {
   if (/(晚晚|小脑袋|三人同框|容貌一致|双胞胎|里屋门口[^。；\n]*少女|门缝[^。；\n]*少女)/u.test(action)) return '里屋门口出现的晚晚'
   if (/老式小户型房间|陈设简单|一尘不染/u.test(action)) return '老式小户型房间的整洁陈设'
+  if (/确认地址|单元门牌|准备进门收租/u.test(action)) return '江渝白到达楼下确认地址'
+  if (/抬头看向楼上平台方向|楼上动静吸引/u.test(action)) return '江渝白被楼上动静吸引'
+  if (/一唱一和|准备打断对话/u.test(action) && /江渝白/u.test(action)) return '江渝白准备打断对话'
+  if (/逼问|身体微微前倾|防御地避开视线|肩颈紧绷/u.test(action) && /江渝白/u.test(action) && /林听晚/u.test(action)) return '江渝白逼问 / 林听晚紧张防御'
   if (/林听晚[^。；]*嘴唇微张|第一次开口/u.test(action)) return '林听晚第一次开口的嘴唇微张和戒备眼神'
   if (/李大妈.*挡住|挡在/u.test(action)) return '李大妈挡住林听晚'
   if (/林听晚.*完整露出|哑巴|说话/u.test(action)) return '林听晚被江渝白看见'
@@ -1411,7 +1468,7 @@ function explicitPrimaryVisual(action) {
 
 function composeExplicitImagePrompt({ contract, shot, characters }) {
   const visibleCharacters = shot.characters?.length ? shot.characters.join('、') : '无人物或按画面需要'
-  const secondary = shot.dialogue_or_voiceover ? `台词只作表演参考，不生成字幕` : `保持${shot.scene}空间连续`
+  const secondary = `无文字、无对白气泡、无屏幕字幕`
   const primary = explicitPrimaryVisual(shot.action)
   return [
     `【关键帧】镜头：${shot.shot_id}`,
@@ -1421,7 +1478,7 @@ function composeExplicitImagePrompt({ contract, shot, characters }) {
     `画面：${shot.action}`,
     `构图：primary=${primary}; secondary=${secondary}; background=${shot.scene}的光线和方位连续`,
     `光线：${shot.lighting}`,
-    `限制：只画当前瞬间，不解释剧情，不新增角色，不新增多余道具，不生成字幕，不要切换成照片质感`
+    `限制：只画当前瞬间，不解释剧情，不新增角色，不新增多余道具，无文字、无对白气泡、无屏幕字幕，不要切换成照片质感`
   ].map(stripTrailingExplicitPunctuation).join('。')
 }
 
@@ -1452,6 +1509,15 @@ function composeExplicitMotionPrompt(shot) {
   return `${shot.duration_seconds}s. ${shot.camera_movement}. ${action}. ${hold}Micro-performance: ${explicitPerformanceCue(shot.action)}. No cut, no new action, no face change.`
 }
 
+function explicitBlockingForAction(action, visibleCharacters, scene) {
+  if (/确认地址|单元门牌|准备进门收租/u.test(action) && /江渝白/u.test(action)) {
+    return '江渝白站在单元门前台阶旁，身体半侧向单元门；折起的租户名单靠近胸前，视线抬向门牌，远离道路中央。'
+  }
+  return visibleCharacters.length
+    ? `${visibleCharacters.join('、')}按原分镜站位；只保留当前瞬间的姿态和距离关系`
+    : `按原分镜保持空间结构和道具位置`
+}
+
 function composeExplicitStoryboardAssets(contract) {
   const characters = parseExplicitCharacters(contract.sourceText, contract.target.style)
   const blocks = parseExplicitStoryboardBlocks(contract.sourceText)
@@ -1466,6 +1532,8 @@ function composeExplicitStoryboardAssets(contract) {
     const shotSize = inferShotSizeFromHeading(heading)
     const cameraMovement = inferCameraMovement(heading, visual, index, blocks.length)
     const dialogue = extractExplicitDialogue(block.lines)
+    const audio = extractExplicitAudio(block.lines, visual, detail)
+    const screenText = extractExplicitScreenText(visual, detail)
     const textForCharacters = `${heading}\n${visual}\n${detail}\n${dialogue}\n${action}`
     const visibleCharacters = explicitCharactersInFrame(textForCharacters, characters)
     const shot = {
@@ -1480,11 +1548,11 @@ function composeExplicitStoryboardAssets(contract) {
       lens: inferLensFromShotSize(shotSize),
       camera_movement: cameraMovement,
       composition: `primary=${explicitPrimaryVisual(action)}; secondary=${visibleCharacters.join('、') || '环境'}; background=${scene}空间连续`,
-      blocking: visibleCharacters.length
-        ? `${visibleCharacters.join('、')}按原分镜站位；只保留当前瞬间的姿态和距离关系`
-        : '按原分镜保持空间结构和道具位置',
+      blocking: explicitBlockingForAction(action, visibleCharacters, scene),
       lighting: inferExplicitLighting(scene, contract.target.style),
       dialogue_or_voiceover: dialogue,
+      audio_or_sfx: audio,
+      screen_text: screenText,
       continuity_from_previous: index === 0 ? 'opening shot' : `延续 ${shotId(index - 1)} 的角色脸、服装、楼道/室内方位和光线方向`,
       source_heading: heading
     }
