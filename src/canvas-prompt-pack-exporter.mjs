@@ -962,21 +962,30 @@ function composeStyleReferencePrompt({ contract, environment }) {
 }
 
 function composeCharacterReferencePrompt({ character, contract }) {
-  if (character.prompt?.trim()) return character.prompt.trim()
-
   if (isIllustratedStyle(contract)) {
     return [
       `【角色参考图】角色：${character.name}`,
       `风格：${contract.target.style}`,
-      '画面：单人半身或全身，干净浅色背景，正面为主，可附小比例三视图，角色身份清楚。',
+      '画面为国漫角色设定图 / character sheet，干净白底或浅灰底，满版构图，不留顶部空白，不要大面积空白边框。',
+      '版式必须固定：左侧从左上区域开始生成高清正面人脸半身大图，占据左边画面约2/3大小；如果没有清晰人脸，就用角色本身的形象大图占据左侧2/3。人物头顶接近画面上边缘但不裁切，脸型、发型、眼睛、服装材质和核心识别点清楚。',
+      '右侧生成角色正面、侧面、背面三视小图，也就是三视图全身设定图；三视小图从上到下或竖向整齐排列，比例一致，显示完整身形、发型轮廓、服装正侧背结构。',
+      '文字标注：只显示角色名称和身高，不显示年龄，不显示多余设定说明；名称和身高放在右侧三视图旁或底部小标注区，清晰可读但不要变成海报标题。',
+      '如果剧本未提供身高，请根据角色身份设定合理身高，并在图中显示“身高”标注。',
       character.identity ? `身份：${character.identity}` : '',
       character.appearance ? `外观：${character.appearance}。` : '',
       character.costume ? `服装：${character.costume}。` : '',
       character.expression ? `表情基准：${character.expression}。` : '',
+      character.props?.length ? `核心道具：${character.props.join('；')}。` : '',
+      '',
+      `角色名称：${character.name}`,
+      character.height ? `身高：${character.height}` : '身高：未指定，请按角色年龄与身份合理设定并在图中标注。',
       '连续性：后续所有镜头保持脸型、发型、身形、服装稳定。',
-      '禁止：不要加入剧情动作，不要加入其他角色，不要复杂背景，不要照片质感，不要对白气泡。'
+      '国漫现实主义，电影式构图，干净线稿，细腻光影，低饱和暖灰色调，character turnaround, front view, side view, back view, left large portrait half-body occupying about two thirds of the image, right small tri-view full-body, show name and height only, no age text.',
+      '负面：不要加入剧情动作，不要加入其他角色，不要复杂背景，不要对白气泡，不要水印，不要logo，不要海报排版，不要真实照片皮肤质感，不要真实毛孔特写，不要把三视图省略成单人立绘。'
     ].filter(Boolean).join('\n')
   }
+
+  if (character.prompt?.trim()) return character.prompt.trim()
 
   return [
     '真人电影角色定妆照，写实摄影风格，白色或浅灰摄影棚背景，满版构图，不留顶部空白，不要大面积空白边框，4K超高画质，心理惊悚电影氛围，电影级低调布光，真实人类面部比例，真实皮肤纹理，毛孔细节，眼袋，细微皱纹，自然发丝，真实服装材质，复杂服装刺绣、褶皱、湿痕和材质细节，非插画，非漫画，非CG。',

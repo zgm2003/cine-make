@@ -302,6 +302,17 @@ test('explicit guoman storyboard Canvas packs keep mother scenes and illustrated
     assert.doesNotMatch(JSON.stringify(foundationManifest), /入口处略暗|昏黄楼道|偏暗暖灰|旧居民楼外景偏暗/u)
     assert.doesNotMatch(JSON.stringify(foundationManifest), /孤岛别墅|暴雨夜|photoreal|live-action|真人电影/iu)
 
+    const characterRef = foundationManifest.nodes.find((node) => node.id === 'character-ref-jiang-yubai')
+    assert.ok(characterRef)
+    assert.match(characterRef.prompt, /左侧从左上区域开始生成高清正面人脸半身大图/u)
+    assert.match(characterRef.prompt, /占据左边画面约2\/3大小/u)
+    assert.match(characterRef.prompt, /如果没有清晰人脸，就用角色本身的形象大图/u)
+    assert.match(characterRef.prompt, /右侧生成角色正面、侧面、背面三视小图/u)
+    assert.match(characterRef.prompt, /角色名称：江渝白/u)
+    assert.match(characterRef.prompt, /身高/u)
+    assert.match(characterRef.prompt, /只显示角色名称和身高，不显示年龄/u)
+    assert.doesNotMatch(characterRef.prompt, /照片质感|真实皮肤毛孔|photorealistic|live action/iu)
+
     const keyframes = storyboardManifest.nodes.filter((node) => node.role === 'keyframe')
     assert.equal(keyframes.length, 4)
     assert.equal(
