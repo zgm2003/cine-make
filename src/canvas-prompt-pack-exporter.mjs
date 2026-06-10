@@ -91,6 +91,17 @@ export async function exportCanvasStoryboardPack({ outDir, contract } = {}) {
   return writeCanvasPackage({ outDir, manifest })
 }
 
+export async function exportCanvasFullPack({ outDir, contract } = {}) {
+  if (!outDir) throw new Error('canvas full pack requires outDir')
+  if (!contract) throw new Error('canvas full pack requires contract')
+
+  await mkdir(outDir, { recursive: true })
+
+  const draft = composeDraftAssets(contract)
+  const manifest = buildCanvasFullPackManifest({ contract, draft })
+  return writeCanvasPackage({ outDir, manifest })
+}
+
 async function writeCanvasPackage({ outDir, manifest }) {
   const canvasExport = buildCanvasExport(manifest)
   const promptPack = composePromptPackMarkdown(manifest)
@@ -305,6 +316,104 @@ function buildCanvasStoryboardPackManifest({ contract, draft }) {
     nodes,
     connections
   }
+}
+
+function buildCanvasFullPackManifest({ contract, draft }) {
+  const foundation = buildCanvasPromptPackManifest({ contract, draft })
+  const storyboard = buildCanvasStoryboardPackManifest({ contract, draft })
+  const nodes = []
+  const connections = []
+  const seenNodeIds = new Set()
+
+  for (const node of foundation.nodes) {
+    if (seenNodeIds.has(node.id)) continue
+    seenNodeIds.add(node.id)
+    nodes.push({ ...node })
+  }
+
+  for (const node of storyboard.nodes) {
+    if (seenNodeIds.has(node.id)) continue
+    seenNodeIds.add(node.id)
+    nodes.push(repositionStoryboardNodeForFullCanvas(node))
+  }
+
+  for (const connection of foundation.connections ?? []) {
+    connect(connections, connection.fromNodeId, connection.toNodeId, connection.role)
+  }
+
+  addFullCanvasKeyframeConnections({ nodes, connections })
+
+  return {
+    schemaVersion: 1,
+    kind: 'cine-make-canvas-full-pack',
+    packageType: 'manual_canvas_full_generation',
+    createdAt: new Date().toISOString(),
+    source: foundation.source,
+    target: foundation.target,
+    manualWorkflow: [
+      '导入 canvas-project.zip。',
+      '这是全量 Canvas 工程：左侧为风格、人设、场景基础资产，右侧为 Shot List 与 Keyframe 分镜链。',
+      '先生成并锁定整体风格参考图、角色参考图和场景参考图。',
+      'Keyframe 节点已经通过实线连接到所需风格/人物/场景参考图，并按 S01 → S02 → S03 的故事顺序串联。',
+      '再按分镜链路从 S01 开始逐个生成关键帧；最后复制 prompt-pack.md 里的 Motion Prompt / 视频提示词到即梦生成视频段。'
+    ],
+    outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
+    nodes,
+    connections
+  }
+}
+
+function repositionStoryboardNodeForFullCanvas(node) {
+  const clone = { ...node, position: { ...node.position } }
+  if (clone.role === 'shot_list') {
+    clone.position = {
+      x: 2 * GAP_X,
+      y: 0
+    }
+    return clone
+  }
+  if (clone.role === 'keyframe') {
+    clone.position = {
+      x: 3 * GAP_X,
+      y: clone.position.y
+    }
+  }
+  return clone
+}
+
+function addFullCanvasKeyframeConnections({ nodes, connections }) {
+  const nodeIds = new Set(nodes.map((node) => node.id))
+  const keyframes = nodes
+    .filter((node) => node.role === 'keyframe')
+    .sort(compareKeyframeNodes)
+
+  if (keyframes[0]) connect(connections, 'shot-list', keyframes[0].id, 'story_flow')
+
+  for (let index = 0; index < keyframes.length; index += 1) {
+    const keyframe = keyframes[index]
+    for (const anchor of keyframe.requiredAnchors ?? []) {
+      if (!nodeIds.has(anchor.anchorId)) continue
+      connect(connections, anchor.anchorId, keyframe.id, anchorConnectionRole(anchor))
+    }
+    const next = keyframes[index + 1]
+    if (next) connect(connections, keyframe.id, next.id, 'story_flow')
+  }
+}
+
+function compareKeyframeNodes(left, right) {
+  return keyframeOrder(left.id) - keyframeOrder(right.id)
+}
+
+function keyframeOrder(id) {
+  const match = String(id).match(/keyframe-s(\d+)/u)
+  return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER
+}
+
+function anchorConnectionRole(anchor) {
+  if (anchor.anchorRole === 'style_reference') return 'style_anchor'
+  if (anchor.anchorRole === 'environment_reference') return 'environment_anchor'
+  if (anchor.anchorRole === 'character_reference') return 'character_anchor'
+  return 'visual_anchor'
 }
 
 function normalizeCharacters(characters = []) {

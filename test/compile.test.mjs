@@ -129,3 +129,52 @@ test('cli writes a manual Canvas storyboard append pack without foundation nodes
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('cli writes a full Canvas pack with reference-to-keyframe and storyboard-flow connections', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-full-pack-cli-'))
+  const input = join(out, 'script.txt')
+  try {
+    await writeFile(input, `AI漫剧剧本：收租偶遇同班哑巴校花
+人物
+- 江渝白：男主，高中生
+- 林听晚：女主，同班校花，对外装作哑巴
+- 李大妈：二房东
+- 晚晚：和林听晚容貌一致的少女
+
+【分镜1】外景·老旧居民楼 全景
+时长：3s
+画面：江渝白站在楼下，抬头望楼。
+
+【分镜2】楼道·楼梯间 中景
+时长：4s
+画面：江渝白缓步走上楼梯，前方传来一高一低两道女声。
+
+【分镜3】结尾定格画面 双人+少女 全景
+时长：5s
+画面：江渝白震惊地看着里屋门口的少女。林听晚挡在前方，晚晚从门口探出。`, 'utf8')
+
+    const result = spawnSync(process.execPath, ['src/cli.mjs', 'canvas-full-pack', '--input', input, '--out', out, '--aspect', '9:16', '--style', '国漫现实主义风格'], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.ok(existsSync(join(out, 'canvas-project.zip')))
+    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
+    const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
+    assert.equal(manifest.kind, 'cine-make-canvas-full-pack')
+    assert.equal(manifest.packageType, 'manual_canvas_full_generation')
+    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), true)
+    assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), true)
+    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'shot-list' && connection.toNodeId === 'keyframe-s01'), true)
+    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'keyframe-s01' && connection.toNodeId === 'keyframe-s02'), true)
+    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'style-reference' && connection.toNodeId === 'keyframe-s01'), true)
+    assert.match(result.stdout, /full Canvas generation/i)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})

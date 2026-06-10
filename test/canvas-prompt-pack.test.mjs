@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createInputContract, parseArgs } from '../src/input-contract.mjs'
-import { exportCanvasPromptPack, exportCanvasStoryboardPack } from '../src/canvas-prompt-pack-exporter.mjs'
+import { exportCanvasPromptPack, exportCanvasStoryboardPack, exportCanvasFullPack } from '../src/canvas-prompt-pack-exporter.mjs'
 
 const isolatedMansionScript = `漫剧概念设定：《孤岛碎忆》
 
@@ -340,6 +340,49 @@ test('explicit guoman storyboard Canvas packs keep mother scenes and illustrated
   } finally {
     await rm(foundationOut, { recursive: true, force: true })
     await rm(storyboardOut, { recursive: true, force: true })
+  }
+})
+
+test('full Canvas pack wires locked references into keyframes and chains storyboard order', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-full-pack-'))
+  try {
+    const contract = await createInputContract(parseArgs([
+      '--aspect',
+      '9:16',
+      '--style',
+      '国漫现实主义风格，电影式构图，低饱和暖灰色调，干净线稿，细腻光影',
+      explicitGuomanStoryboard
+    ]))
+    const result = await exportCanvasFullPack({ outDir: out, contract })
+
+    const manifest = JSON.parse(await readFile(result.manifestPath, 'utf8'))
+    assert.equal(manifest.kind, 'cine-make-canvas-full-pack')
+    assert.equal(manifest.packageType, 'manual_canvas_full_generation')
+
+    const keyframes = manifest.nodes.filter((node) => node.role === 'keyframe')
+    assert.equal(keyframes.length, 4)
+    assertConnection(manifest.connections, 'shot-list', 'keyframe-s01')
+    assertConnection(manifest.connections, 'keyframe-s01', 'keyframe-s02')
+    assertConnection(manifest.connections, 'keyframe-s02', 'keyframe-s03')
+    assertConnection(manifest.connections, 'keyframe-s03', 'keyframe-s04')
+    assertConnection(manifest.connections, 'style-reference', 'keyframe-s01')
+    assertConnection(manifest.connections, 'environment-ref-old-building-exterior', 'keyframe-s01')
+    assertConnection(manifest.connections, 'character-ref-jiang-yubai', 'keyframe-s01')
+    assertConnection(manifest.connections, 'environment-ref-small-apartment-interior', 'keyframe-s04')
+    assertConnection(manifest.connections, 'character-ref-lin-tingwan', 'keyframe-s04')
+    assertConnection(manifest.connections, 'character-ref-wanwan', 'keyframe-s04')
+
+    const projectsJson = await readProjectsJsonFromZip(result.zipPath)
+    const project = projectsJson.projects[0].project
+    assertConnection(project.connections, 'shot-list', 'keyframe-s01')
+    assertConnection(project.connections, 'keyframe-s01', 'keyframe-s02')
+    assertConnection(project.connections, 'keyframe-s02', 'keyframe-s03')
+    assertConnection(project.connections, 'keyframe-s03', 'keyframe-s04')
+    assertConnection(project.connections, 'style-reference', 'keyframe-s01')
+    assertConnection(project.connections, 'environment-ref-small-apartment-interior', 'keyframe-s04')
+    assertConnection(project.connections, 'character-ref-wanwan', 'keyframe-s04')
+  } finally {
+    await rm(out, { recursive: true, force: true })
   }
 })
 
