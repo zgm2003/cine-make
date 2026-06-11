@@ -46,6 +46,8 @@
 node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"
 ```
 
+`reference-feed` 的默认画幅是 `16:9`。这只影响新命令，不改变旧 `draft` / `visual` / `canvas-pack` 的默认画幅。
+
 默认输出：
 
 ```text
@@ -121,6 +123,15 @@ prop-ref-*               生成：道具参考图（可选）
 voice-bible              资料：音色说明（非生成，可选）
 ```
 
+所有可生成图片节点默认：
+
+```text
+imageSize: 16:9
+count: 3
+```
+
+原因：用户需要一次生成三张候选图挑选并锁定；不要默认只出一张，避免反复手动点生成。
+
 不包含：
 
 ```text
@@ -144,6 +155,7 @@ type ReferenceFeedAsset = {
   bible: string
   prompt?: string
   imageSize?: '9:16' | '16:9' | '1:1'
+  count?: number
 }
 
 type ReferenceFeedItem = {

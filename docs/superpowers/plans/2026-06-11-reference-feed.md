@@ -48,7 +48,7 @@ const snowMountainSource = `1.雪山(棚拍雪山场景)日外八画面:雪山�
 test('extracts concrete reference assets without placeholder labels', () => {
   const pack = buildReferenceFeedPackage({
     sourceText: snowMountainSource,
-    aspectRatio: '9:16',
+    aspectRatio: '16:9',
     style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色'
   })
 
@@ -70,7 +70,7 @@ test('extracts concrete reference assets without placeholder labels', () => {
 test('emits video items without storyboard control language', () => {
   const pack = buildReferenceFeedPackage({
     sourceText: snowMountainSource,
-    aspectRatio: '9:16',
+    aspectRatio: '16:9',
     style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色'
   })
 
@@ -115,7 +115,7 @@ Use this structure:
 ```js
 const DEFAULT_REFERENCE_STYLE = '国服水墨画风格，3D古风质感，冷蓝灰雪山，宣纸肌理，墨色风雪，少量朱砂血色'
 
-export function buildReferenceFeedPackage({ sourceText = '', aspectRatio = '9:16', style = DEFAULT_REFERENCE_STYLE, title } = {}) {
+export function buildReferenceFeedPackage({ sourceText = '', aspectRatio = '16:9', style = DEFAULT_REFERENCE_STYLE, title } = {}) {
   const normalizedSource = normalizeText(sourceText)
   const assets = inferReferenceAssets(normalizedSource, style)
   const items = inferReferenceItems(normalizedSource, style)
@@ -156,7 +156,7 @@ function inferReferenceAssets(sourceText, style) {
 }
 
 function sceneAsset(id, label, prompt) {
-  return { id, label, kind: 'scene', imageSize: '9:16', bible: label, prompt }
+  return { id, label, kind: 'scene', imageSize: '16:9', bible: label, prompt }
 }
 
 function characterAsset(id, label, prompt) {
@@ -230,7 +230,7 @@ Append to `test/reference-feed.test.mjs`:
 import { composeReferenceFeedMarkdown, composeReferenceFeedReadme, composeReferencePromptPackMarkdown } from '../src/reference-feed-writer.mjs'
 
 test('renders reference-feed markdown without meta continuation language', () => {
-  const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '9:16', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
+  const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '16:9', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
   const markdown = composeReferenceFeedMarkdown(pack)
 
   assert.match(markdown, /# Reference Feed｜雪山之巅：道清与麒麟幼兽/u)
@@ -243,7 +243,7 @@ test('renders reference-feed markdown without meta continuation language', () =>
 })
 
 test('renders support markdown for reference generation order only', () => {
-  const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '9:16', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
+  const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '16:9', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
   const text = `${composeReferencePromptPackMarkdown(pack)}\n${composeReferenceFeedReadme(pack)}`
 
   assert.match(text, /先生成并锁定基础参考图/u)
@@ -299,7 +299,7 @@ export function composeReferencePromptPackMarkdown(pack) {
     '',
     '## 要生成的参考图',
     '',
-    ...pack.assets.map((asset) => `- ${asset.slot}｜${asset.label}｜${asset.kind}｜${asset.imageSize || '9:16'}`),
+    ...pack.assets.map((asset) => `- ${asset.slot}｜${asset.label}｜${asset.kind}｜${asset.imageSize || '16:9'}`),
     '',
     '## 不要生成',
     '',
@@ -366,7 +366,7 @@ import { exportReferenceFeedPackage } from '../src/reference-feed-canvas-exporte
 test('exports foundation-only Canvas graph and feed files', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-reference-feed-'))
   try {
-    const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '9:16', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
+    const pack = buildReferenceFeedPackage({ sourceText: snowMountainSource, aspectRatio: '16:9', style: '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色' })
     const result = await exportReferenceFeedPackage({ outDir: out, pack })
 
     assert.equal(existsSync(result.referenceFeedPath), true)
@@ -381,6 +381,8 @@ test('exports foundation-only Canvas graph and feed files', async () => {
     assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), false)
     assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), false)
     assert.doesNotMatch(JSON.stringify(manifest), /main subject|lost figure|liminal location/i)
+    assert.equal(manifest.target.aspectRatio, '16:9')
+    assert.equal(manifest.nodes.filter((node) => node.canvasType === 'image').every((node) => node.count === 3), true)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
@@ -440,7 +442,7 @@ function buildReferenceCanvasManifest(pack) {
   const createdAt = new Date().toISOString()
   const nodes = [
     textNode('style-bible', 'style_bible', '资料：整体风格设定（非生成）', 0, pack.style),
-    imageNode('style-reference', 'style_reference', '生成：整体风格参考图', 0, `整体风格参考图，${pack.style}。不要具体剧情动作。`, '9:16', ['style-bible'])
+    imageNode('style-reference', 'style_reference', '生成：整体风格参考图', 0, `整体风格参考图，${pack.style}。不要具体剧情动作。`, '16:9', ['style-bible'])
   ]
   const connections = [connection('style-bible', 'style-reference', 'style_rules')]
 
@@ -449,7 +451,7 @@ function buildReferenceCanvasManifest(pack) {
     const bibleId = `${asset.id}-bible`
     const refId = `${asset.id}-reference`
     nodes.push(textNode(bibleId, `${asset.kind}_bible`, `资料：${asset.label}（非生成）`, row, `${asset.bible}\n参考槽位：${asset.slot}`))
-    nodes.push(imageNode(refId, `${asset.kind}_reference`, `生成：${asset.label}`, row, asset.prompt, asset.imageSize || '9:16', [bibleId, 'style-reference']))
+    nodes.push(imageNode(refId, `${asset.kind}_reference`, `生成：${asset.label}`, row, asset.prompt, asset.imageSize || '16:9', [bibleId, 'style-reference']))
     connections.push(connection(bibleId, refId, `${asset.kind}_bible`))
     connections.push(connection('style-reference', refId, 'style_anchor'))
   })
@@ -472,7 +474,7 @@ function textNode(id, role, title, row, content) {
 }
 
 function imageNode(id, role, title, row, prompt, imageSize, inputOrder) {
-  return { id, role, canvasType: 'image', title, position: { x: 420, y: row * ROW_HEIGHT }, width: imageSize === '16:9' ? 460 : 320, height: imageSize === '16:9' ? 280 : 440, prompt, imageSize, inputOrder }
+  return { id, role, canvasType: 'image', title, position: { x: 420, y: row * ROW_HEIGHT }, width: imageSize === '16:9' ? 460 : 320, height: imageSize === '16:9' ? 280 : 440, prompt, imageSize, inputOrder, count: 3 }
 }
 
 function buildCanvasExport(manifest) {
@@ -485,7 +487,7 @@ function buildCanvasExport(manifest) {
 }
 
 function toProjectNode(node) {
-  return { id: node.id, type: node.canvasType === 'image' ? 'image' : 'text', title: node.title, position: node.position, width: node.width, height: node.height, metadata: node.canvasType === 'image' ? { content: '', prompt: node.prompt, status: 'idle', generationMode: 'image', generationType: 'generation', size: node.imageSize, quality: 'auto', count: 1, inputOrder: node.inputOrder } : { content: node.content, status: 'success', generationMode: 'text', fontSize: 14 } }
+  return { id: node.id, type: node.canvasType === 'image' ? 'image' : 'text', title: node.title, position: node.position, width: node.width, height: node.height, metadata: node.canvasType === 'image' ? { content: '', prompt: node.prompt, status: 'idle', generationMode: 'image', generationType: 'generation', size: node.imageSize, quality: 'auto', count: node.count, inputOrder: node.inputOrder } : { content: node.content, status: 'success', generationMode: 'text', fontSize: 14 } }
 }
 
 function connection(fromNodeId, toNodeId, role) {
@@ -521,7 +523,7 @@ test('cli writes a reference-feed package without storyboard or keyframe artifac
   const input = join(out, 'snow.txt')
   try {
     await writeFile(input, `雪山之巅，老年道清抱着虚弱的麒麟幼兽在风雪中前行。道清倒地，麒麟舔舐他的面颊。道清说老伙计对不住了。麒麟倒在他身边，一人一兽长眠雪中，化作星光，云彩转场到废墟大全景。`, 'utf8')
-    const result = spawnSync(process.execPath, ['src/cli.mjs', 'reference-feed', '--input', input, '--out', out, '--aspect', '9:16', '--style', '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色'], { cwd: root, encoding: 'utf8' })
+    const result = spawnSync(process.execPath, ['src/cli.mjs', 'reference-feed', '--input', input, '--out', out, '--style', '国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色'], { cwd: root, encoding: 'utf8' })
 
     assert.equal(result.status, 0, result.stderr)
     assert.ok(existsSync(join(out, 'reference-feed.md')))
@@ -536,6 +538,8 @@ test('cli writes a reference-feed package without storyboard or keyframe artifac
     assert.doesNotMatch(feed, /承接上一段|不要重置画面|S01|segment|keyframe|main subject|lost figure|liminal location/iu)
     const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
     assert.equal(manifest.kind, 'cine-make-reference-feed-pack')
+    assert.equal(manifest.target.aspectRatio, '16:9')
+    assert.equal(manifest.nodes.filter((node) => node.canvasType === 'image').every((node) => node.count === 3), true)
     assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), false)
     assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), false)
     assert.match(result.stdout, /Reference Feed ready/i)
@@ -567,14 +571,14 @@ import { exportReferenceFeedPackage } from './reference-feed-canvas-exporter.mjs
 Add after the `canvas-pack` usage line:
 
 ```js
-'  node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
+'  node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>]（默认 16:9） [--style <style>] "<story material>"',
 ```
 
 - [ ] **Step 5: Add command helper in `src/cli.mjs` before `main()`**
 
 ```js
 async function exportReferenceFeedCommand(args, cineMakeRoot) {
-  const options = parseArgs(['make', ...args])
+  const options = parseArgs(['make', '--aspect', '16:9', ...args])
   const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
   const contract = await createInputContract(options)
   const pack = buildReferenceFeedPackage({
@@ -636,7 +640,7 @@ Expected: all tests pass.
 ```powershell
 $sample = Join-Path $PWD '.cine-make-runs\reference-feed-smoke'
 if (Test-Path $sample) { Remove-Item -Recurse -Force $sample }
-node src/cli.mjs reference-feed --out $sample --aspect 9:16 --style "国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色" "雪山之巅，老年道清抱着虚弱的麒麟幼兽在风雪中前行。道清倒地，麒麟舔舐他的面颊。道清说老伙计对不住了。麒麟倒在他身边，一人一兽长眠雪中，化作星光，云彩转场到废墟大全景。"
+node src/cli.mjs reference-feed --out $sample --style "国服水墨画风格，冷蓝灰雪山，宣纸肌理，少量朱砂血色" "雪山之巅，老年道清抱着虚弱的麒麟幼兽在风雪中前行。道清倒地，麒麟舔舐他的面颊。道清说老伙计对不住了。麒麟倒在他身边，一人一兽长眠雪中，化作星光，云彩转场到废墟大全景。"
 ```
 
 Expected stdout includes:
@@ -703,4 +707,6 @@ Type consistency:
 - `ReferenceFeedAsset`: `id`, `label`, `kind`, `slot`, `bible`, `prompt`, `imageSize`.
 - `ReferenceFeedItem`: `index`, `scene`, `action`, `camera`, `style`, `sound`.
 - `ReferenceFeedPackage`: `title`, `aspectRatio`, `style`, `assets`, `items`, `footer`.
+- `reference-feed` defaults to `16:9`; generated Canvas image nodes default to `count: 3`.
+
 
