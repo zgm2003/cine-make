@@ -365,7 +365,7 @@ test('cultivation transmigration draft keeps Qijin, cultivation fortunes, and pi
   assert.match(draft.shotlist.at(-1).action, /掉头追丹|最近筑基丹|路线箭头/)
 })
 
-test('cli --draft writes a production-valid run', async () => {
+test('cli --draft is removed from the user-facing path', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-draft-'))
   try {
     const result = spawnSync(process.execPath, ['src/cli.mjs', '--draft', '--out', out, '--duration', '30s', '--aspect', '9:16', '--style', 'cinematic deep-sea mystery', '--platform', 'jimeng', source], {
@@ -373,22 +373,14 @@ test('cli --draft writes a production-valid run', async () => {
       encoding: 'utf8'
     })
 
-    assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'deliverable.md')))
-    assert.ok(existsSync(join(out, 'storyboard-images', 'README.md')))
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /draft\/visual.*removed.*seedance-pack/u)
+    assert.equal(existsSync(join(out, 'deliverable.md')), false)
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
     assert.equal(existsSync(join(out, 'director-script.md')), false)
     assert.equal(existsSync(join(out, 'shotlist.json')), false)
     assert.equal(existsSync(join(out, 'seedance-pack.md')), false)
     assert.equal(existsSync(join(out, 'jimeng-pack.md')), false)
-
-    const validation = await validateRunDirectory({ runDir: out, stage: 'production' })
-    assert.equal(validation.ok, true, validation.errors.join('\n'))
-
-    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
-    assert.match(deliverable, /完整保留剧情/)
-    assert.match(deliverable, /storyboard-images\/S01\.png/)
-    assert.doesNotMatch(deliverable, /episodes\/episode-01\/storyboard-images\/S01-start\.png/)
-    assert.doesNotMatch(deliverable, /episodes\/episode-01\/video-tasks\/S01\.md/)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

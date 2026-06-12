@@ -1,10 +1,8 @@
-# Cine Make 中文说明
+# Cine Make
 
-**中文主文档**。English: [`README.md`](./README.md)
+Cine Make 是一个给 Codex 风格 Agent 使用的本地 AI 短剧前期编译器。它把小说片段、粗剧本、广告 brief、故事素材，直接编成 **Seedance 全能参考投喂包 + Canvas 无媒体导入包**。
 
-Cine Make 是给 Codex 风格 agent 使用的本地 AI 短剧前期制片工具。它把小说片段、粗剧本、广告 brief、剧情梗概整理成一个可交付、可投喂 AI 视频工具的前期包。
-
-Cine Make **不生成 MP4**。它只负责故事拆解、连续性锁定、静态图/关键帧提示词和即梦视频生成卡；最终视频由即梦生成。
+Cine Make **不渲染 MP4**。它只写文本提示词、参考资产计划、Canvas 节点和连续性说明。最终视频合成属于外部视频工具。
 
 ## 当前版本
 
@@ -12,141 +10,118 @@ Cine Make **不生成 MP4**。它只负责故事拆解、连续性锁定、静�
 0.0.5
 ```
 
-## 用户最终拿到什么
+## 用户拿到什么
 
-普通短片和小说片段运行只交付两项：
-
-```text
-deliverable.md
-storyboard-images/
-```
-
-`deliverable.md` 是用户入口，包含：
-
-1. 成片预览
-2. 故事全流程
-3. 短片方案
-4. 导演判断层：`SCRIPT_BEATS`、`DIRECTOR_DECISION`、`ENVIRONMENT_BIBLES`、`ANCHOR_POLICY`
-5. 分层导演系统：`DIRECTOR_BIBLE`、`CHARACTER_BIBLE`、`SCENE_BIBLE`、`ART_DIRECTION`
-6. `STORYBOARD：Shot Definition`
-7. `Storyboard Version A: Full Coverage` 和 `Storyboard Version B: Director Cut` / 导演删减版
-8. `KEYFRAME_PROMPTS`
-9. `MOTION_PROMPTS`
-10. `QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS`
-11. 精简分镜、出图清单、视频工具投喂包
-12. 视觉参考和连续性注意事项
-
-### 分层导演管线
-
-Cine Make 现在按 Structured Cinematic Pipeline 输出，而不是把所有信息塞进一个超长 prompt：
+普通短片和小说片段运行只暴露这些用户交付物：
 
 ```text
-SCRIPT_BEATS        # 先判断叙事节拍功能
-DIRECTOR_DECISION   # 决定镜头保留 / 合并 / 删除
-TEXT_READABILITY_POLICY
-DIALOGUE_POLICY
-SHOT_DENSITY_CONTROLLER
-DIRECTOR_BIBLE      # 全局导演规则
-CHARACTER_BIBLE     # 人物一致性
-ENVIRONMENT_BIBLES  # 多场景环境圣经数组
-ART_DIRECTION       # 色彩、光影、镜头语言
-ANCHOR_POLICY       # 全局 / 角色 / 剧情 / 单镜锚点策略
-Shot Definition     # 带 shot_function 和 audience_takeaway 的静态镜头定义
-Director Cut        # 默认推荐的导演删减版，而不是只做完整拆解
-Keyframe Prompt     # 图片模型用的静态关键帧提示词
-Motion Prompt       # 视频模型用的最小运动提示词
-QUALITY_CHECK       # 质量检查
-AI_RISK_WARNINGS    # AI 生成风险提示
-```
-
-全局规则不在每镜重复；每个镜头只保留本镜头的局部目标。Keyframe 提示词是静态图片提示，不写视频运动；Motion Prompt 才写单镜头单动作、微表情和镜头运动。
-
-### 导演判断层
-
-Cine Make 下一层不是把提示词写更长，而是判断得更准。`SCRIPT_BEATS` 现在要先形成真实叙事节拍，不再退化成一镜一个 Beat；`DIRECTOR_DECISION` 必须给出明确的 `保留 / 合并 / 删除 / 重写`（keep / merge / delete / rewrite）结果，并要求每个镜头证明自己不可删除：它是否提供新信息、改变人物关系、升级情绪压力、揭示关键道具、误导观众、强化倒计时/循环机制，或推进结尾钩子。
-
-`TEXT_READABILITY_POLICY`、`DIALOGUE_POLICY`、`SHOT_DENSITY_CONTROLLER` 是小型控制规则，不是继续堆新阶段。它们负责提前抓翻车点：关键文字必须是 primary anchor 并用 close-up / insert，长台词要压缩成视觉剪辑版短台词，40-50 秒短剧不应盲目拆太碎。`QUALITY_CHECK` 会输出 `通过 / 警告 / 失败`（pass / warning / fail）状态和具体问题。
-
-`ENVIRONMENT_BIBLES` / 环境圣经数组用于多场景剧本，不再假设只有一个 `SCENE_BIBLE`。每个镜头可以绑定环境 id，并标记 reality / hallucination / distorted reality 等空间模式。
-
-`ANCHOR_POLICY` / 锚点策略会区分全局锚点、角色锚点、剧情锚点和单镜锚点。不是所有锚点都要进每一镜：每镜最多 1 个 primary anchor，最多 2 个 secondary anchors。手机、倒计时、武器、血字等道具只在服务本镜功能时入画。
-
-草稿会保留 `Storyboard Version A: Full Coverage` 方便检查是否漏剧情，但默认推荐 `Storyboard Version B: Director Cut` / 导演删减版用于实际生成。导演删减版可以重写节奏和镜头设计，而不是从 A 版里机械删除几镜。`QUALITY_CHECK` / 质量检查 和 `AI_RISK_WARNINGS` 会专门标出常见翻车点：macro 镜头承担复杂表演、wide 镜头承担文字阅读、多人镜头信息过载、每镜强塞无关道具、Keyframe 混入 Motion 描述、Motion Prompt 含多个主动作。
-
-Keyframe 输出使用局部化 Keyframe / 局部化关键帧提示词：每条只写本镜的镜头设计、primary/secondary anchors、调度、光影和连续性；全局风格规则留在 bible 里，不在每个图片 prompt 里重复刷屏。
-
-
-`storyboard-images/` 是图片资产目录，包含或准备：
-
-```text
-character-reference.png
-scene-reference.png
-segment-01-start.png
-S01.png ... S04.png
-segment-01-end.png
-segment-02-end.png
-```
-
-Cine Make 默认每 15 秒即梦投喂卡约 4 个分镜关键帧，给运镜、表演和悬疑停顿留时间。每段仍然最多上传 9 张图片。角色图、场景图、首帧、分镜关键帧、尾帧都算图片。第二段首帧复用第一段尾帧，避免剪辑衔接断掉。
-
-如果你不想在 Cine Make 里抽卡出图，而是想导入 Canvas 手动生成，使用 `canvas-pack`，只交付：
-
-```text
+seedance-all-reference-feed.md
 canvas-project.zip
 canvas-manifest.json
 prompt-pack.md
 README.md
 ```
 
-`canvas-project.zip` 可以直接在 Canvas 里导入。当前首版只打基础：少量文本资源节点 + 可生成的风格参考图、角色参考图、场景参考图。文本资源包含 World Bible / Art Direction、Character Bible 和 Environment Bible；真正需要点击生成的是右侧图片节点。暂不生成 Shot List、Keyframes 或视频段节点。
+默认 CLI 和 `seedance-pack` 等价：
 
-等你在 Canvas 里手动生成并锁定人物主图、场景主图、风格主图后，再使用第二阶段 `canvas-storyboard-pack`。它只追加 Shot List 文本节点和 Keyframe 图片节点，不重复人设、场景、风格参考图；Keyframe 节点会在 metadata 里声明要复用的稳定锚点，例如 `character-ref-linmo`、`environment-ref-*`、`style-reference`。请在 Canvas 使用“合并到当前画布 / 导入到当前画布”，不要重新导入成一个新工程。
+```bash
+node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "故事素材..."
+node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"
+```
 
-`canvas-storyboard-pack` 里的 Keyframe 节点是静态层：`metadata.cineMake.promptLayer = keyframe_static`。Motion Prompt 会作为 metadata 保留给后续视频阶段，不会混进图片节点 prompt，避免图片模型被“呼吸、推拉、二级动画”等动态词污染。
-
-普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
-
+已删除用户入口：`--mode draft`、`--mode visual`、`--draft`、`--visual`。普通运行不得再创建 `deliverable.md` 或 `storyboard-images/`。
 
 ## Seedance 全能参考投喂包
 
-如果用户只是丢剧本给 Cine Make，默认优先走 `reference-feed` 产物，而不是旧的首尾帧 / 分镜图流程。这个流程默认 `16:9`，先询问视觉风格，再询问是否扩写剧本，然后输出：
+`seedance-all-reference-feed.md` 只包含：
+
+1. `GPT-image-2 参考图生成提示词`
+2. `参考资产绑定`
+3. `全局负面约束`
+4. 可复制的逐条视频文本
+5. 底部备注栏可复制
+
+逐条视频文本必须是这种单行格式：
 
 ```text
-seedance-all-reference-feed.md
+序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效
 ```
 
-文件结构固定为：`GPT-image-2 参考图生成提示词`、`参考资产绑定`、`全局负面约束`、`逐条视频文本`、`底部备注栏可复制`。它不生成 `storyboard-images/`，不写首帧、尾帧、S01、segment、续接或承接。
+除非用户明确改规则，否则每 5 条视频文本 = 15 秒。Feed 不写首帧、尾帧、S01、segment 续接，也不写旧图片文件夹。
 
-GPT-image-2 三视图必须是一张图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。
+GPT-image-2 三视图是一张图：正面全身、侧面全身、背面全身，最左侧单独放上半身+头部细节，白底，专业排版。三视图为一张图。
+
+只要单独 feed 文件时：
 
 ```bash
-node src/cli.mjs reference-feed --out .cine-make-runs/demo --aspect 16:9 --style "3D古风写实，超写实真人电影质感" "剧本内容..."
+node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D国漫" "故事素材..."
 ```
 
-## 两种模式 + Canvas 提示词包
+## Canvas 导入包
 
-| 模式 | 用途 | 图片 | 输出 |
-| --- | --- | --- | --- |
-| `draft` | 快速看故事、节奏和分镜 | 不生成图片 | `deliverable.md` + `storyboard-images/README.md` |
-| `visual` | 草稿确认后进入出图模式 | 生成或准备静态图 | `deliverable.md` + `storyboard-images/` |
+Canvas 交接沿用同一套导演层级。所有 Canvas 包都是无媒体包：只创建可导入的文本/节点，不生成图片、不生成视频。
 
-`canvas-pack` 不是第三种出图模式，而是给 Canvas 手动生成用的基础资产包交接命令。它不生成图片、不生成视频、不创建 `storyboard-images/`。分镜关键帧追加包使用 `canvas-storyboard-pack`。
+```bash
+node src/cli.mjs canvas-pack --out .cine-make-runs/canvas --aspect 16:9 --style "3D国漫" "故事素材..."
+node src/cli.mjs canvas-storyboard-pack --out .cine-make-runs/canvas-next --aspect 16:9 --style "3D国漫" "故事素材..."
+node src/cli.mjs canvas-full-pack --out .cine-make-runs/canvas-full --aspect 16:9 --style "3D国漫" "故事素材..."
+```
 
-### 草稿模式
+- `canvas-pack`：第一阶段基础图谱。World Bible / Art Direction、Character Bible、Environment Bible，加 style_reference（风格参考）、character_reference（角色参考）、environment_reference（场景参考）节点。
+- `canvas-storyboard-pack`：主图锁定后合并到当前画布；关键帧节点带 `requiredAnchors`。
+- `canvas-full-pack`：一次导入基础参考、Shot List、Keyframes、真实参考到关键帧连线，以及 `shot-list -> keyframe-s01 -> keyframe-s02` 故事流。
 
-用于故事还没定稿时。它回答：短片讲什么、剧情怎么推进、镜头怎么拆、是否值得进入出图模式。
+## 分层电影管线
 
-### 出图模式
+Cine Make 输出结构化电影管线，而不是一坨超长提示词：
 
-用于草稿确认后。它准备：
+```text
+SCRIPT_BEATS        # 真实叙事节拍
+DIRECTOR_DECISION   # 保留 / 合并 / 删除 / 重写
+TEXT_READABILITY_POLICY
+DIALOGUE_POLICY
+SHOT_DENSITY_CONTROLLER
+DIRECTOR_BIBLE      # 全局导演规则
+CHARACTER_BIBLE     # 角色、服装、表演连续性
+SCENE_BIBLE         # 兼容旧文档名称
+ENVIRONMENT_BIBLES  # 多场景环境圣经数组
+ART_DIRECTION       # 色彩、光线、镜头语言
+ANCHOR_POLICY       # 全局 / 角色 / 故事 / 单行锚点限制
+Shot Definition     # 静态镜头设计
+Director Cut        # 导演删减版，不是机械删减
+Keyframe Prompt     # 需要时给 Canvas / 图像模型的静态提示词
+Motion Prompt       # 给视频模型的最小状态转移
+QUALITY_CHECK       # 通过 / 警告 / 失败
+AI_RISK_WARNINGS    # 图像/视频生成风险
+```
 
-- 主角/人物参考图；
-- 场景图；
-- 每段首帧、尾帧；
-- `S01.png` ... `Sxx.png` 分镜关键帧；
-- `deliverable.md` 里的视频生成卡。
+全局规则不在每镜重复。每条视频文本只携带本地目标。Keyframe 提示词是静态图像提示词；Motion Prompt 只描述一个主动作、一个微表演和一个运镜。
 
-图片生成只用 Codex `$imagegen`。Cine Make 不走外部图片 API，也不需要额外图片密钥。
+## 导演判断层
+
+Cine Make 的关键是判断，不是把提示词写长。`SCRIPT_BEATS` 先整理真实叙事节拍。`DIRECTOR_DECISION` 使用 `keep / merge / delete / rewrite`，要求每个镜头必须证明自己不可删除：新增信息、改变关系、升级压力、揭示关键道具、误导观众、强化倒计时/循环机制，或推动最终钩子。
+
+`TEXT_READABILITY_POLICY`、`DIALOGUE_POLICY`、`SHOT_DENSITY_CONTROLLER` 是小控制策略。可读文字必须用近景/插入镜头；长台词压成视觉短句；Director Cut 重写节奏，而不是机械删镜头。`QUALITY_CHECK` 用 `pass / warning / fail` 给出具体问题。
+
+`ENVIRONMENT_BIBLES` 取代单场景假设。`ANCHOR_POLICY` 限制每条最多 1 个 primary anchor、最多 2 个 secondary anchor。`QUALITY_CHECK` 和 `AI_RISK_WARNINGS` 标记常见失败：macro 复杂表演不匹配、wide 文字阅读失败、多人画面过载、强塞无关道具、Keyframe 被 Motion Prompt 污染、Motion Prompt 主动作太多。
+
+局部化 Keyframe 提示词只携带当前帧需要的局部镜头设计、主/次锚点、调度、光线和连续性。
+
+## 自然语言用法
+
+```text
+$cine-make 把这段替嫁冲突拆成 Seedance 全能参考投喂包和 Canvas 导入包：……
+```
+
+```text
+$cine-make 给我 3D国漫，国风仙侠，偏水墨+古风写实结合，每5条=15s：……
+```
+
+```text
+$cine-make 我不想在这里抽卡，直接给我 Canvas 提示词包，我导入画布手动生成：……
+```
+
+用户不需要指定视频平台。Cine Make 默认交付 Seedance feed 文本 + Canvas 参考资产。
 
 ## 安装
 
@@ -154,117 +129,24 @@ node src/cli.mjs reference-feed --out .cine-make-runs/demo --aspect 16:9 --style
 npx --registry=https://registry.npmjs.org/ cine-make install-skill
 ```
 
-安装后重启 Codex，然后使用：
+重启 Codex 后使用：
 
 ```text
 $cine-make ...
 ```
 
-## 自然语言用法
-
-### 草稿
-
-```text
-$cine-make
-
-把下面小说片段做成 30 秒竖屏 AI 短剧草稿。
-风格：超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调，克制表演。
-
-小说片段：
-凌晨三点，外卖员陈默送最后一单到废弃医院。电梯停在不存在的13楼，门打开后，他看见十年前失踪的妹妹正坐在护士站，手里拿着他小时候丢掉的红色弹珠。
-```
-
-### 出图
-
-```text
-$cine-make
-
-这个草稿可以，继续进入出图模式。
-帮我生成人物参考图、场景参考图、首尾控制帧和分镜关键帧。
-```
-
-### 带主角图
-
-```text
-$cine-make
-
-用这张人物图锁定女主的脸、发型、服装和气质。
-把下面剧情做成 30 秒竖屏 AI 短剧出图包。
-
-人物图：
-C:\Users\you\Desktop\refs\hero.png
-
-剧情：
-她在雨夜收到一条来自三年前自己的短信。短信里只有一句话：不要回家。
-```
-
-用户不需要指定平台。Cine Make 只输出即梦投喂格式。
-
 ## CLI 用法
 
-默认视觉风格是 `超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性`。
-
-### 草稿模式
-
 ```bash
-cine-make --mode draft \
-  --out .cine-make-runs/demo \
-  --duration 30s \
-  --aspect 9:16 \
-  --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调，克制表演" \
-  "凌晨三点，外卖员陈默走进废弃医院..."
+cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫" "故事素材..."
+cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"
+cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D国漫"
+cine-make canvas-pack --out .cine-make-runs/canvas --input script.txt --style "3D国漫"
 ```
-
-### 出图模式
-
-```bash
-cine-make --mode visual \
-  --out .cine-make-runs/demo-visual \
-  --duration 30s \
-  --aspect 9:16 \
-  --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调" \
-  --character-image refs/hero.png \
-  "故事内容..."
-```
-
-### 可选参考图
-
-```bash
---character-image refs/hero.png
---scene-image refs/hospital.png
---style-image refs/noir-style.png
-```
-
-这些都不是必填项。
-
-### Canvas 提示词包
-
-如果你要在 `E:/admin_go/canvas_front_next` 之类的 Canvas 系统里手动生成，不要跑 `--mode visual`，直接跑：
-
-```bash
-cine-make canvas-pack \
-  --input ./script.txt \
-  --out .cine-make-runs/demo-canvas-pack \
-  --aspect 9:16 \
-  --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑，冷色调"
-```
-
-导入 `canvas-project.zip` 后，先看左侧文本设定，再从右侧图片节点开始生成：先生成风格参考图，再生成人物参考图和场景参考图。文本节点是上游上下文 chip，不需要逐个生成。人物参考图只连接对应人设资料，不连接场景或风格节点，保持白底/浅灰棚拍三视图；场景和风格单独生成。首版不动分镜，先把人设、场景和风格基础打牢。
-
-基础主图锁定后，再导出并合并第二阶段：
-
-```bash
-cine-make canvas-storyboard-pack \
-  --input ./script.txt \
-  --out .cine-make-runs/demo-canvas-storyboard \
-  --aspect 9:16
-```
-
-这个包不要从画布库重新导入成新项目，而是在当前画布里“合并到当前画布”。合并后会追加 `Shot List` 和 `S01/S02/... Keyframe` 图片节点；每个 Keyframe 只声明本镜头实际需要的人物、场景、风格锚点，方便 Canvas 自动连到你已经设为主图的节点。
 
 ### 长篇小说项目模式
 
-整本小说或很大的 `.txt` 文件使用项目模式。不要把整本小说塞进一次上下文；先导入项目，再按章节任务做有边界的摘要，确认摘要后生成系列 bible、规划视觉 bible，最后按集导出现有 Cine Make 草稿交付物。
+整本小说或很大的 `.txt` 文件走项目模式。它不会把全文塞进一个 prompt，而是拆章节任务、接收摘要、构建系列 bible、规划视觉参考，再逐集导出。
 
 ```bash
 cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
@@ -277,9 +159,9 @@ cine-make novel episode --run .cine-make-runs/my-novel --episode 1
 cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
-Novel Studio MVP 不自动生成图片，只规划视觉参考；必须在视觉 bible 确认后，才显式使用 `$imagegen`。
+Novel Studio MVP 不自动生成图片。视觉 bible 批准后，再显式使用 `$imagegen`。
 
-单集导出包包含：
+单集导出包属于旧的单集交接，可能包含：
 
 ```text
 episode-input.md
@@ -288,40 +170,24 @@ storyboard-images/
 jimeng-feed-cards.json
 ```
 
-如果用户同时使用 Canvas 系统，可以继续运行 `novel canvas`，得到：
+旧即梦素材预算仍是每张卡 9 张上传图片。角色图、场景图、首帧、分镜关键帧、尾帧都算上传图片。
+
+如果用户也跑 Canvas 系统，`novel canvas` 会创建：
 
 ```text
 canvas-manifest.json
 canvas-project.zip
 ```
 
-`canvas-manifest.json` 是 Cine Make 自己的导演语义交接文件；`canvas-project.zip` 是只含文字节点的 Canvas 导入包，可以在 Canvas 里点击 `导入画布` 使用。它不生成图片、不生成视频，也不打包媒体文件。
+## 投喂视频工具
 
-### 调试文件
+普通运行直接用 `seedance-all-reference-feed.md`：
 
-```bash
-cine-make --mode draft --emit-internal --out .cine-make-runs/debug "故事内容"
-```
-
-这会额外生成：
-
-```text
-.cine-make-internal/
-```
-
-不要把 `.cine-make-internal/` 当成用户交付物。
-
-## 如何喂给 AI 视频工具
-
-用户只看 `deliverable.md`：
-
-1. 按 `出图清单` 用 `$imagegen` 生成或确认主角、场景、首帧、尾帧和 `Sxx.png`；
-2. 到 `视频工具投喂包`，每段上传列出的图片，确保每段不超过 9 张图片；
-3. 复制该段提示词；
-4. 在即梦里生成片段；
-5. 多段结果外部剪辑拼接，后一段首帧必须等于前一段尾帧。
-
-如果使用 `canvas-pack`，用户先导入 `canvas-project.zip`，然后在 Canvas 里手动生成人物/场景/风格并设为主图。之后使用 `canvas-storyboard-pack`，把分镜/Keyframe 节点合并到当前画布继续生成。
+1. 生成或确认 feed / Canvas 包里的 GPT-image-2 参考资产。
+2. 按参考资产绑定表绑定素材。
+3. 按 5 条 / 15 秒复制逐条视频文本。
+4. 在外部视频工具生成片段。
+5. 多段视频在外部剪辑合成。
 
 ## 开发
 
@@ -334,7 +200,7 @@ node scripts/install-codex-skill.mjs
 
 ## npm 发布
 
-发布前检查：
+预检：
 
 ```bash
 npm whoami --registry=https://registry.npmjs.org/
@@ -348,7 +214,7 @@ npm pack --dry-run
 npm publish --registry=https://registry.npmjs.org/ --access public
 ```
 
-发布后确认：
+验证：
 
 ```bash
 npm view cine-make version --registry=https://registry.npmjs.org/
@@ -356,23 +222,16 @@ npm view cine-make version --registry=https://registry.npmjs.org/
 
 ## 边界
 
-Cine Make 负责前期制片：
+Cine Make 负责前期：
 
 ```text
-故事素材 -> deliverable.md -> storyboard-images/ -> 视频工具投喂包 -> 外部视频工具
-```
-
-或者：
-
-```text
-故事素材 -> canvas-pack -> 基础资产主图锁定 -> canvas-storyboard-pack -> 合并到当前画布 -> Canvas 手动生成 Keyframes
+故事素材 -> seedance-all-reference-feed.md + canvas-project.zip -> 外部视频工具
 ```
 
 外部视频工具负责最终合成：
 
 ```text
-视频生成卡 -> 视频片段 -> 最终剪辑/导出
+逐条视频文本 + 参考资产 -> 生成视频片段 -> 最终剪辑/导出
 ```
 
-Cine Make 不能声称 Codex 生成了最终 MP4。
-
+Cine Make 绝不能声称 Codex 已经渲染最终 MP4。

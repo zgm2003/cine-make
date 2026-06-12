@@ -64,7 +64,7 @@ test('novel ingest requires input', async () => {
   }
 })
 
-test('existing draft mode CLI still works', async () => {
+test('removed draft mode CLI fails clearly', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-draft-cli-'))
   try {
     const outDir = path.join(workspace, 'draft')
@@ -80,9 +80,8 @@ test('existing draft mode CLI still works', async () => {
       encoding: 'utf8'
     })
 
-    assert.equal(result.status, 0, result.stderr)
-    assert.match(result.stdout, /Cine Make ready \(draft\):/)
-    assert.match(await readFile(path.join(outDir, 'deliverable.md'), 'utf8'), /雨夜里/)
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /draft\/visual.*removed.*seedance-pack/u)
   } finally {
     await rm(workspace, { recursive: true, force: true })
   }

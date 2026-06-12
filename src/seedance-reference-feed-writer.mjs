@@ -59,7 +59,7 @@ export function composeSeedanceAllReferenceFeedMarkdown(pack) {
     '',
     codeBlock([
       pack.bottomNote,
-      `【不要字幕、不要配乐，只保留环境音和必要对白】${pack.style}，${pack.aspectRatio}，参考图优先于文字。`
+      pack.bottomConstraint ?? `【不要字幕、不要配乐，只保留环境音和必要对白】${pack.style}，${pack.aspectRatio}，参考图优先于文字。`
     ].filter(Boolean).join('\n'))
   ].join('\n')
 }

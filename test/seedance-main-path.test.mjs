@@ -8,19 +8,17 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
-const source = '雨夜，外卖骑手林野接到一单没有地址的医院订单。13楼护士站空无一人，桌上滚出一颗红色玻璃弹珠。'
+const source = '许怡宁举剑拒婚，许悠然被迫替嫁，江凡在许家大堂角落平静喝茶。'
 
-test('short-drama CLI main path is Seedance feed plus Canvas assets only', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'cine-make-ai-package-'))
+test('default CLI writes the Seedance + Canvas pack, not draft or visual artifacts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-default-seedance-pack-'))
   try {
     const result = spawnSync(process.execPath, [
       'src/cli.mjs',
       '--out',
       out,
-      '--aspect',
-      '16:9',
       '--style',
-      '3D国漫，电影式构图，冷蓝雨夜',
+      '3D国漫，国风仙侠，偏水墨+古风写实结合',
       source
     ], { cwd: root, encoding: 'utf8' })
 
@@ -32,34 +30,43 @@ test('short-drama CLI main path is Seedance feed plus Canvas assets only', async
     assert.equal(existsSync(join(out, 'README.md')), true)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
+    assert.match(result.stdout, /Seedance \+ Canvas pack ready/u)
 
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
-    assert.match(feed, /GPT-image-2 参考图生成提示词/u)
-    assert.match(feed, /参考资产绑定/u)
     assert.match(feed, /逐条视频文本/u)
-    assert.doesNotMatch(feed, /storyboard-images|首帧|尾帧|S01/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
 })
 
-test('removed short-drama draft/visual modes fail before writing old artifacts', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'cine-make-removed-ai-package-'))
-  try {
+for (const args of [
+  ['--mode', 'draft'],
+  ['--mode', 'visual'],
+  ['--draft'],
+  ['--visual']
+]) {
+  test(`CLI rejects removed draft/visual entry: ${args.join(' ')}`, () => {
     const result = spawnSync(process.execPath, [
       'src/cli.mjs',
-      '--mode',
-      'visual',
+      ...args,
       '--out',
-      out,
+      join(tmpdir(), 'cine-make-removed-mode'),
       source
     ], { cwd: root, encoding: 'utf8' })
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /draft\/visual.*removed.*seedance-pack/u)
-    assert.equal(existsSync(join(out, 'deliverable.md')), false)
-    assert.equal(existsSync(join(out, 'storyboard-images')), false)
-  } finally {
-    await rm(out, { recursive: true, force: true })
-  }
+  })
+}
+
+test('CLI help promotes Seedance + Canvas and hides removed draft/visual modes', () => {
+  const result = spawnSync(process.execPath, ['src/cli.mjs', '--help'], {
+    cwd: root,
+    encoding: 'utf8'
+  })
+
+  assert.equal(result.status, 0, result.stderr)
+  assert.match(result.stdout, /seedance-pack/u)
+  assert.doesNotMatch(result.stdout, /--mode <draft\|visual>/u)
+  assert.doesNotMatch(result.stdout, /--mode draft|--mode visual/u)
 })

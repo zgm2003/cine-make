@@ -9,37 +9,43 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-test('cli writes a draft run with the compact user deliverable', async () => {
+test('cli writes the default Seedance + Canvas package', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-run-'))
   try {
-    const result = spawnSync(process.execPath, ['src/cli.mjs', '--out', out, '--duration', '15s', '--aspect', '9:16', '--style', 'noir', '--platform', 'jimeng', '广告短片：一杯咖啡让疲惫的程序员重新抬头。'], {
+    const result = spawnSync(process.execPath, ['src/cli.mjs', '--out', out, '--aspect', '16:9', '--style', '3D国漫', '广告短片：一杯咖啡让疲惫的程序员重新抬头。'], {
       cwd: root,
       encoding: 'utf8'
     })
 
     assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'deliverable.md')))
-    assert.ok(existsSync(join(out, 'storyboard-images', 'README.md')))
+    assert.ok(existsSync(join(out, 'seedance-all-reference-feed.md')))
+    assert.ok(existsSync(join(out, 'canvas-project.zip')))
+    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
+    assert.ok(existsSync(join(out, 'prompt-pack.md')))
+    assert.ok(existsSync(join(out, 'README.md')))
+    assert.equal(existsSync(join(out, 'deliverable.md')), false)
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
     assert.equal(existsSync(join(out, 'input-contract.json')), false)
     assert.equal(existsSync(join(out, 'agent-plan.json')), false)
 
-    const deliverable = await readFile(join(out, 'deliverable.md'), 'utf8')
-    assert.match(deliverable, /草稿模式/)
-    assert.match(deliverable, /Codex 不生成最终视频/)
+    const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
+    assert.match(feed, /逐条视频文本/u)
+    assert.match(result.stdout, /Seedance \+ Canvas pack ready/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
 })
 
-test('cli help is Jimeng-only', () => {
+test('cli help promotes Seedance + Canvas only', () => {
   const result = spawnSync(process.execPath, ['src/cli.mjs', '--help'], {
     cwd: root,
     encoding: 'utf8'
   })
 
   assert.equal(result.status, 0, result.stderr)
-  assert.match(result.stdout, /--platform <jimeng>/)
-  assert.doesNotMatch(result.stdout, /seedance|generic/i)
+  assert.match(result.stdout, /seedance-pack/u)
+  assert.match(result.stdout, /Seedance all-reference feed/u)
+  assert.doesNotMatch(result.stdout, /--mode <draft\|visual>|--mode draft|--mode visual/u)
 })
 
 test('cli writes a manual Canvas prompt pack without storyboard images', async () => {

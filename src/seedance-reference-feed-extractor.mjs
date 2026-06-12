@@ -1,3 +1,12 @@
+import {
+  isTijiaGuomanSource,
+  tijiaGuomanAssetDefinitions,
+  tijiaGuomanGlobalNegative,
+  tijiaGuomanStyle,
+  tijiaGuomanTitle,
+  tijiaGuomanVideoLines
+} from './tijia-guoman-profile.mjs'
+
 const DEFAULT_ASPECT = '16:9'
 const FORBIDDEN_VIDEO_META = /续接|承接|下一段|下一场|后续|首帧|尾帧|首尾|segment|storyboard-images|S\d{2}|keyframe|控制帧|分镜图/u
 
@@ -107,6 +116,18 @@ function addAudioAsset(assets, { id, title, prompt }) {
 }
 
 function buildAssets({ sourceText, style, aspectRatio }) {
+  if (isTijiaGuomanSource(sourceText)) {
+    const assets = []
+    for (const definition of tijiaGuomanAssetDefinitions({ sourceText, style, aspectRatio })) {
+      addImageAsset(assets, {
+        id: definition.id,
+        title: definition.title,
+        prompt: definition.prompt
+      })
+    }
+    return assets
+  }
+
   const assets = []
   const scene = sceneName(sourceText)
   const character = characterName(sourceText)
@@ -195,7 +216,9 @@ function genericVideoLines(sourceText) {
 }
 
 function buildVideoLines({ sourceText, expandScript }) {
-  const lines = hasAny(sourceText, [/雪山/u, /麒麟/u, /老道|道清|老道人/u])
+  const lines = isTijiaGuomanSource(sourceText)
+    ? tijiaGuomanVideoLines()
+    : hasAny(sourceText, [/雪山/u, /麒麟/u, /老道|道清|老道人/u])
     ? snowQilinVideoLines()
     : genericVideoLines(sourceText)
   const selected = expandScript ? lines : lines.slice(0, Math.min(lines.length, 14))
@@ -208,11 +231,13 @@ function buildVideoLines({ sourceText, expandScript }) {
 }
 
 function titleFromSource(sourceText) {
+  if (isTijiaGuomanSource(sourceText)) return tijiaGuomanTitle()
   if (/雪山|麒麟|老道|道清/u.test(sourceText)) return '雪山之巅护麟'
   return sceneName(sourceText).replace(/\s*\/.*$/u, '')
 }
 
 function globalNegative({ sourceText, style, aspectRatio }) {
+  if (isTijiaGuomanSource(sourceText)) return tijiaGuomanGlobalNegative({ style, aspectRatio })
   const base = [
     `不要字幕、不要配乐，只保留环境音和必要对白。${style}，${aspectRatio}，参考图优先于文字。`,
     '人物造型不能变，角色体型不能变，服装配饰不能乱，场景方向不能乱。',
@@ -238,17 +263,21 @@ export function buildSeedanceReferenceFeedPackage({
   const cleanSourceText = stripSourcePrefix(sourceText)
   if (!cleanSourceText) throw new Error('Seedance reference feed requires source story material')
   if (!compact(style)) throw new Error('Seedance reference feed requires a visual style')
-  const assets = buildAssets({ sourceText: cleanSourceText, style: compact(style), aspectRatio })
+  const normalizedStyle = isTijiaGuomanSource(cleanSourceText) ? tijiaGuomanStyle(style) : compact(style)
+  const assets = buildAssets({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio })
   return {
     kind: 'seedance_all_reference_feed',
     title: titleFromSource(cleanSourceText),
     sourceText: cleanSourceText,
-    style: compact(style),
+    style: normalizedStyle,
     aspectRatio,
     expandScript: Boolean(expandScript),
     assets,
-    globalNegative: globalNegative({ sourceText: cleanSourceText, style: compact(style), aspectRatio }),
+    globalNegative: globalNegative({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio }),
     videoLines: buildVideoLines({ sourceText: cleanSourceText, expandScript }),
-    bottomNote: bottomNote(assets)
+    bottomNote: bottomNote(assets),
+    bottomConstraint: isTijiaGuomanSource(cleanSourceText)
+      ? `【不要字幕、不要文字水印】${normalizedStyle}，${aspectRatio}，参考图优先于文字。每5条视频文本=15s。`
+      : undefined
   }
 }

@@ -41,7 +41,7 @@ import { composeSeedanceAllReferenceFeedMarkdown } from './seedance-reference-fe
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs [--mode <draft|visual>] [--emit-internal] --out <output-dir> [--input <file>] [--duration <15s|30s|60s>] [--aspect <9:16|16:9|1:1>] [--style <style>] [--platform <jimeng>] [--character-image <path>] [--scene-image <path>] [--style-image <path>] "<story material>"',
+    '  node src/cli.mjs [seedance-pack] --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs canvas-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs canvas-storyboard-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs canvas-full-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
@@ -58,11 +58,12 @@ function usage() {
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
     '',
-    'If --duration is omitted, Cine Make infers total duration from plot density and still splits every video feed card to 15s or less.',
+    'Default output is the Seedance all-reference feed plus a media-free Canvas import pack.',
+    'Removed: draft/visual user modes and storyboard image folders.',
     '',
     'Example:',
-    '  node src/cli.mjs --mode draft --out .cine-make-runs/demo --aspect 9:16 --style "超写实真人电影质感，85mm镜头，4K，电影感悬疑" "把这段小说片段改成电影感短片：雨夜里，女孩在巷口停下脚步。"',
-    '  node src/cli.mjs --mode visual --out .cine-make-runs/demo-visual --character-image refs/hero.png "小说片段..."'
+    '  node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "许怡宁举剑拒婚，许悠然被迫替嫁，江凡在角落平静喝茶。"',
+    '  node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"'
   ].join('\n')
 }
 
@@ -449,6 +450,37 @@ async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
   console.log('- images/videos: none; generate GPT-image-2 reference images manually, then upload the bound references to the video tool')
 }
 
+async function exportSeedanceCanvasPack(argv, cineMakeRoot) {
+  const options = parseArgs(argv)
+  if (options.help) {
+    console.log(usage())
+    return
+  }
+
+  if (!argv.includes('--aspect')) options.aspect = '16:9'
+  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
+  const contract = await createInputContract(options)
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: contract.sourceText,
+    style: contract.target.style,
+    aspectRatio: contract.target.aspectRatio,
+    expandScript: false
+  })
+
+  await mkdir(outDir, { recursive: true })
+  const feedPath = join(outDir, 'seedance-all-reference-feed.md')
+  await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(pack)}\n`, 'utf8')
+  const canvas = await exportCanvasPromptPack({ outDir, contract })
+
+  console.log('Seedance + Canvas pack ready:')
+  console.log(`- feed: ${feedPath}`)
+  console.log(`- canvas zip: ${canvas.zipPath}`)
+  console.log(`- manifest: ${canvas.manifestPath}`)
+  console.log(`- prompt pack: ${canvas.promptPackPath}`)
+  console.log(`- README: ${canvas.readmePath}`)
+  console.log('- images/videos: none; generate references manually inside Canvas, then paste Seedance feed text into the video tool')
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -634,6 +666,11 @@ async function main() {
     return
   }
 
+  if (process.argv[2] === 'seedance-pack') {
+    await exportSeedanceCanvasPack(process.argv.slice(3), cineMakeRoot)
+    return
+  }
+
   const options = parseArgs(process.argv.slice(2))
 
   if (options.help) {
@@ -656,15 +693,7 @@ async function main() {
     return
   }
 
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
-  const contract = await createInputContract(options)
-  await writeRunArtifacts({ outDir, contract, emitInternal: options.emitInternal })
-
-  console.log(`Cine Make ready (${contract.mode}):`)
-  console.log(`- deliverable: ${join(outDir, 'deliverable.md')}`)
-  console.log(`- storyboard images: ${join(outDir, 'storyboard-images')}`)
-  if (options.emitInternal) console.log(`- internal debug artifacts: ${join(outDir, '.cine-make-internal')}`)
-  console.log(`- next: ${contract.mode === 'visual' ? 'generate/fill storyboard images, then use the video feed pack in deliverable.md with Jimeng' : 'review deliverable.md; run --mode visual only after the draft is approved'}`)
+  await exportSeedanceCanvasPack(process.argv.slice(2), cineMakeRoot)
 }
 
 main().catch((error) => {

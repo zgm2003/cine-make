@@ -14,6 +14,7 @@ const DEFAULT_SHOTS_PER_SEGMENT = 4
 const DEFAULT_MIN_SHOTS = Math.ceil(DEFAULT_MIN_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const MAX_SHOTS = Math.ceil(MAX_DURATION_SECONDS / VIDEO_SEGMENT_SECONDS) * DEFAULT_SHOTS_PER_SEGMENT
 const EXPLICIT_STORYBOARD_MARKER = /(?:^|\n)\s*(?:【\s*分镜\s*(?:\d+|[一二三四五六七八九十百]+)\s*】|分镜\s*(?:\d+|[一二三四五六七八九十百]+)(?=[\s:：、.．-]|$)|镜头\s*(?:\d+|[一二三四五六七八九十百]+)(?=[\s:：、.．-]|$)|shot\s*\d+(?=[\s:：、.．-]|$)|s\d{1,3}(?=[\s:：、.．-]|$))/giu
+const REMOVED_DRAFT_VISUAL_MESSAGE = 'draft/visual modes are removed; use seedance-pack or the default Cine Make command for Seedance + Canvas.'
 const MODE_ALIASES = new Map([
   ['draft', 'draft'],
   ['visual', 'visual'],
@@ -169,10 +170,7 @@ export function parseArgs(argv) {
     }
 
     if (arg === '--mode') {
-      index += 1
-      if (!argv[index]) throw new Error('--mode requires draft or visual')
-      options.mode = argv[index].toLowerCase()
-      continue
+      throw new Error(REMOVED_DRAFT_VISUAL_MESSAGE)
     }
 
     if (arg === '--stage') {
@@ -183,15 +181,11 @@ export function parseArgs(argv) {
     }
 
     if (arg === '--draft') {
-      options.mode = 'draft'
-      options.draft = true
-      continue
+      throw new Error(REMOVED_DRAFT_VISUAL_MESSAGE)
     }
 
     if (arg === '--visual') {
-      options.mode = 'visual'
-      options.draft = true
-      continue
+      throw new Error(REMOVED_DRAFT_VISUAL_MESSAGE)
     }
 
     if (arg === '--emit-internal' || arg === '--debug-artifacts') {

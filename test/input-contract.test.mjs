@@ -116,7 +116,7 @@ test('defaults to Jimeng and rejects non-Jimeng video platforms', async () => {
 })
 
 test('rejects more than twelve user visual references per run', async () => {
-  const args = ['--mode', 'visual']
+  const args = []
   for (let index = 1; index <= 13; index += 1) {
     args.push('--character-image', `refs/ref-${index}.png`)
   }

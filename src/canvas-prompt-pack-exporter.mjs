@@ -1,6 +1,12 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { composeDraftAssets } from './draft-writer.mjs'
+import {
+  isTijiaGuomanSource,
+  tijiaGuomanAssetDefinitions,
+  tijiaGuomanStyle,
+  tijiaGuomanStyleBible
+} from './tijia-guoman-profile.mjs'
 import { createStoredZip } from './zip-writer.mjs'
 
 const CANVAS_APP = 'infinite-canvas'
@@ -74,6 +80,11 @@ export async function exportCanvasPromptPack({ outDir, contract } = {}) {
   if (!contract) throw new Error('canvas prompt pack requires contract')
 
   await mkdir(outDir, { recursive: true })
+
+  if (isTijiaGuomanSource(contract.sourceText)) {
+    const manifest = buildTijiaGuomanCanvasPromptPackManifest({ contract })
+    return writeCanvasPackage({ outDir, manifest })
+  }
 
   const draft = composeDraftAssets(contract)
   const manifest = buildCanvasPromptPackManifest({ contract, draft })
@@ -236,6 +247,166 @@ function buildCanvasPromptPackManifest({ contract, draft }) {
       '这是基础参考图包：先不做分镜和 Keyframe。',
       '左侧是风格、人设、场景文本设定；右侧是可生成的风格参考图、角色参考图、场景参考图。',
       '用户从右侧图片节点开始操作；文本节点只作为直接上游上下文 chip。'
+    ],
+    outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
+    nodes,
+    connections
+  }
+}
+
+function buildTijiaGuomanCanvasPromptPackManifest({ contract }) {
+  const nodes = []
+  const connections = []
+  const aspectRatio = contract.target.aspectRatio
+  const style = tijiaGuomanStyle(contract.target.style)
+  const assetDefinitions = tijiaGuomanAssetDefinitions({
+    sourceText: contract.sourceText,
+    style,
+    aspectRatio
+  })
+  const stylePrompt = [
+    `GPT-image-2，${aspectRatio}，${style}。`,
+    '3D国漫整体风格参考图，不是分镜，不要具体剧情动作。',
+    '画面表现古代仙侠家族大堂内的压迫气氛：深色木梁、屏风、烛火、茶案、冷青剑光、暖金灯火、水墨雾气。',
+    '空间有东方水墨晕染感，后续角色资产要适配高质量3D国漫建模。',
+    '不要真人照片，不要现代物品，不要低幼卡通，不要Q版，不要文字水印。'
+  ].join('')
+
+  nodes.push(createManifestNode({
+    id: 'style-bible',
+    role: 'style_bible',
+    title: '资料：3D国漫整体风格（非生成）',
+    canvasType: 'text',
+    row: 0,
+    column: 0,
+    content: tijiaGuomanStyleBible({ style, aspectRatio })
+  }))
+  nodes.push(createManifestNode({
+    id: 'style-reference',
+    role: 'style_reference',
+    title: '生成：3D国漫整体风格参考图',
+    canvasType: 'image',
+    row: 0,
+    column: 1,
+    prompt: stylePrompt,
+    imageSize: '16:9',
+    anchor: styleReferenceAnchor(),
+    inputOrder: ['style-bible']
+  }))
+  connect(connections, 'style-bible', 'style-reference', 'style_rules')
+
+  assetDefinitions.forEach((asset, index) => {
+    const row = index + 1
+    if (asset.id.startsWith('environment-')) {
+      const refId = asset.id.replace(/^environment-/u, 'environment-ref-')
+      const environment = { id: asset.id, name: asset.title }
+      nodes.push(createManifestNode({
+        id: asset.id,
+        role: 'environment_bible',
+        title: `资料：${asset.title}场景（非生成）`,
+        canvasType: 'text',
+        row,
+        column: 0,
+        content: asset.bible
+      }))
+      nodes.push(createManifestNode({
+        id: refId,
+        role: 'environment_reference',
+        title: `生成：${asset.title}场景参考图`,
+        canvasType: 'image',
+        row,
+        column: 1,
+        prompt: asset.prompt,
+        imageSize: '16:9',
+        anchor: environmentReferenceAnchor(environment),
+        inputOrder: ['style-bible', asset.id]
+      }))
+      connect(connections, 'style-bible', refId, 'style_rules')
+      connect(connections, asset.id, refId, 'environment_bible')
+      return
+    }
+
+    if (asset.id.startsWith('character-')) {
+      const refId = asset.id.replace(/^character-/u, 'character-ref-')
+      const character = { id: asset.id, name: asset.title }
+      nodes.push(createManifestNode({
+        id: asset.id,
+        role: 'character_bible',
+        title: `资料：${asset.title}人设（非生成）`,
+        canvasType: 'text',
+        row,
+        column: 0,
+        content: asset.bible
+      }))
+      nodes.push(createManifestNode({
+        id: refId,
+        role: 'character_reference',
+        title: `生成：${asset.title}3D国漫三视图`,
+        canvasType: 'image',
+        row,
+        column: 1,
+        prompt: asset.prompt,
+        imageSize: '16:9',
+        anchor: characterReferenceAnchor(character),
+        inputOrder: [asset.id]
+      }))
+      connect(connections, asset.id, refId, 'character_bible')
+      return
+    }
+
+    if (asset.id.startsWith('prop-')) {
+      const refId = asset.id.replace(/^prop-/u, 'prop-ref-')
+      nodes.push(createManifestNode({
+        id: asset.id,
+        role: 'prop_bible',
+        title: `资料：${asset.title}道具（非生成）`,
+        canvasType: 'text',
+        row,
+        column: 0,
+        content: asset.bible
+      }))
+      nodes.push(createManifestNode({
+        id: refId,
+        role: 'prop_reference',
+        title: `生成：${asset.title}道具参考图`,
+        canvasType: 'image',
+        row,
+        column: 1,
+        prompt: asset.prompt,
+        imageSize: '16:9',
+        anchor: {
+          anchorId: refId,
+          anchorRole: 'prop_reference',
+          anchorName: asset.title,
+          mergeStrategy: 'reuse_existing'
+        },
+        inputOrder: [asset.id]
+      }))
+      connect(connections, asset.id, refId, 'prop_bible')
+    }
+  })
+
+  return {
+    schemaVersion: 1,
+    kind: 'cine-make-canvas-prompt-pack',
+    packageType: 'manual_canvas_generation',
+    createdAt: new Date().toISOString(),
+    source: {
+      title: '替嫁爆点-3D国漫资产生成包',
+      contentType: contract.contentType
+    },
+    target: {
+      app: CANVAS_APP,
+      version: CANVAS_VERSION,
+      aspectRatio,
+      style,
+      platform: contract.target.platform
+    },
+    manualWorkflow: [
+      '导入 canvas-project.zip。',
+      '本包只生成基础资产：3D国漫整体风格、许家大堂、4个人物三视图、3个核心道具。',
+      '左侧资料节点不要生成；点击右侧图片节点生成。',
+      '生成满意后锁定这些资产；下一步再做每5条=15s的Seedance逐条视频文本投喂包。'
     ],
     outputs: ['canvas-project.zip', 'canvas-manifest.json', 'prompt-pack.md', 'README.md'],
     nodes,
