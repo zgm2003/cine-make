@@ -276,8 +276,6 @@ export function buildSeedanceReferenceFeedPackage({
     globalNegative: globalNegative({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio }),
     videoLines: buildVideoLines({ sourceText: cleanSourceText, expandScript }),
     bottomNote: bottomNote(assets),
-    bottomConstraint: isTijiaGuomanSource(cleanSourceText)
-      ? `【不要字幕、不要文字水印】${normalizedStyle}，${aspectRatio}，参考图优先于文字。每5条视频文本=15s。`
-      : undefined
+    bottomConstraint: undefined
   }
 }

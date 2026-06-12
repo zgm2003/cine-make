@@ -29,7 +29,7 @@ test('替嫁国漫 Seedance feed uses the proven single-line shot-text format', 
   assert.equal(pack.title, '替嫁爆点 15s')
   assert.equal(pack.videoLines.length, 5)
   assert.deepEqual(pack.assets.filter((asset) => asset.kind === 'image').map((asset) => asset.title), [
-    '许家大堂',
+    '许家大厅',
     '许怡宁',
     '许悠然',
     '江凡',
@@ -37,12 +37,16 @@ test('替嫁国漫 Seedance feed uses the proven single-line shot-text format', 
     '三尺青锋'
   ])
 
-  assert.match(markdown, /^1 许家大堂 许怡宁 .*许怡宁的手死死攥着三尺青锋.*特写\+慢推.*台词（许怡宁，尖厉决绝）：“我宁死，也不嫁江凡！”/mu)
-  assert.match(markdown, /^3 许家大堂角落 江凡 .*江凡独自坐在角落阴影里.*表情平静无波.*眼底却藏着冷光.*心跳声/mu)
-  assert.match(markdown, /^5 许家大堂中央 许悠然、江凡 .*许悠然.*我嫁.*江凡抬眸.*轻响定格/mu)
-  assert.match(markdown, /每5条视频文本=15s/u)
+  assert.match(markdown, /### 图片1｜许家大厅/u)
+  assert.match(markdown, /许家大厅 = 图片1/u)
+  assert.match(markdown, /^1 许家大厅 许怡宁 .*三尺青锋.*极特写.*我宁愿死，也不嫁给那个哑巴废物/mu)
+  assert.match(markdown, /^3 许家大厅 许正言 .*三尺青锋.*扫向角落里的许悠然.*嫡女拒婚，全家竟逼庶女替嫁/mu)
+  assert.match(markdown, /^5 许家大厅暗角 江凡 .*江凡始终平静.*眼底闪过一丝冷光.*这场戏，该我收场了/mu)
+  assert.match(markdown, /本组 1-5 条为一个完整 15 秒视频段/u)
   assert.match(markdown, /3D国漫/u)
-  assert.doesNotMatch(markdown, /青云宗玉牌|白瓷茶杯/u)
+  assert.doesNotMatch(markdown, /青云宗玉牌|白瓷茶杯|茶杯|玉佩|茶案/u)
+  assert.doesNotMatch(markdown, /16:9，参考图优先于文字|参考图优先于文字|每\s*5\s*条视频文本\s*=\s*15s/u)
+  assert.match(markdown, /## 底部备注栏可复制\s+许家大厅=图片1  许怡宁=图片2  许悠然=图片3  江凡=图片4  许正言=图片5  三尺青锋=图片6\s*$/u)
   assert.doesNotMatch(markdown, /主要场景|含泪三视图|中景 \+ 平视或轻微低机位|不要配乐|心理悬疑|暴风雨|真人电影质感/u)
 })
 
@@ -95,7 +99,7 @@ test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async 
     assert.equal(byId.has('prop-ref-white-teacup'), false)
     assert.doesNotMatch(byId.get('character-ref-xuyining').prompt, /青云宗玉牌|玉牌.*锚点/u)
     assert.doesNotMatch(byId.get('character-ref-jiangfan').prompt, /白瓷茶杯|茶杯.*锚点/u)
-    assert.match(byId.get('environment-ref-xu-hall').prompt, /许家大堂/u)
+    assert.match(byId.get('environment-ref-xu-hall').prompt, /许家大厅/u)
     for (const id of ['prop-ref-qingfeng-sword']) {
       assert.match(byId.get(id).prompt, /只生成一个完整道具主体/u)
       assert.match(byId.get(id).prompt, /不要人物、不要手持、不要场景摆拍/u)
@@ -103,6 +107,21 @@ test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async 
     }
     assert.doesNotMatch(JSON.stringify(manifest), /青云宗玉牌|白瓷茶杯|茶案|prop-ref-qingyun-token|prop-ref-white-teacup/u)
     assert.doesNotMatch(JSON.stringify(manifest), /心理悬疑|暴风雨|liminal|倒计时|手机|真人电影质感|超写实真人/u)
+    assert.equal(manifest.nodes.filter((node) => node.canvasType === 'video').length, 0)
+    assert.equal(manifest.nodes.filter((node) => node.canvasType === 'image').length, 7)
+    assert.equal(manifest.nodes.filter((node) => node.canvasType === 'text').length, 2)
+    assert.equal(manifest.connections.length, 7)
+    assert.ok(manifest.connections.some((connection) => connection.fromNodeId === 'style-bible' && connection.toNodeId === 'style-reference'))
+    for (const id of [
+      'environment-ref-xu-hall',
+      'character-ref-xuyining',
+      'character-ref-xuyouran',
+      'character-ref-jiangfan',
+      'character-ref-xuzhengyan',
+      'prop-ref-qingfeng-sword'
+    ]) {
+      assert.ok(manifest.connections.some((connection) => connection.fromNodeId === 'style-reference' && connection.toNodeId === id), `${id} should connect to style reference`)
+    }
   } finally {
     await rm(out, { recursive: true, force: true })
   }
