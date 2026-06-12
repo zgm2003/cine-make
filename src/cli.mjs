@@ -35,6 +35,8 @@ import { exportNovelCanvas } from './novel/canvas-exporter.mjs'
 import { updateProjectContinuity } from './novel/continuity-manager.mjs'
 import { planVisualBible } from './novel/visual-bible-planner.mjs'
 import { exportCanvasPromptPack, exportCanvasStoryboardPack, exportCanvasFullPack } from './canvas-prompt-pack-exporter.mjs'
+import { buildSeedanceReferenceFeedPackage } from './seedance-reference-feed-extractor.mjs'
+import { composeSeedanceAllReferenceFeedMarkdown } from './seedance-reference-feed-writer.mjs'
 
 function usage() {
   return [
@@ -43,6 +45,7 @@ function usage() {
     '  node src/cli.mjs canvas-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs canvas-storyboard-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs canvas-full-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
+    '  node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
@@ -419,6 +422,33 @@ async function exportManualCanvasFullPack(argv, cineMakeRoot) {
   console.log('- images/videos: none; import once, generate references first, then follow S01→Sxx keyframe chain')
 }
 
+async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
+  const options = parseArgs(argv)
+  if (options.help) {
+    console.log(usage())
+    return
+  }
+
+  if (!argv.includes('--aspect')) options.aspect = '16:9'
+  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
+  const contract = await createInputContract(options)
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: contract.sourceText,
+    style: contract.target.style,
+    aspectRatio: contract.target.aspectRatio,
+    expandScript: false
+  })
+
+  await mkdir(outDir, { recursive: true })
+  const feedPath = join(outDir, 'seedance-all-reference-feed.md')
+  await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(pack)}\n`, 'utf8')
+
+  console.log('Seedance all-reference feed ready:')
+  console.log(`- feed: ${feedPath}`)
+  console.log(`- aspect: ${pack.aspectRatio}`)
+  console.log('- images/videos: none; generate GPT-image-2 reference images manually, then upload the bound references to the video tool')
+}
+
 async function findProjectChapter(projectDir, chapterId) {
   const chunks = await readProjectChunks(projectDir)
   return chunks.find((chunk) => chunk.chapterId === chapterId) ?? null
@@ -596,6 +626,11 @@ async function main() {
 
   if (process.argv[2] === 'canvas-full-pack') {
     await exportManualCanvasFullPack(process.argv.slice(3), cineMakeRoot)
+    return
+  }
+
+  if (process.argv[2] === 'reference-feed') {
+    await exportSeedanceReferenceFeed(process.argv.slice(3), cineMakeRoot)
     return
   }
 

@@ -18,6 +18,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - preserve long source stories by splitting them into feed cards instead of compressing them into one teaser;
 - generate storyboard/keyframe prompts and, in image-output mode (`visual` internally), still images into `storyboard-images/`;
 - package concrete Jimeng feed cards for external AI video generation;
+- generate Seedance 全能参考投喂包 / Seedance all-reference feed through eference-feed;
 - export short-script/story prompt packs into a media-free Canvas import zip for manual Canvas generation;
 - export whole-novel episode packages into a text-only Canvas import zip when the user runs the Canvas system;
 - preserve continuity instead of relying on random video generation.
@@ -112,6 +113,46 @@ Do not require prompts like:
 ```
 
 That rule belongs to this skill, not to the user.
+
+
+## Default Seedance reference-feed workflow
+
+For this project, when the user drops a script or story fragment and asks Cine Make to operate normally, prefer the `reference-feed` handoff over the old draft/storyboard package unless the user explicitly asks for `draft`, `visual`, `canvas-pack`, or Jimeng feed cards.
+
+Before generating the package, ask two short questions when the answer is not already present:
+
+1. 询问视觉风格：例如 `3D古风写实，超写实真人电影质感，冷蓝灰雪山`。
+2. 询问是否扩写剧本：不扩写 = 严格按原文拆；扩写 = 可扩成更完整的逐条视频文本。
+
+Run:
+
+```bash
+node src/cli.mjs reference-feed --out <run-dir> --aspect 16:9 --style <style> [--input <file>] "<source material>"
+```
+
+The output is `seedance-all-reference-feed.md`. It must be a Seedance 全能参考投喂包 / Seedance all-reference feed with only:
+
+- `GPT-image-2 参考图生成提示词`
+- `参考资产绑定`
+- `全局负面约束`
+- `逐条视频文本`
+- `底部备注栏可复制`
+
+Do not create `deliverable.md`, `storyboard-images/`, segment start/end frames, S01/S02 keyframes, or continuation text in this workflow. The feed must not contain words like `续接`, `承接`, `下一段`, `后续`, `首帧`, `尾帧`, `segment`, `storyboard-images`, `S01`, or `keyframe`.
+
+### GPT-image-2 三视图生成模板
+
+Every character or creature reference prompt in `reference-feed` must use this one-image tri-view layout:
+
+```text
+【三视图生成模板】设计人物三视图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。
+```
+
+For people: the left detail panel shows face, hair, head, upper body, costume material, and identifying accessories. The main panels show the same character's front full-body, side full-body, and back full-body. Use one face, one hairstyle, one body type, one costume, and one accessory set.
+
+For creatures: use the same layout, but the left panel shows head/eyes/horns/fur/scales detail and the three full-body views lock the same body ratio and material.
+
+The default aspect for this workflow is `16:9`.
 
 ## Locate the compiler
 
@@ -212,3 +253,4 @@ Before saying a Cine Make run is ready, report:
 - video prompt pack status; mention a platform only if the user explicitly named one;
 - continuity review result;
 - clear reminder that final video synthesis belongs to the external video tool.
+

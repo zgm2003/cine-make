@@ -31,7 +31,7 @@ test('skill keeps user prompts natural and internal output rules implicit', asyn
   assert.match(skill, /The user should not have to say/)
   assert.match(skill, /Jimeng/)
   assert.doesNotMatch(skill, /generic adapter unless the user explicitly asks/)
-  assert.doesNotMatch(skill, /Seedance/)
+  assert.match(skill, /Seedance 全能参考投喂包|Seedance all-reference/u)
   assert.match(skill, /That rule belongs to this skill, not to the user/)
   assert.match(skill, /Do not pass `--emit-internal` in normal user runs/)
   assert.match(skill, /视频工具投喂包/)
@@ -42,11 +42,16 @@ test('skill keeps user prompts natural and internal output rules implicit', asyn
   assert.match(skill, /故事全流程/)
 })
 
-test('skill describes Codex-only image generation through $imagegen', async () => {
+test('skill describes GPT-image-2 tri-view prompt workflow for reference-feed', async () => {
   const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
 
-  assert.match(skill, /\$imagegen/)
-  assert.doesNotMatch(skill, /gpt-image-2/)
+  assert.match(skill, /GPT-image-2/)
+  assert.match(skill, /最左侧单独的上半身\+头部细节展示/u)
+  assert.match(skill, /正面全身照、侧面全身照、背面全身照/u)
+  assert.match(skill, /三视图为一张图/u)
+  assert.match(skill, /16:9/)
+  assert.match(skill, /询问.*风格/u)
+  assert.match(skill, /询问.*扩写/u)
   assert.doesNotMatch(skill, /OPENAI_API_KEY/)
 })
 
@@ -77,16 +82,16 @@ test('skill routes manual Canvas work to canvas-pack instead of image generation
   assert.match(chinese, /场景参考/)
 })
 
-test('readmes describe Codex-only image generation through $imagegen', async () => {
+test('readmes describe Seedance reference-feed and GPT-image-2 tri-view prompts', async () => {
   const english = await readFile(join(root, 'README.md'), 'utf8')
   const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')
+  const combined = [english, chinese].join('\n')
 
-  assert.match(english, /\$imagegen/)
-  assert.match(chinese, /\$imagegen/)
-  assert.doesNotMatch(english, /gpt-image-2/)
-  assert.doesNotMatch(chinese, /gpt-image-2/)
-  assert.doesNotMatch(english, /OPENAI_API_KEY/)
-  assert.doesNotMatch(chinese, /OPENAI_API_KEY/)
+  assert.match(combined, /reference-feed/)
+  assert.match(combined, /Seedance 全能参考投喂包|Seedance all-reference/u)
+  assert.match(combined, /GPT-image-2/)
+  assert.match(combined, /三视图为一张图/u)
+  assert.doesNotMatch(combined, /OPENAI_API_KEY/)
 })
 
 test('docs describe layered cinematic pipeline instead of repeating global rules per shot', async () => {
@@ -146,3 +151,4 @@ test('golden rain-alley example is a valid production run', async () => {
   assert.equal(result.ok, true, result.errors.join('\n'))
   assert.deepEqual(result.errors, [])
 })
+

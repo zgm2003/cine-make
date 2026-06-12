@@ -93,6 +93,23 @@ Manual Canvas generation uses the same layering. `canvas-pack` creates only the 
 
 For normal short-script and excerpt runs, internal debug artifacts must stay under `.cine-make-internal/`. Normal users should not see `episodes/`, `continuity-bible.json`, task trees, or handoff files from those runs. Whole-novel project mode intentionally exposes project workspace artifacts and per-episode packages.
 
+
+## Seedance all-reference feed
+
+When the user simply drops a script into Cine Make, prefer the `reference-feed` output instead of the old start/end-frame storyboard workflow. This workflow defaults to `16:9`, asks for visual style, asks whether to expand the script, and writes:
+
+```text
+seedance-all-reference-feed.md
+```
+
+The file has only: `GPT-image-2 reference prompts`, `reference asset bindings`, `global negative constraints`, `numbered video texts`, and `copyable bottom notes`. It does not create `storyboard-images/` and does not mention start frames, end frames, S01, segment, or continuation language.
+
+The GPT-image-2 tri-view prompt is one image: front full-body, side full-body, back full-body, plus a separate upper-body + head detail panel on the far left, white background, clean professional layout. 三视图为一张图.
+
+```bash
+node src/cli.mjs reference-feed --out .cine-make-runs/demo --aspect 16:9 --style "3D ancient live-action, photoreal cinematic" "story material..."
+```
+
 ## Modes
 
 | Mode | Purpose | Images | Output |
@@ -310,3 +327,4 @@ video feed card -> generated video segment -> final edit/export
 ```
 
 Cine Make must never claim that Codex rendered the final MP4.
+

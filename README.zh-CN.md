@@ -106,6 +106,23 @@ README.md
 
 普通短片和小说片段运行的内部调试文件只允许出现在 `.cine-make-internal/`，普通用户不应该看到这些运行里的 `episodes/`、`continuity-bible.json`、任务树或 handoff 文件。长篇小说项目模式会有意暴露项目工作区产物和单集导出包。
 
+
+## Seedance 全能参考投喂包
+
+如果用户只是丢剧本给 Cine Make，默认优先走 `reference-feed` 产物，而不是旧的首尾帧 / 分镜图流程。这个流程默认 `16:9`，先询问视觉风格，再询问是否扩写剧本，然后输出：
+
+```text
+seedance-all-reference-feed.md
+```
+
+文件结构固定为：`GPT-image-2 参考图生成提示词`、`参考资产绑定`、`全局负面约束`、`逐条视频文本`、`底部备注栏可复制`。它不生成 `storyboard-images/`，不写首帧、尾帧、S01、segment、续接或承接。
+
+GPT-image-2 三视图必须是一张图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。
+
+```bash
+node src/cli.mjs reference-feed --out .cine-make-runs/demo --aspect 16:9 --style "3D古风写实，超写实真人电影质感" "剧本内容..."
+```
+
 ## 两种模式 + Canvas 提示词包
 
 | 模式 | 用途 | 图片 | 输出 |
@@ -358,3 +375,4 @@ Cine Make 负责前期制片：
 ```
 
 Cine Make 不能声称 Codex 生成了最终 MP4。
+

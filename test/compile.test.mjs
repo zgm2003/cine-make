@@ -178,3 +178,33 @@ test('cli writes a full Canvas pack with reference-to-keyframe and storyboard-fl
     await rm(out, { recursive: true, force: true })
   }
 })
+
+test('cli writes a Seedance all-reference feed without storyboard artifacts', async () => {
+  const out = await mkdtemp(join(tmpdir(), 'cine-make-seedance-feed-cli-'))
+  const input = join(out, 'script.txt')
+  try {
+    await writeFile(input, '画面:雪山之巅，风雪之中。头发花白且凌乱的老道人身穿蓑衣，头戴斗笠，艰难的迎着风雪行走，双手放在胸前，怀里紧紧抱着一只虚弱的麒麟幼兽。身后的雪地上滴下长长的一道血痕，没走几步老道终于支撑不住倒在雪地里。怀里的麒麟幼兽摔在雪地上，看着倒在雪地的老道，坚强的起身用舌头舔舐老道的面颊，老道奄奄一息的伸出手触摸麒麟。', 'utf8')
+
+    const result = spawnSync(process.execPath, ['src/cli.mjs', 'reference-feed', '--input', input, '--out', out, '--style', '3D古风写实，超写实真人电影质感，冷蓝灰雪山'], {
+      cwd: root,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.ok(existsSync(join(out, 'seedance-all-reference-feed.md')))
+    assert.equal(existsSync(join(out, 'deliverable.md')), false)
+    assert.equal(existsSync(join(out, 'storyboard-images')), false)
+    const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
+    assert.match(feed, /GPT-image-2 参考图生成提示词/u)
+    assert.match(feed, /最左侧单独的上半身\+头部细节展示/u)
+    assert.match(feed, /三视图为一张图/u)
+    assert.match(feed, /16:9/u)
+    assert.match(feed, /雪山之巅=图片1/u)
+    assert.match(feed, /老年道清=图片2/u)
+    assert.match(feed, /麒麟幼兽=图片3/u)
+    assert.doesNotMatch(feed, /续接|承接|下一段|首帧|尾帧|segment|storyboard-images|S01/u)
+    assert.match(result.stdout, /Seedance all-reference feed ready/u)
+  } finally {
+    await rm(out, { recursive: true, force: true })
+  }
+})
