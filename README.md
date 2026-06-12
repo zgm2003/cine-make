@@ -53,7 +53,7 @@ Every 5 video text lines equals 15 seconds unless the user explicitly overrides.
 
 The GPT-image-2 tri-view prompt is one image: front full-body, side full-body, back full-body, plus a separate upper-body + head detail panel on the far left, white background, clean professional layout. 三视图为一张图.
 
-Prop references are different: each prop prompt must generate one isolated complete object only, like a single sword, token, or teacup product shot on a clean white/light-gray background. No people, hands, scene staging, split panels, variants, or bundled props.
+Prop references are value-gated before prompting. Only story-critical props that drive conflict, action, identity reveal, mystery, or the decisive beat become standalone assets. Low-content objects such as ordinary pendants, cups, tableware, decorative tags, or background ornaments are not reference assets and should not be repeated as prompt anchors. If a prop passes the gate, generate one isolated complete object only on a clean white/light-gray background. No people, hands, scene staging, split panels, variants, or bundled props.
 
 If the user wants only the feed file:
 

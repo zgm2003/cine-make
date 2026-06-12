@@ -28,6 +28,7 @@ const PROP_CATALOG = [
     id: 'prop-phone',
     title: '道具：倒计时手机',
     label: '手机',
+    contentValue: 'high',
     triggers: ['手机', '闹钟', '倒计时', '00:00:00', '00:10:00'],
     prompt: '超写实真人电影道具参考图：一部旧智能手机，屏幕显示倒计时数字，边缘有雨水、血迹和细小划痕，心理惊悚电影氛围，暗色背景，85mm镜头，4K，真实玻璃反光，不要水印、字幕、logo。'
   },
@@ -35,6 +36,7 @@ const PROP_CATALOG = [
     id: 'prop-teapot',
     title: '道具：茶壶 / 热水杯',
     label: '茶壶',
+    contentValue: 'low',
     triggers: ['茶壶', '热水', '水杯', '倒水'],
     prompt: '超写实真人电影道具参考图：旧别墅茶几上的陶瓷茶壶和热水杯，杯口有热气，表面有雨夜冷光反射，悬疑片低调布光，85mm镜头，4K，真实材质，不要水印、字幕、logo。'
   },
@@ -42,37 +44,57 @@ const PROP_CATALOG = [
     id: 'prop-gun',
     title: '道具：老式手枪',
     label: '枪',
+    contentValue: 'high',
     triggers: ['枪', '手枪', '枪口', '拔枪'],
-    prompt: '超写实真人电影道具参考图：磨损老式手枪，金属有雨水和指纹，旁边有旧警用枪套，暗黑心理惊悚氛围，85mm镜头，4K，真实金属材质，不要水印、字幕、logo。'
+    prompt: '超写实真人电影道具参考图：一把磨损老式手枪，金属有雨水和指纹，干净深灰背景，暗黑心理惊悚氛围，85mm镜头，4K，真实金属材质，不要手持、不要人物、不要枪套、不要其他道具、不要水印、字幕、logo。'
   },
   {
     id: 'prop-police-badge',
     title: '道具：警徽',
     label: '警徽',
+    contentValue: 'high',
     triggers: ['警徽'],
-    prompt: '超写实真人电影道具参考图：旧警徽放在潮湿木桌上，边缘磨损，冷色闪电反光，心理惊悚电影低调布光，85mm镜头，4K，真实金属质感，不要水印、字幕、logo。'
+    prompt: '超写实真人电影道具参考图：一枚旧警徽，边缘磨损，冷色闪电反光，干净深灰背景，心理惊悚电影低调布光，85mm镜头，4K，真实金属质感，不要手持、不要人物、不要桌面摆拍、不要其他道具、不要水印、字幕、logo。'
   },
   {
     id: 'prop-bloody-scalpel',
     title: '道具：带血解剖刀',
     label: '带血的解剖刀',
+    contentValue: 'high',
     triggers: ['解剖刀', '解刨刀', '手术刀'],
-    prompt: '超写实真人电影道具参考图：带血解剖刀放在旧证物袋旁，刀刃有暗红血迹和冷色反光，精神病院线索氛围，85mm镜头，4K，真实金属和血迹材质，不要水印、字幕、logo。'
+    prompt: '超写实真人电影道具参考图：一把带血解剖刀，刀刃有暗红血迹和冷色反光，干净深灰背景，精神病院线索氛围，85mm镜头，4K，真实金属和血迹材质，不要手持、不要人物、不要证物袋、不要其他道具、不要水印、字幕、logo。'
   },
   {
     id: 'prop-bloody-knife',
     title: '道具：带血小刀 / 手臂刻字',
     label: '带血小刀',
+    contentValue: 'high',
     triggers: ['小刀', '刀刻', '刻字'],
-    prompt: '超写实真人电影道具参考图：带血小刀和手臂刻字细节，浅浅刀痕写着记忆只有10分钟，皮肤纹理真实，血迹克制，心理惊悚电影低调布光，85mm镜头，4K，不要水印、字幕、logo。'
+    prompt: '超写实真人电影道具参考图：一把带血小刀，刀刃有克制暗红血迹，干净深灰背景，心理惊悚电影低调布光，85mm镜头，4K，真实金属材质，不要手持、不要人物、不要手臂、不要刻字皮肤、不要其他道具、不要水印、字幕、logo。'
   },
   {
     id: 'prop-medical-file',
     title: '道具：病历夹 / 药瓶',
     label: '病历夹',
+    contentValue: 'high',
     triggers: ['病历', '药瓶', '精神病院', '圣路易斯'],
-    prompt: '超写实真人电影道具参考图：精神病院病历夹、药瓶和旧工作牌摆在潮湿茶几上，纸张边缘发皱，冷色低调布光，85mm镜头，4K，真实纸张与玻璃材质，不要水印、字幕、logo。'
+    prompt: '超写实真人电影道具参考图：一本精神病院病历夹，纸张边缘发皱，干净深灰背景，冷色低调布光，85mm镜头，4K，真实纸张材质，不要手持、不要人物、不要药瓶、不要工作牌、不要其他道具、不要水印、字幕、logo。'
   }
+]
+
+const LOW_CONTENT_PROP_TERMS = [
+  '白瓷茶杯',
+  '热水杯',
+  '茶杯',
+  '水杯',
+  '茶壶',
+  '普通玉佩',
+  '玉佩',
+  '普通玉牌',
+  '玉牌',
+  '装饰牌',
+  '餐具',
+  '背景摆件'
 ]
 
 export async function exportCanvasPromptPack({ outDir, contract } = {}) {
@@ -267,7 +289,7 @@ function buildTijiaGuomanCanvasPromptPackManifest({ contract }) {
   const stylePrompt = [
     `GPT-image-2，${aspectRatio}，${style}。`,
     '3D国漫整体风格参考图，不是分镜，不要具体剧情动作。',
-    '画面表现古代仙侠家族大堂内的压迫气氛：深色木梁、屏风、烛火、茶案、冷青剑光、暖金灯火、水墨雾气。',
+    '画面表现古代仙侠家族大堂内的压迫气氛：深色木梁、屏风、烛火、家主主位、角落阴影坐席、冷青剑光、暖金灯火、水墨雾气。',
     '空间有东方水墨晕染感，后续角色资产要适配高质量3D国漫建模。',
     '不要真人照片，不要现代物品，不要低幼卡通，不要Q版，不要文字水印。'
   ].join('')
@@ -404,7 +426,7 @@ function buildTijiaGuomanCanvasPromptPackManifest({ contract }) {
     },
     manualWorkflow: [
       '导入 canvas-project.zip。',
-      '本包只生成基础资产：3D国漫整体风格、许家大堂、4个人物三视图、3个核心道具。',
+      '本包只生成基础资产：3D国漫整体风格、许家大堂、4个人物三视图、1个高内容感剧情道具。',
       '左侧资料节点不要生成；点击右侧图片节点生成。',
       '生成满意后锁定这些资产；下一步再做每5条=15s的Seedance逐条视频文本投喂包。'
     ],
@@ -599,8 +621,8 @@ function normalizeCharacters(characters = []) {
     bodyDetails: character.body_details || '',
     expression: character.expression || character.performance_anchor || '',
     mood: character.mood || '',
-    props: character.props ?? [],
-    prompt: character.reference_prompt || ''
+    props: valueGatePropNames(character.props ?? []),
+    prompt: stripLowContentPropText(character.reference_prompt || '')
   }))
 }
 
@@ -694,7 +716,39 @@ function inferProps(sourceText, draft) {
     ])
   ].filter(Boolean).join('\n')
 
-  return PROP_CATALOG.filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
+  return PROP_CATALOG
+    .filter((prop) => prop.contentValue === 'high')
+    .filter((prop) => prop.triggers.some((trigger) => haystack.includes(trigger)))
+}
+
+function valueGatePropNames(props = []) {
+  return props.filter((prop) => !isLowContentPropText(prop))
+}
+
+function isLowContentPropText(value) {
+  const text = String(value || '')
+  return LOW_CONTENT_PROP_TERMS.some((term) => text.includes(term))
+}
+
+function stripLowContentPropText(value) {
+  let text = String(value || '')
+  for (const term of LOW_CONTENT_PROP_TERMS) {
+    const escaped = escapeRegExp(term)
+    text = text.replace(new RegExp(`(?:[；;、，,]\\s*)?${escaped}(?:\\s*[；;、，,])?`, 'gu'), (match) => {
+      const hasLeftSeparator = /^[；;、，,]/u.test(match)
+      const hasRightSeparator = /[；;、，,]$/u.test(match)
+      return hasLeftSeparator && hasRightSeparator ? '；' : ''
+    })
+  }
+  return text
+    .replace(/[；;、，,]{2,}/gu, '；')
+    .replace(/：\s*[；;、，,]\s*/gu, '：')
+    .replace(/[；;、，,]\s*。/gu, '。')
+    .replace(/核心道具：\s*。/gu, '')
+}
+
+function escapeRegExp(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
 }
 
 function createManifestNode({ id, role, title, canvasType, row, column, prompt, content, seconds, imageSize, inputOrder, anchor, requiredAnchors, promptLayer, motionPrompt, linkedBeat, shotFunction, audienceTakeaway, environmentId, anchorPolicy, mergeStrategy }) {
@@ -1459,9 +1513,9 @@ function anchorPolicyForShot(shot) {
   if (/镜头拉开|另外三个人|三个人|四个方位|客厅里还有/u.test(text)) return { primary: '四人空间棋盘', secondary: ['雷队堵门', '阿杰背光角落'] }
   if (/冷笑|凯撒|眼神诡异/u.test(text)) return { primary: /冷笑/u.test(text) ? '阿杰嘴角冷笑' : '阿杰诡异眼神', secondary: ['众人视线转向阿杰', '拐杖/腿部支架'] }
   if (/阿杰|瘸子|蜷缩|瑟瑟/u.test(text)) return { primary: '阿杰诡异眼神', secondary: ['拐杖', '腿部支架'] }
-  if (/热水杯|倒热水|倒水/u.test(text)) return { primary: '热水杯', secondary: ['安娜手部动作', '林默警惕眼神'] }
+  if (/热水杯|倒热水|倒水/u.test(text)) return { primary: '安娜倒水安抚/控制', secondary: ['安娜手部动作', '林默警惕眼神'] }
   if (/雷队|枪/u.test(text)) return { primary: '雷队堵门', secondary: ['手枪', '出口'] }
-  if (/安娜|药|安抚/u.test(text)) return { primary: '安娜安抚/控制', secondary: ['热水杯', '药瓶'] }
+  if (/安娜|药|安抚/u.test(text)) return { primary: '安娜安抚/控制', secondary: ['药瓶', '林默反应'] }
   if (/血手|鲜血|双手/u.test(text)) return { primary: '林默血手', secondary: ['沙发', '低光'] }
   return { primary: '本镜头主要视觉信息', secondary: ['环境连续性'] }
 }

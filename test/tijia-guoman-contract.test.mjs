@@ -34,21 +34,19 @@ test('替嫁国漫 Seedance feed uses the proven single-line shot-text format', 
     '许悠然',
     '江凡',
     '许正言',
-    '三尺青锋',
-    '青云宗玉牌',
-    '白瓷茶杯'
+    '三尺青锋'
   ])
 
   assert.match(markdown, /^1 许家大堂 许怡宁 .*许怡宁的手死死攥着三尺青锋.*特写\+慢推.*台词（许怡宁，尖厉决绝）：“我宁死，也不嫁江凡！”/mu)
-  assert.match(markdown, /^3 许家大堂角落 江凡 .*白瓷茶杯.*茶杯特写.*心跳声/mu)
+  assert.match(markdown, /^3 许家大堂角落 江凡 .*江凡独自坐在角落阴影里.*表情平静无波.*眼底却藏着冷光.*心跳声/mu)
   assert.match(markdown, /^5 许家大堂中央 许悠然、江凡 .*许悠然.*我嫁.*江凡抬眸.*轻响定格/mu)
   assert.match(markdown, /每5条视频文本=15s/u)
   assert.match(markdown, /3D国漫/u)
-  assert.match(markdown, /青云宗玉牌=图片7/u)
+  assert.doesNotMatch(markdown, /青云宗玉牌|白瓷茶杯/u)
   assert.doesNotMatch(markdown, /主要场景|含泪三视图|中景 \+ 平视或轻微低机位|不要配乐|心理悬疑|暴风雨|真人电影质感/u)
 })
 
-test('替嫁国漫 prop references are single clean product shots to avoid contamination', () => {
+test('替嫁国漫 prop references keep only high-content decisive props', () => {
   const pack = buildSeedanceReferenceFeedPackage({
     sourceText: tijiaGuomanSource,
     style: guomanStyle,
@@ -57,7 +55,7 @@ test('替嫁国漫 prop references are single clean product shots to avoid conta
   })
   const propAssets = pack.assets.filter((asset) => asset.id.startsWith('prop-'))
 
-  assert.equal(propAssets.length, 3)
+  assert.deepEqual(propAssets.map((asset) => asset.title), ['三尺青锋'])
   for (const asset of propAssets) {
     assert.match(asset.prompt, /只生成一个完整道具主体/u)
     assert.match(asset.prompt, /一张图里只出现这一件道具/u)
@@ -86,23 +84,24 @@ test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async 
       'character-ref-xuyouran',
       'character-ref-jiangfan',
       'character-ref-xuzhengyan',
-      'prop-ref-qingfeng-sword',
-      'prop-ref-qingyun-token',
-      'prop-ref-white-teacup'
+      'prop-ref-qingfeng-sword'
     ]) {
       assert.ok(byId.has(id), `${id} should exist`)
       assert.equal(byId.get(id).canvasType, 'image')
       assert.match(byId.get(id).prompt, /3D国漫/u)
     }
 
-    assert.match(byId.get('character-ref-xuyining').prompt, /青云宗内定弟子.*玉牌/u)
-    assert.match(byId.get('character-ref-jiangfan').prompt, /白瓷茶杯/u)
+    assert.equal(byId.has('prop-ref-qingyun-token'), false)
+    assert.equal(byId.has('prop-ref-white-teacup'), false)
+    assert.doesNotMatch(byId.get('character-ref-xuyining').prompt, /青云宗玉牌|玉牌.*锚点/u)
+    assert.doesNotMatch(byId.get('character-ref-jiangfan').prompt, /白瓷茶杯|茶杯.*锚点/u)
     assert.match(byId.get('environment-ref-xu-hall').prompt, /许家大堂/u)
-    for (const id of ['prop-ref-qingfeng-sword', 'prop-ref-qingyun-token', 'prop-ref-white-teacup']) {
+    for (const id of ['prop-ref-qingfeng-sword']) {
       assert.match(byId.get(id).prompt, /只生成一个完整道具主体/u)
       assert.match(byId.get(id).prompt, /不要人物、不要手持、不要场景摆拍/u)
       assert.doesNotMatch(byId.get(id).prompt, /三视图|多角度|拆解图|组合道具/u)
     }
+    assert.doesNotMatch(JSON.stringify(manifest), /青云宗玉牌|白瓷茶杯|茶案|prop-ref-qingyun-token|prop-ref-white-teacup/u)
     assert.doesNotMatch(JSON.stringify(manifest), /心理悬疑|暴风雨|liminal|倒计时|手机|真人电影质感|超写实真人/u)
   } finally {
     await rm(out, { recursive: true, force: true })

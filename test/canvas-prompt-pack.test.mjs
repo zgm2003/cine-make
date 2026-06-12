@@ -153,6 +153,7 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.equal(manifestById.has('shot-list'), false)
     assert.equal(manifestById.has('keyframe-s02'), false)
     assert.equal(manifestById.has('prop-phone'), false)
+    assert.doesNotMatch(JSON.stringify(manifest.nodes), /茶壶|热水杯|prop-teapot/u)
     assert.equal(manifestById.has('video-segment-01'), false)
 
     assertConnection(manifest.connections, 'style-bible', 'style-reference')
@@ -201,6 +202,7 @@ test('exports a compact foundation Canvas graph for character scene and style re
     assert.deepEqual(byId.get('character-ref-linmo').metadata.inputOrder, ['character-linmo'])
     assertImagePromptNode(byId.get('environment-ref-island-villa-living-room-night'), { size: '9:16' }, /场景参考图/u, /孤岛别墅客厅/u, /暴雨夜/u)
     assertImagePromptNode(byId.get('style-reference'), { size: '9:16' }, /风格参考图/u, /低饱和/u, /暴雨夜/u)
+    assert.doesNotMatch(JSON.stringify(item.project.nodes), /茶壶|热水杯|prop-teapot/u)
 
     for (const node of item.project.nodes) {
       assert.equal(Object.hasOwn(node, 'role'), false)
@@ -463,7 +465,8 @@ test('canvas storyboard keyframes use smart anchors grouped beats and localized 
     assert.notEqual(byId.get('keyframe-s03').metadata.cineMake.anchorPolicy.primary, '倒计时手机')
     assert.doesNotMatch(byId.get('keyframe-s03').prompt, /关键道具：手机/u)
     assert.equal(byId.get('keyframe-s05').metadata.cineMake.anchorPolicy.primary, '四人空间棋盘')
-    assert.equal(byId.get('keyframe-s07').metadata.cineMake.anchorPolicy.primary, '热水杯')
+    assert.equal(byId.get('keyframe-s07').metadata.cineMake.anchorPolicy.primary, '安娜倒水安抚/控制')
+    assert.doesNotMatch(byId.get('keyframe-s07').prompt, /关键道具：茶壶|关键道具：热水杯/u)
     assert.match(byId.get('keyframe-s13').metadata.cineMake.anchorPolicy.primary, /阿杰(嘴角冷笑|诡异眼神)/u)
     assert.equal(byId.get('keyframe-s15').metadata.cineMake.anchorPolicy.primary, '手机 00:00:00')
 

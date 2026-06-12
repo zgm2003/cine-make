@@ -41,6 +41,8 @@ Seedance feed:
 
 Prop reference contract:
 
+- standalone prop assets are allowed only when the prop directly drives conflict, action, identity reveal, mystery, or the decisive beat;
+- low-content accessories and incidental objects such as ordinary pendants, cups, tableware, decorative tags, or background ornaments must not become reference assets, anchors, or repeated prompt details;
 - every prop reference prompt must generate one isolated complete object only;
 - use a clean white or light-gray product-shot background;
 - forbid characters, hands, scene staging, prop bundles, split panels, or multiple variants in the same image;
