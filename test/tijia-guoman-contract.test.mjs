@@ -48,6 +48,25 @@ test('替嫁国漫 Seedance feed uses the proven single-line shot-text format', 
   assert.doesNotMatch(markdown, /主要场景|含泪三视图|中景 \+ 平视或轻微低机位|不要配乐|心理悬疑|暴风雨|真人电影质感/u)
 })
 
+test('替嫁国漫 prop references are single clean product shots to avoid contamination', () => {
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: tijiaGuomanSource,
+    style: guomanStyle,
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+  const propAssets = pack.assets.filter((asset) => asset.id.startsWith('prop-'))
+
+  assert.equal(propAssets.length, 3)
+  for (const asset of propAssets) {
+    assert.match(asset.prompt, /只生成一个完整道具主体/u)
+    assert.match(asset.prompt, /一张图里只出现这一件道具/u)
+    assert.match(asset.prompt, /干净白色或浅灰背景/u)
+    assert.match(asset.prompt, /不要人物、不要手持、不要场景摆拍/u)
+    assert.doesNotMatch(asset.prompt, /三视图|多角度|拆解图|组合道具|旁侧道具展示|展示正面、侧面/u)
+  }
+})
+
 test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-tijia-guoman-canvas-'))
   try {
@@ -79,6 +98,11 @@ test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async 
     assert.match(byId.get('character-ref-xuyining').prompt, /青云宗内定弟子.*玉牌/u)
     assert.match(byId.get('character-ref-jiangfan').prompt, /白瓷茶杯/u)
     assert.match(byId.get('environment-ref-xu-hall').prompt, /许家大堂/u)
+    for (const id of ['prop-ref-qingfeng-sword', 'prop-ref-qingyun-token', 'prop-ref-white-teacup']) {
+      assert.match(byId.get(id).prompt, /只生成一个完整道具主体/u)
+      assert.match(byId.get(id).prompt, /不要人物、不要手持、不要场景摆拍/u)
+      assert.doesNotMatch(byId.get(id).prompt, /三视图|多角度|拆解图|组合道具/u)
+    }
     assert.doesNotMatch(JSON.stringify(manifest), /心理悬疑|暴风雨|liminal|倒计时|手机|真人电影质感|超写实真人/u)
   } finally {
     await rm(out, { recursive: true, force: true })

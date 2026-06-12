@@ -57,6 +57,7 @@ Cine Make does **not** generate final video. Codex can write text assets and gen
 - Treat external AI video generation as a short Seedance feed-text workflow. Every 5 single-line video texts equal 15 seconds unless the user explicitly overrides. Each line should have room for camera movement, performance, and suspense beats.
 - GPT-image-2 / manual image prompt workflow is foundation-first: before continuous video text, help the user lock character references, visual style, and scene/environment reference in Canvas.
 - GPT-image-2 reference prompts must use in-frame camera language only: visible blocking, camera position, shot size, character orientation, foreground/background, body pose, expression, spatial relationship, lighting, and negative constraints. Avoid abstract or ambiguous phrases like “男主看着建筑”; write “背对镜头的男主站在画面下方中央，头微微仰起，视线朝向前方居民楼入口”.
+- Prop / 道具 reference prompts must be single clean product shots: only one complete prop subject in the image, clean white or light-gray background, no character, no hand holding, no scene staging, no prop bundle, no split panels. This prevents the prop asset from contaminating character or scene references.
 - Long stories must be preserved and split into multiple feed cards; do not silently compress a multi-beat story into a single 30-second teaser unless the user explicitly asks for compression.
 
 ## Main Seedance + Canvas handoffs
@@ -212,6 +213,7 @@ When triggered by a story-to-video-preproduction request:
 
 - A good Seedance video text line is concrete and AI-facing: location, roles, action, performance, shot size, lens/camera position, composition, blocking, lighting, camera movement, dialogue, sound, and negative constraints.
 - A good reference image prompt asks for one stable asset sheet, not motion.
+- A good prop reference image prompt asks for one isolated object, like a single sword / token / teacup product reference. Do not ask for surrounding people, hands, tables, rooms, multiple variants, or bundled props.
 - For Cine Make specifically, if the user explicitly asks for image generation, use `$imagegen` directly and save still images only where the user requested them; do not revive the removed main-path image folder.
 - A good video-tool feed card, when a legacy novel export needs one, is operational: uploaded images + timeline + start frame + end frame + shot size + lens + camera language + composition + blocking + lighting/art direction + continuity + avoid list.
 - Each legacy video-tool feed card must keep uploaded images at or under 9 total. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.

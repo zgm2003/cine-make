@@ -39,6 +39,13 @@ Seedance feed:
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;
 - final video synthesis and stitching happen outside Cine Make.
 
+Prop reference contract:
+
+- every prop reference prompt must generate one isolated complete object only;
+- use a clean white or light-gray product-shot background;
+- forbid characters, hands, scene staging, prop bundles, split panels, or multiple variants in the same image;
+- describe material and silhouette on that single object instead of adding companion objects.
+
 Canvas pack:
 
 - all Canvas handoff commands write `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`;

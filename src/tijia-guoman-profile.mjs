@@ -20,6 +20,18 @@ export function tijiaGuomanTitle() {
   return '替嫁爆点 15s'
 }
 
+function singlePropReferencePrompt({ base, title, description, materialDetails, optionalDetail = '', avoid = '' }) {
+  return [
+    `${base}${title}道具参考图，单体产品图，只生成一个完整道具主体，一张图里只出现这一件道具。`,
+    `${description}`,
+    `${materialDetails}`,
+    optionalDetail,
+    '构图：道具居中或斜向铺开，完整外轮廓清楚，材质细节集中在同一件道具上，干净白色或浅灰背景，像单个道具产品图。',
+    '不要人物、不要手持、不要场景摆拍，不要分栏展示，不要拆件，不要第二件道具，不要文字水印。',
+    avoid
+  ].filter(Boolean).join('')
+}
+
 export function tijiaGuomanAssetDefinitions({ style, aspectRatio }) {
   const visualStyle = tijiaGuomanStyle(style)
   const triView = '【三视图生成模板】设计3D国漫人物三视图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色或极浅灰色，整体构图工整专业。三视图为一张图。'
@@ -70,21 +82,40 @@ export function tijiaGuomanAssetDefinitions({ style, aspectRatio }) {
       id: 'prop-qingfeng-sword',
       kind: 'image',
       title: '三尺青锋',
-      prompt: `${base}三尺青锋道具参考图，锋利长剑，剑身修长，青冷寒光，剑刃薄而危险，剑柄古朴精致，金属和国漫三维材质结合。展示整体剑身、剑柄细节、剑刃青色反光，可有一滴泪珠落在剑身上的小水花参考。白色或浅灰背景，3D国漫道具设定图。不要人物，不要现代物品，不要夸张魔法光效，不要血迹，不要文字水印。`,
+      prompt: singlePropReferencePrompt({
+        base,
+        title: '三尺青锋',
+        description: '锋利长剑，剑身修长，青冷寒光，剑刃薄而危险，剑柄古朴精致。',
+        materialDetails: '金属和国漫三维材质结合，剑刃有青色反光，剑柄有古风金属纹样和青玉点缀。',
+        optionalDetail: '可保留一滴泪珠落在剑身上的小水花，但水花必须贴在同一把剑上，不额外生成其他物体。',
+        avoid: '不要现代物品，不要夸张魔法光效，不要血迹。'
+      }),
       bible: '三尺青锋：许怡宁抵颈拒婚的核心道具，剑身青冷，干净无血。'
     },
     {
       id: 'prop-qingyun-token',
       kind: 'image',
       title: '青云宗玉牌',
-      prompt: `${base}青云宗玉牌道具参考图，青白玉质仙门玉牌，云纹浮雕，细绳或金属扣连接，可挂在衣襟处，玉质半透，边缘有冷青反光。展示正面、侧面厚度、挂绳连接方式、玉石纹理，允许简单云纹符号但不要复杂文字。白色或浅灰背景，3D国漫道具设定图。不要人物，不要现代校牌，不要金属军牌，不要二维码，不要文字水印。`,
+      prompt: singlePropReferencePrompt({
+        base,
+        title: '青云宗玉牌',
+        description: '青白玉质仙门玉牌，云纹浮雕，细绳或金属扣连接，可挂在衣襟处。',
+        materialDetails: '玉质半透，边缘有冷青反光，挂绳和玉石连接结构清楚，允许简单云纹符号但不要复杂文字。',
+        avoid: '不要现代校牌，不要金属军牌，不要二维码。'
+      }),
       bible: '青云宗玉牌：许怡宁内定弟子身份锚点，挂在衣襟处会轻轻晃动。'
     },
     {
       id: 'prop-white-teacup',
       kind: 'image',
       title: '白瓷茶杯',
-      prompt: `${base}白瓷茶杯道具参考图，古风白瓷小茶杯，杯壁薄，茶水微微晃动，杯口有暖金反光，瓷面干净。展示茶杯整体、杯口茶水反射、指尖可接触的尺度参考，可有淡淡茶雾。白色或浅灰背景，3D国漫道具设定图。不要人物，不要现代马克杯，不要玻璃杯，不要咖啡杯，不要文字水印。`,
+      prompt: singlePropReferencePrompt({
+        base,
+        title: '白瓷茶杯',
+        description: '古风白瓷小茶杯，杯壁薄，茶水微微晃动，杯口有暖金反光，瓷面干净。',
+        materialDetails: '白瓷釉面、杯口茶水反射和淡淡茶雾集中在同一个茶杯上，尺度感由茶杯自身比例体现。',
+        avoid: '不要现代马克杯，不要玻璃杯，不要咖啡杯。'
+      }),
       bible: '白瓷茶杯：江凡平静反打的核心锚点，茶水微晃但人不乱。'
     }
   ]
