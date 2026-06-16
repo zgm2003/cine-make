@@ -1,0 +1,633 @@
+{
+  "schemaVersion": 1,
+  "kind": "cine-make-canvas-prompt-pack",
+  "packageType": "manual_canvas_reference_only_no_style_reference",
+  "createdAt": "2026-06-12T12:40:43.911Z",
+  "source": "taixu-ep01-reference-only-no-narration",
+  "target": {
+    "app": "infinite-canvas",
+    "version": 3,
+    "aspectRatio": "16:9",
+    "style": "沿用用户已有参考图的风格；不单独生成单独风格参考",
+    "platform": "jimeng"
+  },
+  "manualWorkflow": [
+    "导入 canvas-project.zip。",
+    "Canvas里只生成/锁定人物、场景、关键道具参考图；不要生成单独风格参考。",
+    "你的参考图已经携带整体风格，后续提示词只引用这些参考图，避免风格污染。",
+    "只使用你已有的角色音色；对白由文字台词驱动；不要配乐。",
+    "复制“即梦逐段提示词”文本节点，每次5条投喂即梦/Seedance。",
+    "每段都强调：不要字幕、配乐，只保留音效和对白；段末音效轻收。"
+  ],
+  "outputs": [
+    "canvas-project.zip",
+    "canvas-manifest.json",
+    "prompt-pack.md",
+    "README.md",
+    "seedance-all-reference-feed.md"
+  ],
+  "nodes": [
+    {
+      "id": "environment-ref-xu-hall-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：许家大堂",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 许家大堂\n类型：environment_reference\n用途：镜头01-53主场景\n\n生成规则：16:9，古代仙侠世家大堂空场景，主位、屏风、族人站位区、角落茶案、厅中央空地清楚，暖金烛火与冷青剑光对比，水墨雾气，3D动画电影材质。空场景，不要人物，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "environment-ref-xu-hall",
+      "role": "environment_reference",
+      "canvasType": "image",
+      "title": "生成：许家大堂",
+      "position": {
+        "x": 420,
+        "y": 0
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "16:9，古代仙侠世家大堂空场景，主位、屏风、族人站位区、角落茶案、厅中央空地清楚，暖金烛火与冷青剑光对比，水墨雾气，延续已有人物和场景参考图的材质。空场景，不要人物，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "environment-ref-xu-hall-bible"
+      ],
+      "anchor": {
+        "anchorId": "environment-ref-xu-hall",
+        "anchorRole": "environment_reference",
+        "anchorName": "许家大堂",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "environment_reference"
+        }
+      }
+    },
+    {
+      "id": "environment-ref-youran-room-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：许悠然闺房",
+      "position": {
+        "x": 0,
+        "y": 330
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 许悠然闺房\n类型：environment_reference\n用途：镜头54-60主场景\n\n生成规则：16:9，简陋古风少女闺房空场景，旧梳妆镜、小抽屉、木桌、简单床榻，米黄弱烛光混青灰阴影，空间比丫鬟房略好，3D国漫电影质感。空场景，不要人物，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "environment-ref-youran-room",
+      "role": "environment_reference",
+      "canvasType": "image",
+      "title": "生成：许悠然闺房",
+      "position": {
+        "x": 420,
+        "y": 330
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "16:9，简陋古风少女闺房空场景，旧梳妆镜、小抽屉、木桌、简单床榻，米黄弱烛光混青灰阴影，空间比丫鬟房略好，延续已有人物和场景参考图的质感。空场景，不要人物，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "environment-ref-youran-room-bible"
+      ],
+      "anchor": {
+        "anchorId": "environment-ref-youran-room",
+        "anchorRole": "environment_reference",
+        "anchorName": "许悠然闺房",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "environment_reference"
+        }
+      }
+    },
+    {
+      "id": "character-ref-jiangfan-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：江凡",
+      "position": {
+        "x": 0,
+        "y": 990
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 江凡\n类型：character_reference\n用途：江凡所有镜头\n\n生成规则：【三视图生成模板】设计人物三视图：正面全身、侧面全身、背面全身，最左侧上半身+头部细节，白色背景，一张图。江凡，清俊年轻男子，表面沉默平静，眼底藏冷光，素色仙侠古装，修长手指，可在细节区放白瓷茶杯作为气质锚点。不要剧情动作，不要多人，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "character-ref-jiangfan",
+      "role": "character_reference",
+      "canvasType": "image",
+      "title": "生成：江凡",
+      "position": {
+        "x": 420,
+        "y": 990
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "【三视图生成模板】设计人物三视图：正面全身、侧面全身、背面全身，最左侧上半身+头部细节，白色背景，一张图。江凡，清俊年轻男子，表面沉默平静，眼底藏冷光，素色仙侠古装，修长手指，可在细节区放白瓷茶杯作为气质锚点。不要剧情动作，不要多人，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "character-ref-jiangfan-bible"
+      ],
+      "anchor": {
+        "anchorId": "character-ref-jiangfan",
+        "anchorRole": "character_reference",
+        "anchorName": "江凡",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "character_reference"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuyining-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：许怡宁",
+      "position": {
+        "x": 0,
+        "y": 1320
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 许怡宁\n类型：character_reference\n用途：镜头01-25\n\n生成规则：【三视图生成模板】许怡宁，许家嫡女，清冷骄矜，泪痕与决绝眼神，华贵浅色仙侠古装，青云宗真传压力只用神态表现，三尺青锋为竖向手持剧情道具。白色背景，一张三视图。不要多人，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuyining",
+      "role": "character_reference",
+      "canvasType": "image",
+      "title": "生成：许怡宁",
+      "position": {
+        "x": 420,
+        "y": 1320
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "【三视图生成模板】许怡宁，许家嫡女，清冷骄矜，泪痕与决绝眼神，华贵浅色仙侠古装，青云宗真传压力只用神态表现，三尺青锋为竖向手持剧情道具。白色背景，一张三视图。不要多人，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "character-ref-xuyining-bible"
+      ],
+      "anchor": {
+        "anchorId": "character-ref-xuyining",
+        "anchorRole": "character_reference",
+        "anchorName": "许怡宁",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "character_reference"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuyouran-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：许悠然",
+      "position": {
+        "x": 0,
+        "y": 1650
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 许悠然\n类型：character_reference\n用途：镜头20-60\n\n生成规则：【三视图生成模板】许悠然，许家庶女，柔弱温善但忍耐，苍白脸色、含泪眼神，素雅碧色古风衣裙，少量银饰，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuyouran",
+      "role": "character_reference",
+      "canvasType": "image",
+      "title": "生成：许悠然",
+      "position": {
+        "x": 420,
+        "y": 1650
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "【三视图生成模板】许悠然，许家庶女，柔弱温善但忍耐，苍白脸色、含泪眼神，素雅碧色古风衣裙，少量银饰，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "character-ref-xuyouran-bible"
+      ],
+      "anchor": {
+        "anchorId": "character-ref-xuyouran",
+        "anchorRole": "character_reference",
+        "anchorName": "许悠然",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "character_reference"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuzhengyan-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：许正言",
+      "position": {
+        "x": 0,
+        "y": 1980
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 许正言\n类型：character_reference\n用途：镜头03-45\n\n生成规则：【三视图生成模板】许正言，中年家主，威严、冷汗、算计并存，深色家主古装，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "character-ref-xuzhengyan",
+      "role": "character_reference",
+      "canvasType": "image",
+      "title": "生成：许正言",
+      "position": {
+        "x": 420,
+        "y": 1980
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "【三视图生成模板】许正言，中年家主，威严、冷汗、算计并存，深色家主古装，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "character-ref-xuzhengyan-bible"
+      ],
+      "anchor": {
+        "anchorId": "character-ref-xuzhengyan",
+        "anchorRole": "character_reference",
+        "anchorName": "许正言",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "character_reference"
+        }
+      }
+    },
+    {
+      "id": "character-ref-wangyingfeng-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：王映凤",
+      "position": {
+        "x": 0,
+        "y": 2310
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 王映凤\n类型：character_reference\n用途：镜头18-52\n\n生成规则：【三视图生成模板】王映凤，中年夫人，表面温和恳切、眼底精明恶毒，古风家族夫人造型，端庄但有压迫感，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "character-ref-wangyingfeng",
+      "role": "character_reference",
+      "canvasType": "image",
+      "title": "生成：王映凤",
+      "position": {
+        "x": 420,
+        "y": 2310
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "【三视图生成模板】王映凤，中年夫人，表面温和恳切、眼底精明恶毒，古风家族夫人造型，端庄但有压迫感，白色背景，一张三视图。不要剧情动作，不要多人，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "character-ref-wangyingfeng-bible"
+      ],
+      "anchor": {
+        "anchorId": "character-ref-wangyingfeng",
+        "anchorRole": "character_reference",
+        "anchorName": "王映凤",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "character_reference"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-qingfeng-sword-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：三尺青锋",
+      "position": {
+        "x": 0,
+        "y": 2640
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 三尺青锋\n类型：prop_reference\n用途：许怡宁拒婚核心道具\n\n生成规则：单件道具产品图：三尺青锋长剑，剑身修长，冷青金属反光，剑柄古朴，白色或浅灰背景，3D国漫道具材质。不要人物，不要手持，不要血迹，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-qingfeng-sword",
+      "role": "prop_reference",
+      "canvasType": "image",
+      "title": "生成：三尺青锋",
+      "position": {
+        "x": 420,
+        "y": 2640
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "单件道具产品图：三尺青锋长剑，剑身修长，冷青金属反光，剑柄古朴，白色或浅灰背景，与已有人物和场景参考图一致的道具材质。不要人物，不要手持，不要血迹，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "prop-ref-qingfeng-sword-bible"
+      ],
+      "anchor": {
+        "anchorId": "prop-ref-qingfeng-sword",
+        "anchorRole": "prop_reference",
+        "anchorName": "三尺青锋",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "prop_reference"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-paper-brush-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：纸笔与字条",
+      "position": {
+        "x": 0,
+        "y": 3300
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 纸笔与字条\n类型：prop_reference\n用途：江凡写退婚与答应成婚\n\n生成规则：单件道具产品图：古风纸张与毛笔，纸上可留空或只有一个清晰“好”字版本，白色或浅灰背景，3D国漫材质。不要人物，不要手持，不要复杂桌面，不要额外文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-paper-brush",
+      "role": "prop_reference",
+      "canvasType": "image",
+      "title": "生成：纸笔与字条",
+      "position": {
+        "x": 420,
+        "y": 3300
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "单件道具产品图：古风纸张与毛笔，纸上可留空或只有一个清晰“好”字版本，白色或浅灰背景，3D国漫材质。不要人物，不要手持，不要复杂桌面，不要额外文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "prop-ref-paper-brush-bible"
+      ],
+      "anchor": {
+        "anchorId": "prop-ref-paper-brush",
+        "anchorRole": "prop_reference",
+        "anchorName": "纸笔与字条",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "prop_reference"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-money-pouch-bible",
+      "role": "asset_bible",
+      "canvasType": "text",
+      "title": "资料：碎银钱袋",
+      "position": {
+        "x": 0,
+        "y": 3630
+      },
+      "width": 340,
+      "height": 260,
+      "content": "# 碎银钱袋\n类型：prop_reference\n用途：许悠然劝江凡离开\n\n生成规则：单件道具产品图：朴素小钱袋，袋口露出大大小小碎银子，旧布材质，白色或浅灰背景，3D国漫材质。不要人物，不要手持，不要复杂场景，不要文字。",
+      "metadata": {
+        "cineMake": {
+          "role": "asset_bible"
+        }
+      }
+    },
+    {
+      "id": "prop-ref-money-pouch",
+      "role": "prop_reference",
+      "canvasType": "image",
+      "title": "生成：碎银钱袋",
+      "position": {
+        "x": 420,
+        "y": 3630
+      },
+      "width": 420,
+      "height": 260,
+      "prompt": "单件道具产品图：朴素小钱袋，袋口露出大大小小碎银子，旧布材质，白色或浅灰背景，3D国漫材质。不要人物，不要手持，不要复杂场景，不要文字。",
+      "imageSize": "16:9",
+      "inputOrder": [
+        "prop-ref-money-pouch-bible"
+      ],
+      "anchor": {
+        "anchorId": "prop-ref-money-pouch",
+        "anchorRole": "prop_reference",
+        "anchorName": "碎银钱袋",
+        "mergeStrategy": "reuse_existing"
+      },
+      "metadata": {
+        "cineMake": {
+          "role": "prop_reference"
+        }
+      }
+    },
+    {
+      "id": "seedance-prompt-cards",
+      "role": "prompt_cards",
+      "canvasType": "text",
+      "title": "资料：即梦逐段提示词（复制用，非生成）",
+      "position": {
+        "x": 840,
+        "y": 0
+      },
+      "width": 500,
+      "height": 620,
+      "content": "# 即梦 / Seedance 逐段提示词控制包（无Canvas分镜节点）\n\n使用方式：Canvas 只生成并锁定参考资产；即梦里每次上传本段所需参考图，选择对应角色音色，再复制本段 5 条提示词。\n硬规则：每段都执行【不要字幕、配乐，只保留音效和对白】；段末音效轻收，保留动作、视线、道具状态给下一段接。\n\n## 第01段｜01-05｜约15秒\n上传参考：参考图：许家大堂、许怡宁、许正言、三尺青锋。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第05镜保持剑刃贴颈侧；第06镜从同一剑影前景推到许正言，动作和情绪连续。\n声音规则：【不要字幕、配乐，只保留音效和对白】段尾只收环境声，不要重击音效。\n\n01 许家大堂·厅中央 许怡宁、许家族人 许怡宁握三尺青剑横在颈侧，泪水滑落，族人还没反应过来。 许怡宁+特写+略仰侧视+剑锋横切颈侧与泪痕形成三角构图+冷青剑光压住暖金烛火。 从剑锋锁定，极慢推到泪眼；无切。 许怡宁：“我宁愿死，也不嫁给江凡！”｜音效：剑身轻颤、族人压低惊呼。\n02 许家大堂·厅中央 许怡宁、许家族人 大堂族人乱作一团，脚步后退，中央空出危险圆心。 族人群像+俯拍全景+高位视角+人群环形散开包围许怡宁+暖烛被冷青剑光撕开。 镜头缓升俯拍，轻摇扫过慌乱人群后停回许怡宁。 音效：衣袖摩擦、杂乱脚步、压低惊呼；无对白。\n03 许家大堂·主位前 许正言、许怡宁 许正言从主位前冲出半步又停住，双手抬起安抚女儿。 许正言+中近景+平视+他伸出的双手占前景、许怡宁在后景持剑+暖光打在冷汗上。 小幅前移，焦点从手掌移到许正言惊惧的脸。 许正言：“怡宁，不要冲动！是爹错了，爹不该逼你。”\n04 许家大堂·厅中央 许怡宁、许正言 许怡宁抬高下巴，剑刃贴近颈侧；许正言停步，双手悬在半空。 许怡宁与许正言+中景+侧面平视+剑刃横在两人之间+青灰冷光压住背景。 横移半步，停在剑刃分割线。 音效：短促吸气、剑锋轻擦衣领；无对白。\n05 许家大堂·厅中央 许怡宁、许正言 许怡宁手腕发抖，泪珠落到剑身；许正言停在安全距离。 剑身与泪珠+微距特写+低角度+泪珠、剑刃、许怡宁下颌占据画面中心+冷光细闪、背景暖烛虚化。 定镜微推。 音效：一滴泪落在剑身，环境声压低；无对白。\n\n## 第02段｜06-10｜约15秒\n上传参考：参考图：许家大堂、许正言、许怡宁、三尺青锋。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第10镜停在许怡宁迟疑但未放剑；第11镜直接接她跺脚反弹。\n声音规则：【不要字幕、配乐，只保留音效和对白】不要用强音效结束，保留剑与呼吸声。\n\n06 许家大堂·主位前 许正言、许怡宁 许正言压住恐惧，解释十年前婚约。 许正言+近景+平视+冷汗从额角滑下、许怡宁剑影在前景虚化+暖金侧光夹冷青反光。 从前景剑影轻推到许正言面部。 许正言：“十年前，江凡的父亲救了我们老爷子一命……”\n07 许家大堂·主位前 许正言、许怡宁、族人 许正言用族人视线施压，把老爷子许诺婚约说出口。 许正言+中景+平视+主位牌匾压在上方、族人半环站立+墨蓝阴影与暖烛交错。 轻摇带到族人反应，再回许正言。 许正言：“出于感激，老爷子许诺你们俩在十八岁时成婚。”\n08 许家大堂·人群侧 许正言、许怡宁、族人 族人低声议论，许正言抓住名声继续劝。 族人群像+俯拍中全景+斜上视角+视线全部压向许怡宁+青灰压抑、暖光只在边缘。 俯拍慢摇，最后落到许怡宁紧绷的手。 许正言：“你若毁约，会被人说是忘恩负义的！”\n09 许家大堂·厅中央 许怡宁、许正言 许正言提到青云宗真传资格，许怡宁神色微变，剑刃仍停在颈侧。 许怡宁+近景+平视+她的泪眼居中，剑刃在画面下沿+冷青光压住暖烛。 定镜轻推。 许正言：“如今你好不容易被青云宗相中，内定为真传弟子……”\n10 许家大堂·厅中央 许怡宁、许正言 许怡宁听到真传资格可能取消，眼神出现迟疑，剑仍贴在颈侧。 许怡宁+特写+平视+泪眼居中、剑刃贴着画面下沿+冷色压迫中透出一丝暖光。 慢慢推近眼睛。 许正言：“若惹了某位长老不喜，真传弟子资格就取消了！”\n\n## 第03段｜11-15｜约15秒\n上传参考：参考图：许家大堂、许怡宁、许正言、江凡。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第15镜保持江凡沉默；第16镜接许正言从江凡方向收回视线。\n声音规则：【不要字幕、配乐，只保留音效和对白】本段只用动作、眼神、环境声承接，解说轨和悬疑鼓点留空。\n\n11 许家大堂·厅中央 许怡宁 许怡宁跺脚，抬起下巴，脸色重新强硬。 许怡宁+中近景+平视+居中构图，身后为模糊族人暗影+冷青光压住暖烛。 定镜轻推。 许怡宁：“我不管！”\n12 许家大堂·厅中央 许怡宁 许怡宁右手持剑垂在身侧，左手斜向前伸。 许怡宁+半身近景+平视+居中构图，剑身竖在身体右侧+背后暖光，情绪强硬。 定镜轻推。 许怡宁：“江凡我不会嫁，名声我也不能丢，爹你替我想办法！”｜音效：衣袖轻响。\n13 许家大堂·厅中央侧 许正言 许正言站在族人队列前揉额，目光斜向右下方。 许正言+近景+平视+居中偏左构图，前景有模糊族人肩影+暖烛与冷蓝窗光交错。 定镜轻推到他的眼神。 音效：压低吸气、远处族人低语；无对白。\n14 许家大堂·角落茶案 江凡 江凡坐在角落茶案旁，抬眼看向大堂方向。 江凡+中近景+平视+居中构图，桌上只有茶杯+冷暖交界突出沉静。 定镜轻推。 音效：茶盏轻响、远处人声压低；无对白。\n15 许家大堂·角落茶案 江凡 江凡保持沉默，眼神平和。 江凡+特写+平视+脸部居中，桌沿和茶杯在下方虚化+墨蓝冷光压住背景。 定镜轻推。 音效：环境声压低；无对白。\n\n## 第04段｜16-20｜约15秒\n上传参考：参考图：许家大堂、许怡宁、许正言、王映凤、许悠然。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第20镜许悠然被众人看见；第21镜直接接许正言上前握住许悠然双肩。\n声音规则：【不要字幕、配乐，只保留音效和对白】段末只留人群低语。\n\n16 许家大堂·厅中央侧 许正言、江凡 许正言从江凡方向收回视线，眉头紧皱，手指按住额角。 许正言+近景+平视+许正言三分侧脸居中，远处江凡角落虚化+暖烛照在额角，后景墨蓝压低。 定镜轻推。 音效：许正言低吸气、远处族人低语；无对白。\n17 许家大堂·主位侧 王映凤、许正言 王映凤侧身靠近许正言，压低声音开口。 王映凤与许正言+中近景+侧面平视+两人侧身低语，后景族人虚化+暖光柔和，边缘冷影收紧。 小幅推近王映凤嘴角。 王映凤：“夫君，实在不行让悠然代替怡宁嫁了吧？”\n18 许家大堂·主位侧 许正言、王映凤 许正言听完后微微抬眼，王映凤保持温和神色站在旁边。 许正言与王映凤+近景+平视+许正言脸部在前，王映凤侧影在旁+暖光贴面，冷蓝窗光落在背后。 定镜轻推到许正言眼神。 音效：厅内低语变轻；无对白。\n19 许家大堂·人群后方 许悠然、族人 族人转身看向人群后方，许悠然被目光围住，身体微僵。 许悠然+长焦中景+平视+前景是族人肩背，许悠然在后景中央+暖光被人影切碎，青灰阴影压住身后。 长焦缓慢推近许悠然。 音效：低语停顿、衣袖轻响；无对白。\n20 许家大堂·人群后方 许悠然 许悠然抬头，脸色发白，眼眶泛红。 许悠然+特写+平视+眼睛位于上三分之一，前景人影虚化+米黄柔光落在眼角，冷灰阴影压住脸侧。 柔和推近到眼眶。 音效：她轻吸一口气；无对白。\n\n## 第05段｜21-25｜约15秒\n上传参考：参考图：许家大堂、许悠然、许正言、许怡宁。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第25镜许悠然答应；第26镜接许正言转向江凡。\n声音规则：【不要字幕、配乐，只保留音效和对白】许悠然答应后只保留压抑呼吸。\n\n21 许家大堂·主位前 许正言、许悠然 许正言上前握住许悠然双肩，语气放低。 许正言与许悠然+中景+平视+许正言双手按在她肩上，许悠然低头站稳+暖光变硬，背后青灰更重。 推近双肩受力，再上摇到许正言脸。 许正言：“悠然，我们许家没落百年，好不容易出了你妹妹这样一个天才……”\n22 许家大堂·主位前 许正言、许悠然、许怡宁 许正言一手扶着许悠然肩膀，另一手指向厅中央的许怡宁。 许正言+中近景+平视+许正言侧身指向远处许怡宁，许悠然被挤在画面下方+暖光落在许怡宁方向，许悠然脸侧发冷。 顺着手势摇到许怡宁，再回到许悠然苍白脸。 许正言：“许家的未来都在她身上了！”\n23 许家大堂·主位前 许正言、许悠然 许正言低头恳求，许悠然双肩被扶住，沉默不语。 许正言与许悠然+半身近景+平视+父亲低头靠近，许悠然在画面中央垂眼+青灰冷色逐渐压过暖光。 小幅推近许悠然沉默的脸。 许正言：“算爹求你，你代替妹妹嫁给江凡吧！”\n24 许家大堂·主位前 许正言、许悠然、族人 许正言膝盖微弯，许悠然慌忙伸手去扶，族人一阵僵住。 许正言+低角度中景+仰拍+膝弯与许悠然伸出的手同框+暖光从上压下，地面青冷。 低位推近膝盖，再上摇到许悠然惊慌脸。 许正言：“难道要爹跪下求你吗？”\n25 许家大堂·主位前 许悠然、许正言 许悠然扶住许正言手臂，哭腔压住，低头答应。 许悠然与许正言+中近景+平视+她双手托住父亲手臂，许正言膝盖尚未落地+画面拥挤压迫，冷灰吞没暖光。 手持感轻微前移。 许悠然：“爹，你别这样。我嫁、我嫁还不行吗？”\n\n## 第06段｜26-30｜约15秒\n上传参考：参考图：许家大堂、江凡、许正言、王映凤、纸笔。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第30镜江凡写下“好”；第31镜王映凤接纸条反应。\n声音规则：【不要字幕、配乐，只保留音效和对白】纸条内容短，只保留对白和轻纸声。\n\n26 许家大堂·主位前 许正言 许正言站直身子，望向角落茶案。 许正言+中近景+平视+脸部居中，背景族人虚化+暖光回到主位，边缘墨蓝。 定镜轻推。 许正言：“小凡，你意下如何？”\n27 许家大堂·角落茶案 江凡 江凡拿起笔，写下“作罢”。 江凡手与纸笔+特写+俯视+纸面中央写着“作罢”两个字，茶杯在角落虚化+暖烛照纸，四周墨蓝。 定镜轻推。 纸条内容：“作罢。”\n28 许家大堂·主位前 许正言 许正言读完纸条，眼神微微一松。 许正言+近景+平视+脸部居中，纸角在画面下方虚化+暖光照亮眉眼，冷影压住嘴角。 焦点从纸角转到眼睛。 音效：纸张轻展、低吸气；无对白。\n29 许家大堂·主位侧 王映凤 王映凤上前一步，笑着劝阻。 王映凤+中近景+平视+她居中站在暖光里，背景族人虚化+暖烛贴脸，边缘青灰。 定镜轻推。 王映凤：“小凡，这怎么行呀？婚约是老爷子订下的。你要是真感谢许府，就娶了悠然。”\n30 许家大堂·角落茶案 江凡 江凡沉默片刻，提笔写下“好”。 江凡手与纸笔+特写+俯视+纸面中央写着“好”字，茶杯在旁边虚化+暖烛照纸，背景墨蓝。 定镜轻推。 纸条内容：“好。”\n\n## 第07段｜31-35｜约15秒\n上传参考：参考图：许家大堂、王映凤、许悠然、江凡、许悠然闺房。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第35镜两人进入许悠然闺房；第36镜许悠然打开抽屉取钱袋。\n声音规则：【不要字幕、配乐，只保留音效和对白】大堂到闺房顺序推进，段末轻收。\n\n31 许家大堂·主位侧 王映凤 王映凤看到纸条，笑意加深。 王映凤+近景+平视+脸部居中，眼角带笑+暖光偏甜，边缘冷灰。 定镜轻推。 音效：纸张轻响；无对白。\n32 许家大堂·主位侧 王映凤 王映凤转向许悠然，开口安排。 王映凤+中近景+平视+她站在暖光里，背景族人虚化+暖光压住冷影。 小幅推近。 王映凤：“悠然，快带江凡去量一身衣服，一月后你们就成婚。”\n33 许家大堂·人群后方 许悠然 许悠然擦掉眼泪，抬头看向江凡。 许悠然+近景+平视+脸部居中，眼眶发红+米黄弱光落在脸上，青灰阴影压住身后。 定镜轻推。 音效：衣袖轻响；无对白。\n34 许家大堂·通往内院 许悠然、江凡 许悠然走到江凡前方，带他离开。 许悠然与江凡+中景+平视+许悠然在前，江凡落后半步，门口框住两人+暖光过渡到青灰廊影。 跟拍。 许悠然：“跟我来吧，刚好我也有话对你说。”\n35 许悠然闺房·门口 许悠然、江凡 两人进入简陋闺房。 许悠然与江凡+全景+门口视角+床、旧木桌、小抽屉清楚入画+米黄弱光混青灰阴影。 从门框缓慢推进屋内。 音效：木门轻响、室内安静；无对白。\n\n## 第08段｜36-40｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然、钱袋、纸笔。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第40镜门外传来丫鬟笑声；第41镜许悠然回到江凡身前催他走。\n声音规则：【不要字幕、配乐，只保留音效和对白】室内音效轻，保留对白。\n\n36 许悠然闺房·梳妆镜前 许悠然 许悠然打开抽屉，取出小钱袋。 许悠然手与抽屉+近景+俯视+旧抽屉和小钱袋居中+暖黄烛光微弱，四角青灰。 定镜轻推。 音效：木抽屉轻响；无对白。\n37 许悠然闺房·梳妆镜前 许悠然 许悠然拿着钱袋，叹气看向江凡。 许悠然+近景+平视+钱袋在手边，脸部居中+米黄暖光带生活感，四角青灰。 定镜轻推。 许悠然：“小哑巴，你不该答应的。他们不是真心希望你娶我。”\n38 许悠然闺房·桌边 许悠然、江凡 许悠然把钱袋塞进江凡手心。 两人手部+特写+俯视+钱袋被推入江凡掌心，指尖短暂相触+暖光柔和但压抑。 定镜轻推。 许悠然：“带着这些钱离开许府，离开孤舟城吧。”\n39 许悠然闺房·桌边 江凡、许悠然 江凡写下“你呢”，许悠然苦涩一笑。 纸条与许悠然+中近景+平视+纸上“你呢”在前景，许悠然苦笑在后景+暖光打在纸面，脸部落入青灰。 焦点从纸条转到她的苦笑。 纸条内容：“你呢？”｜许悠然：“这里是我的家，他们对我再不好，我也不能走。”\n40 许悠然闺房·门内 许悠然 门外传来丫鬟笑声，许悠然靠近门边。 许悠然与门缝+中近景+侧面视角+她挡在门内，门缝透出冷光+屋内暖光交界。 轻摇到门缝，再回许悠然含泪的脸。 音效：门外丫鬟轻笑渐近。\n\n## 第09段｜41-45｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然、纸笔。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第45镜江凡放下纸笔；第46镜江凡起身走近许悠然。\n声音规则：【不要字幕、配乐，只保留音效和对白】哭腔轻收，避免强音效。\n\n41 许悠然闺房·桌边 许悠然 许悠然回到江凡身前，压低声音催他离开。 许悠然+中近景+平视+她站在桌边，身后门缝透出冷光+屋内暖黄，脸侧带青灰。 定镜轻推。 许悠然：“你快走吧，别犹豫了。”\n42 许悠然闺房·桌边 许悠然 许悠然忍着哭意，认真叮嘱江凡。 许悠然+特写+平视+她眼眶发红，背景墨蓝安静+米黄暖光贴脸。 慢推到她的眼睛。 许悠然：“到了外面不要随便相信陌生人，不要吃他们的东西，不要喝他们的水。”\n43 许悠然闺房·桌边 许悠然 许悠然继续叮嘱，声音带上哭腔。 许悠然+特写+平视+她低头又抬眼，泪光在眼眶里打转+暖光柔和，脸侧青灰。 定镜轻推。 许悠然：“还有，不要随便搭理人，如果被人发现你是哑巴，他们会欺负你的。”\n44 许悠然闺房·桌边 许悠然、江凡 许悠然强忍眼泪，看着江凡确认。 许悠然+近景+平视+她站在桌边，江凡坐在前景侧影里+暖光集中在她脸上，背景安静。 小幅推近。 许悠然：“知道了吗？小哑巴！”\n45 许悠然闺房·桌边 江凡 江凡放下纸笔，抬眼看向许悠然。 江凡+中近景+平视+他坐在桌边，许悠然站在近处虚化+墨蓝背景中有暖烛反光。 定镜轻推。 音效：纸笔轻放、环境声压低；无对白。\n\n## 第10段｜46-50｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：本段为本集结尾钩子，结在许悠然震惊眼神；下一集可从同一眼神和“你不是哑巴”接入。\n声音规则：【不要字幕、配乐，只保留音效和对白】最终只压低环境声，保持对白清楚。\n\n46 许悠然闺房·桌边 江凡、许悠然 江凡起身走近许悠然，抬手靠近她头顶。 江凡与许悠然+中近景+侧面平视+江凡从桌边起身，许悠然站在原地含泪+暖光集中在两人之间。 缓慢前移。 音效：衣袖轻动；无对白。\n47 许悠然闺房·桌边 江凡、许悠然 江凡轻摸许悠然的头，温柔开口。 江凡与许悠然+特写+平视+江凡手落在她头顶，许悠然低头怔住+暖光包住两人脸侧，背景墨蓝安静。 慢推江凡动作。 江凡：“以后该叫我夫君了。”\n48 许悠然闺房·桌边 许悠然、江凡 许悠然猛地抬头，眼睛睁大，泪光停在眼眶里。 许悠然+特写+平视+她震惊的眼睛居中，江凡手仍在头顶边缘+暖光集中在脸上，四周安静。 拉焦到许悠然震惊眼神。 许悠然：“你、你说话了？”\n49 许悠然闺房·桌边 江凡 江凡看着许悠然，神情温和。 江凡+近景+平视+脸部居中，背景墨蓝安静+暖光落在眼角。 定镜轻推。 音效：环境声短暂压低；无对白。\n50 许悠然闺房·桌边 许悠然、江凡 许悠然盯着江凡，震惊得后退半步。 许悠然与江凡+中近景+平视+许悠然在前景抬头，江凡站在她面前神情温和+暖光照亮两人，背景墨蓝收紧。 定镜轻推。 许悠然：“你不是哑巴！”｜音效：环境声压低。\n",
+      "metadata": {
+        "cineMake": {
+          "role": "prompt_cards",
+          "note": "Canvas内只作文本资料；不生成分镜节点、不生成Keyframe。"
+        }
+      }
+    }
+  ],
+  "connections": [
+    {
+      "id": "environment-ref-xu-hall-bible-to-environment-ref-xu-hall",
+      "fromNodeId": "environment-ref-xu-hall-bible",
+      "toNodeId": "environment-ref-xu-hall",
+      "role": "asset_bible"
+    },
+    {
+      "id": "environment-ref-xu-hall-to-seedance-prompt-cards",
+      "fromNodeId": "environment-ref-xu-hall",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "environment-ref-youran-room-bible-to-environment-ref-youran-room",
+      "fromNodeId": "environment-ref-youran-room-bible",
+      "toNodeId": "environment-ref-youran-room",
+      "role": "asset_bible"
+    },
+    {
+      "id": "environment-ref-youran-room-to-seedance-prompt-cards",
+      "fromNodeId": "environment-ref-youran-room",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "character-ref-jiangfan-bible-to-character-ref-jiangfan",
+      "fromNodeId": "character-ref-jiangfan-bible",
+      "toNodeId": "character-ref-jiangfan",
+      "role": "asset_bible"
+    },
+    {
+      "id": "character-ref-jiangfan-to-seedance-prompt-cards",
+      "fromNodeId": "character-ref-jiangfan",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "character-ref-xuyining-bible-to-character-ref-xuyining",
+      "fromNodeId": "character-ref-xuyining-bible",
+      "toNodeId": "character-ref-xuyining",
+      "role": "asset_bible"
+    },
+    {
+      "id": "character-ref-xuyining-to-seedance-prompt-cards",
+      "fromNodeId": "character-ref-xuyining",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "character-ref-xuyouran-bible-to-character-ref-xuyouran",
+      "fromNodeId": "character-ref-xuyouran-bible",
+      "toNodeId": "character-ref-xuyouran",
+      "role": "asset_bible"
+    },
+    {
+      "id": "character-ref-xuyouran-to-seedance-prompt-cards",
+      "fromNodeId": "character-ref-xuyouran",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "character-ref-xuzhengyan-bible-to-character-ref-xuzhengyan",
+      "fromNodeId": "character-ref-xuzhengyan-bible",
+      "toNodeId": "character-ref-xuzhengyan",
+      "role": "asset_bible"
+    },
+    {
+      "id": "character-ref-xuzhengyan-to-seedance-prompt-cards",
+      "fromNodeId": "character-ref-xuzhengyan",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "character-ref-wangyingfeng-bible-to-character-ref-wangyingfeng",
+      "fromNodeId": "character-ref-wangyingfeng-bible",
+      "toNodeId": "character-ref-wangyingfeng",
+      "role": "asset_bible"
+    },
+    {
+      "id": "character-ref-wangyingfeng-to-seedance-prompt-cards",
+      "fromNodeId": "character-ref-wangyingfeng",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "prop-ref-qingfeng-sword-bible-to-prop-ref-qingfeng-sword",
+      "fromNodeId": "prop-ref-qingfeng-sword-bible",
+      "toNodeId": "prop-ref-qingfeng-sword",
+      "role": "asset_bible"
+    },
+    {
+      "id": "prop-ref-qingfeng-sword-to-seedance-prompt-cards",
+      "fromNodeId": "prop-ref-qingfeng-sword",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "prop-ref-paper-brush-bible-to-prop-ref-paper-brush",
+      "fromNodeId": "prop-ref-paper-brush-bible",
+      "toNodeId": "prop-ref-paper-brush",
+      "role": "asset_bible"
+    },
+    {
+      "id": "prop-ref-paper-brush-to-seedance-prompt-cards",
+      "fromNodeId": "prop-ref-paper-brush",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    },
+    {
+      "id": "prop-ref-money-pouch-bible-to-prop-ref-money-pouch",
+      "fromNodeId": "prop-ref-money-pouch-bible",
+      "toNodeId": "prop-ref-money-pouch",
+      "role": "asset_bible"
+    },
+    {
+      "id": "prop-ref-money-pouch-to-seedance-prompt-cards",
+      "fromNodeId": "prop-ref-money-pouch",
+      "toNodeId": "seedance-prompt-cards",
+      "role": "prompt_reference"
+    }
+  ],
+  "updatedAt": "2026-06-13T01:14:45.599722Z"
+}

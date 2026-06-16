@@ -1,0 +1,429 @@
+{
+  "app": "infinite-canvas",
+  "version": 3,
+  "exportedAt": "2026-06-13T11:00:51.957387",
+  "projects": [
+    {
+      "project": {
+        "id": "cine-make-canvas-taixu-ep02-merge-assets",
+        "title": "Cine Make Canvas - 太虚至尊 第二章 新增资产合并包",
+        "createdAt": "2026-06-13T10:46:25.453094",
+        "updatedAt": "2026-06-13T11:00:51.957387",
+        "nodes": [
+          {
+            "id": "environment-ref-xu-sky-thunder-bible",
+            "type": "text",
+            "title": "资料：许府上空雷云",
+            "position": {
+              "x": 0,
+              "y": 0
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 许府上空雷云\n类型：environment_reference\n用途：第二章新增参考资产\n\n生成规则：16:9，古代仙侠许府屋檐与上空雷云场景，屋檐在画面下方，晴空转墨蓝雷云，冷白雷光照亮瓦片，空间干净，无人物，无文字。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-xu-sky-thunder",
+            "type": "image",
+            "title": "生成：许府上空雷云",
+            "position": {
+              "x": 420,
+              "y": 0
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "16:9，古代仙侠许府屋檐与上空雷云场景，屋檐在画面下方，晴空转墨蓝雷云，冷白雷光照亮瓦片，空间干净，无人物，无文字。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "environment-ref-xu-sky-thunder-bible"
+              ],
+              "cineMake": {
+                "role": "environment_reference"
+              },
+              "anchor": {
+                "anchorId": "environment-ref-xu-sky-thunder",
+                "anchorRole": "environment_reference",
+                "anchorName": "许府上空雷云",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-wang-bedroom-bible",
+            "type": "text",
+            "title": "资料：王映凤卧房",
+            "position": {
+              "x": 0,
+              "y": 300
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 王映凤卧房\n类型：environment_reference\n用途：第二章新增参考资产\n\n生成规则：16:9，古代仙侠世家妇人卧房，榻边、桌灯、屏风、茶案清楚，暖灯与青灰阴影对比，空间干净，无人物，无文字。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-wang-bedroom",
+            "type": "image",
+            "title": "生成：王映凤卧房",
+            "position": {
+              "x": 420,
+              "y": 300
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "16:9，古代仙侠世家妇人卧房，榻边、桌灯、屏风、茶案清楚，暖灯与青灰阴影对比，空间干净，无人物，无文字。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "environment-ref-wang-bedroom-bible"
+              ],
+              "cineMake": {
+                "role": "environment_reference"
+              },
+              "anchor": {
+                "anchorId": "environment-ref-wang-bedroom",
+                "anchorRole": "environment_reference",
+                "anchorName": "王映凤卧房",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-wang-corridor-bible",
+            "type": "text",
+            "title": "资料：王映凤卧房门外廊下",
+            "position": {
+              "x": 0,
+              "y": 600
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 王映凤卧房门外廊下\n类型：environment_reference\n用途：第二章新增参考资产\n\n生成规则：16:9，古代仙侠许府后院廊下，卧房门口、廊柱、青灰夜色、门内暖光清楚，适合人物出门变脸，无人物，无文字。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-wang-corridor",
+            "type": "image",
+            "title": "生成：王映凤卧房门外廊下",
+            "position": {
+              "x": 420,
+              "y": 600
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "16:9，古代仙侠许府后院廊下，卧房门口、廊柱、青灰夜色、门内暖光清楚，适合人物出门变脸，无人物，无文字。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "environment-ref-wang-corridor-bible"
+              ],
+              "cineMake": {
+                "role": "environment_reference"
+              },
+              "anchor": {
+                "anchorId": "environment-ref-wang-corridor",
+                "anchorRole": "environment_reference",
+                "anchorName": "王映凤卧房门外廊下",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-west-room-bible",
+            "type": "text",
+            "title": "资料：许府西院简陋房间",
+            "position": {
+              "x": 920,
+              "y": 0
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 许府西院简陋房间\n类型：environment_reference\n用途：第二章新增参考资产\n\n生成规则：16:9，古代仙侠许府西院简陋房间，旧床、旧木桌、窗格、清晨光束入屋，青灰冷光与金色晨光对比，无人物，无文字。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "environment-ref-west-room",
+            "type": "image",
+            "title": "生成：许府西院简陋房间",
+            "position": {
+              "x": 1340,
+              "y": 0
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "16:9，古代仙侠许府西院简陋房间，旧床、旧木桌、窗格、清晨光束入屋，青灰冷光与金色晨光对比，无人物，无文字。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "environment-ref-west-room-bible"
+              ],
+              "cineMake": {
+                "role": "environment_reference"
+              },
+              "anchor": {
+                "anchorId": "environment-ref-west-room",
+                "anchorRole": "environment_reference",
+                "anchorName": "许府西院简陋房间",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "character-ref-luzheng-bible",
+            "type": "text",
+            "title": "资料：陆争",
+            "position": {
+              "x": 920,
+              "y": 300
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 陆争\n类型：character_reference\n用途：第二章新增参考资产\n\n生成规则：【三视图生成模板】设计人物三视图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。角色：陆争，二十岁左右，许家剧情反派青年。脸型瘦削偏尖，颧骨略高，眉骨压眼，眼尾狭长上挑，眼窝略深，鼻梁高而锋利，薄唇紧抿，嘴角斜出冷笑；下巴微抬，站姿傲慢，肩背微绷，眼神阴鸷、冷硬、带嫉妒感和占有欲；整体气质刻薄阴沉。全图保持同一张脸，同一发型，同一体型。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "character-ref-luzheng",
+            "type": "image",
+            "title": "生成：陆争",
+            "position": {
+              "x": 1340,
+              "y": 300
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "【三视图生成模板】设计人物三视图：正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。角色：陆争，二十岁左右，许家剧情反派青年。脸型瘦削偏尖，颧骨略高，眉骨压眼，眼尾狭长上挑，眼窝略深，鼻梁高而锋利，薄唇紧抿，嘴角斜出冷笑；下巴微抬，站姿傲慢，肩背微绷，眼神阴鸷、冷硬、带嫉妒感和占有欲；整体气质刻薄阴沉。全图保持同一张脸，同一发型，同一体型。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "character-ref-luzheng-bible"
+              ],
+              "cineMake": {
+                "role": "character_reference"
+              },
+              "anchor": {
+                "anchorId": "character-ref-luzheng",
+                "anchorRole": "character_reference",
+                "anchorName": "陆争",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "prop-ref-snow-cake-bible",
+            "type": "text",
+            "title": "资料：雪花膏点心包",
+            "position": {
+              "x": 920,
+              "y": 600
+            },
+            "width": 360,
+            "height": 240,
+            "metadata": {
+              "content": "# 雪花膏点心包\n类型：prop_reference\n用途：第二章新增参考资产\n\n生成规则：单个古风点心纸包产品图，雪花膏点心包，浅色油纸包裹，细绳捆扎，干净浅灰背景，无人物，无手，无桌景，无文字。",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "asset_bible"
+              }
+            }
+          },
+          {
+            "id": "prop-ref-snow-cake",
+            "type": "image",
+            "title": "生成：雪花膏点心包",
+            "position": {
+              "x": 1340,
+              "y": 600
+            },
+            "width": 420,
+            "height": 240,
+            "metadata": {
+              "content": "",
+              "prompt": "单个古风点心纸包产品图，雪花膏点心包，浅色油纸包裹，细绳捆扎，干净浅灰背景，无人物，无手，无桌景，无文字。",
+              "status": "idle",
+              "generationMode": "image",
+              "generationType": "generation",
+              "size": "16:9",
+              "quality": "auto",
+              "count": 1,
+              "inputOrder": [
+                "prop-ref-snow-cake-bible"
+              ],
+              "cineMake": {
+                "role": "prop_reference"
+              },
+              "anchor": {
+                "anchorId": "prop-ref-snow-cake",
+                "anchorRole": "prop_reference",
+                "anchorName": "雪花膏点心包",
+                "mergeStrategy": "create_if_missing"
+              }
+            }
+          },
+          {
+            "id": "seedance-prompt-cards-ep02",
+            "type": "text",
+            "title": "即梦逐段提示词｜第二章 神秘的种子",
+            "position": {
+              "x": 1840,
+              "y": 0
+            },
+            "width": 680,
+            "height": 900,
+            "metadata": {
+              "content": "# 即梦 / Seedance 第二章逐段提示词控制包（Canvas合并包）\n\n使用方式：把本章 `canvas-project.zip` 合并到你第一章当前画布；只生成/锁定新增人物和新增场景参考图。即梦里每次上传本段所需参考图，选择对应角色音色，再复制本段提示词。\n硬规则：每段都执行【不要字幕、配乐，只保留音效和对白】；每条只做一个主要动作，人物尽量少，段末音效轻收。\n## 第01段｜01-05｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第05镜许悠然说“三年前一样”；第06镜接她看着背身江凡放软语气。\n声音规则：【不要字幕、配乐，只保留音效和对白】雷声只在窗外出现，段末轻收。\n\n01 许悠然闺房·桌边 江凡 江凡揶揄一笑，轻声反问。 江凡+近景+平视+脸部居中，背景墨蓝安静+暖光落在眼角。 定镜轻推。 江凡：“我说过自己是哑巴吗？”\n02 许悠然闺房·桌边 许悠然 许悠然愣住，眼神慌乱。 许悠然+特写+平视+脸部居中，泪光停在眼眶+暖光贴脸，四周安静。 定镜轻推。 许悠然：“你、你是在假装哑巴？为什么呀？”\n03 许悠然闺房·桌边 江凡 江凡没有立刻回答，笑意慢慢收住。 江凡+近景+平视+脸部居中，眼神安静落下+暖光贴住眼角，背景墨蓝。 定镜轻推。 音效：室内环境声压低；无对白。\n04 许悠然闺房·窗边 江凡 窗外忽然传来雷声，江凡神情不变。 江凡+中近景+侧面平视+窗光从侧面闪过，脸部保持平静+屋内暖光被冷白雷光压低。 定镜轻震。 音效：窗外两声惊雷后迅速收低；无对白。\n05 许悠然闺房·桌边 许悠然 许悠然被雷声吓了一颤，抬头看向窗边。 许悠然+近景+平视+脸部居中，眼眶发红+冷白雷光掠过脸侧，暖光很弱。 定镜轻推。 许悠然：“怎么凭空闪惊雷，跟三年前一样。”\n\n## 第02段｜06-10｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第06-07镜许悠然按原著催江凡离开；第08-10镜江凡握手表态，许悠然抽回手。\n声音规则：【不要字幕、配乐，只保留音效和对白】室内对白推进，动作简单，段末轻收。\n\n06 许悠然闺房·窗边 江凡 江凡背对许悠然站在窗边，低头沉默。 江凡+中近景+背侧平视+江凡背影居中，窗外冷雷光很弱+屋内暖光压低。 定镜轻推。 旁白音色：江凡体内有一颗神秘的种子，每次开口，都会引来天雷。\n07 许悠然闺房·桌边 许悠然 许悠然看着江凡的背影，语气放软。 许悠然+近景+平视+脸部居中，江凡背影在左后方虚化+米黄暖光回到脸侧，窗边冷光很弱。 定镜轻推。 许悠然：“好了好了，我不问了。你快走吧，王姨知道了会疑神疑鬼。”\n08 许悠然闺房·桌边 江凡、许悠然 江凡从窗边转身走近，轻轻握住许悠然的手。 两人手部+特写+俯视+江凡手掌覆住许悠然指尖+暖光集中在手上，背景柔暗。 定镜轻推。 音效：衣袖轻擦；无对白。\n09 许悠然闺房·桌边 江凡、许悠然 江凡看着许悠然，语气坚定。 江凡与许悠然+中近景+侧面平视+江凡靠近，许悠然微微怔住+暖光在两人之间聚拢。 小幅推近江凡。 江凡：“我不走，留下来娶你，从此保护你。”\n10 许悠然闺房·桌边 许悠然 许悠然脸颊泛红，慌张抽回手。 许悠然+近景+平视+脸部居中，手收回胸前+暖光偏粉，青灰阴影收在身后。 定镜轻推。 许悠然：“别说大话了，你的灵根还不如我呢！”\n\n## 第03段｜11-15｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第15镜许悠然眼神软下来；第16镜接许悠然拿钱袋。\n声音规则：【不要字幕、配乐，只保留音效和对白】对白为主，动作轻。\n\n11 许悠然闺房·桌边 江凡 江凡笑而不语，眼神平稳。 江凡+近景+平视+脸部居中，嘴角微扬+墨蓝背景中有暖烛反光。 定镜轻推。 音效：室内安静；无对白。\n12 许悠然闺房·桌边 江凡 江凡静静注视许悠然，低声开口。 江凡+特写+平视+眼睛位于上三分之一，脸部被暖光勾边+背景墨蓝安静。 慢推到眼神。 江凡：“相信我。”\n13 许悠然闺房·窗边 江凡 江凡走到窗边，指尖按住胸口。 江凡+近景+侧面平视+手指停在胸口，窗外天色青灰+胸口微光短暂亮起。 定镜轻推。 江凡：“父亲说，十八年后它会发芽。”\n14 许悠然闺房·窗边 江凡 江凡望向窗外，神情安定。 江凡+中近景+平视+侧脸居中，窗格形成竖线构图+冷光在脸侧，屋内暖光很弱。 缓慢推近。 江凡：“明天第一缕光到来时，我会脱胎换骨。”\n15 许悠然闺房·桌边 许悠然 许悠然看着江凡，眼神慢慢软下来。 许悠然+近景+平视+脸部居中，眼眶微红+暖光像细线落在眼角，背景青灰。 定镜轻推。 音效：她轻轻吸气；无对白。\n\n## 第04段｜16-20｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然、钱袋。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第20镜江凡抱住许悠然；第21镜接江凡温柔开口。\n声音规则：【不要字幕、配乐，只保留音效和对白】钱袋音效轻，拥抱段安静。\n\n16 许悠然闺房·梳妆镜前 许悠然 许悠然再次拿起钱袋，走回江凡身边。 许悠然+中近景+平视+钱袋在手边，脸部低垂+米黄弱光带生活感，四角青灰。 跟随半步。 音效：钱袋轻响；无对白。\n17 许悠然闺房·桌边 许悠然、江凡 许悠然把钱袋塞进江凡手里，脸颊带红。 两人手部+特写+俯视+钱袋压在江凡掌心，许悠然指尖轻颤+暖光柔和。 定镜轻推。 许悠然：“拿这当娶我的聘礼吧。”\n18 许悠然闺房·桌边 江凡 江凡握着钱袋，眼神明显一震。 江凡+近景+平视+脸部居中，钱袋在画面下方虚化+暖光照出眼底波动，背景墨蓝。 定镜轻推。 音效：沉闷心跳一声；无对白。\n19 许悠然闺房·桌边 许悠然 许悠然伸手替江凡整理衣襟，声音温柔。 许悠然+中近景+平视+她低头整理衣襟，手指动作轻慢+米黄暖光柔和，背景青灰。 定镜轻推。 许悠然：“江叔叔一生清贫，没给你留什么金银，这些积蓄希望能帮到你。”\n20 许悠然闺房·桌边 江凡、许悠然 江凡再也忍不住，伸手抱住许悠然。 江凡与许悠然+中近景+侧面平视+江凡手臂环住她的腰，许悠然身体僵住+暖光包住两人，背景墨蓝。 缓慢推近。 音效：衣袖轻响；无对白。\n\n## 第05段｜21-25｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许悠然、钱袋。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第25镜江凡看着钱袋微笑；第26镜接窗边立誓。\n声音规则：【不要字幕、配乐，只保留音效和对白】情绪温柔，不上强音效。\n\n21 许悠然闺房·桌边 江凡、许悠然 江凡抱着许悠然，低声承诺。 江凡与许悠然+近景+侧面平视+江凡侧脸靠近，许悠然低头僵住+暖光集中在肩颈，四周安静。 定镜轻推。 江凡：“悠然，谢谢你。从今以后，换我来护着你。”\n22 许悠然闺房·桌边 许悠然 许悠然满脸通红，僵在江凡怀里。 许悠然+特写+平视+脸部居中，耳尖和脸颊泛红+暖光偏甜，背景墨蓝柔暗。 定镜轻推。 音效：呼吸变轻；无对白。\n23 许悠然闺房·桌边 许悠然 许悠然慌张挣脱，退开半步。 许悠然+中近景+平视+她后退半步，手指抓住袖口+暖光摇晃，青灰阴影在身后。 小幅后移。 许悠然：“我、我量衣服去了……”\n24 许悠然闺房·门口 许悠然 许悠然转身快步跑出房间。 许悠然+中景+背侧平视+她从门口离开，衣袖带起弱光+门外青灰廊影拉长。 跟拍到门口。 音效：脚步轻急、门帘晃动；无对白。\n25 许悠然闺房·桌边 江凡 江凡把钱袋放回桌上。 江凡手与钱袋+特写+俯视+钱袋落在旧木桌中央，江凡指尖松开+暖光照在桌面，四周安静。 定镜轻推。 音效：钱袋轻落；无对白。\n\n## 第06段｜26-30｜约15秒\n上传参考：参考图：许悠然闺房、江凡、许府上空雷云、王映凤卧房、陆争。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第27镜夜空天雷；第28镜江凡瞪天空；第29镜切到王映凤卧房。\n声音规则：【不要字幕、配乐，只保留音效和对白】雷声收掉后进入室内对白。\n\n26 许悠然闺房·桌边 江凡 江凡看着钱袋，露出温柔笑意。 江凡+中近景+平视+脸部居中，钱袋在下方虚化+暖光照亮嘴角，背景墨蓝。 定镜轻推。 江凡：“迎娶我的妻子，怎能如此寒酸。”\n27 许悠然闺房·窗边 江凡 江凡走到窗边，望向远处。 江凡+中近景+背侧平视+他站在窗前，窗外青灰天色渐沉+屋内暖光贴住肩线。 缓慢推近。 江凡：“悠然，我会风风光光娶你的。”\n28 许府上空·夜色 天空 夜空接连炸开两道雷光。 夜空与屋檐+远景+仰视+屋檐压在底部，雷光撕开墨蓝云层+冷白光瞬间照亮瓦片。 定镜轻震。 音效：两道天雷后迅速压低。\n29 许悠然闺房·窗边 江凡 江凡抬头瞪向天空，语气带笑。 江凡+近景+低角度仰拍+脸部居中，窗外雷光在眼底闪过+屋内暖光很弱。 小幅推近。 江凡：“炸吧炸吧，过了今晚，你们再也没有机会了！”\n30 王映凤卧房·门内 陆争 陆争跪在地上，焦急抬头。 陆争+中近景+平视+他跪在地面中央，背后屏风虚化+暖灯偏暗，边缘青灰。 定镜轻推。 陆争：“姨母，你怎么能把悠然表妹嫁给江凡这个废物？”\n\n## 第07段｜31-35｜约15秒\n上传参考：参考图：王映凤卧房、王映凤、陆争。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第35镜陆争低头不甘；第36镜王映凤开始暗示。\n声音规则：【不要字幕、配乐，只保留音效和对白】阴谋对白压低，环境音少。\n\n31 王映凤卧房·门内 陆争 陆争向前挪半步，神情急切。 陆争+近景+平视+脸部居中，眉眼紧绷+暖灯照在额角，背景压暗。 定镜轻推。 陆争：“请你收回成命，把表妹嫁给我吧！”\n32 王映凤卧房·榻边 王映凤 王映凤坐在榻边，语气冷静。 王映凤+中近景+平视+她端坐画面中央，桌灯在侧+暖光稳住脸部，背景深青。 定镜轻推。 王映凤：“争儿，悠然嫁给江凡关乎着许家的未来。”\n33 王映凤卧房·榻边 王映凤 王映凤抬眼看向陆争，话锋压低。 王映凤+近景+平视+脸部居中，眼神冷静+暖光收窄，边缘冷灰。 定镜轻推。 王映凤：“别的方面姨母可以迁就你，唯独这件事不许你胡闹。”\n34 王映凤卧房·地面 陆争 陆争低下头，满脸不甘。 陆争+近景+略俯视+脸部低垂，拳头握紧在膝前+暖光照在手背，背景压暗。 定镜轻推。 音效：衣袖轻绷；无对白。\n35 王映凤卧房·榻边 王映凤 王映凤身体微微前倾，露出意味深长的笑。 王映凤+近景+平视+脸部居中，唇角微抬+暖光偏甜，眼底冷灰。 小幅推近。 王映凤：“姨母只是不许你干扰他们成婚，没说他们成婚后你不能出手啊？”\n\n## 第08段｜36-40｜约15秒\n上传参考：参考图：王映凤卧房、王映凤、陆争。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第40镜陆争懂了；第41镜接递点心。\n声音规则：【不要字幕、配乐，只保留音效和对白】对白清楚，段末轻收。\n\n36 王映凤卧房·榻边 王映凤 王映凤端起茶盏，语气轻慢。 王映凤+中近景+平视+茶盏在手边，脸部居中+暖灯照杯沿，背景青灰。 定镜轻推。 王映凤：“万一江凡意外身死，你再迎娶悠然也可以嘛。”\n37 王映凤卧房·地面 陆争 陆争猛地抬头，眼神亮起。 陆争+近景+平视+脸部居中，眼底兴奋压住焦急+暖光照在眼角，背景变暗。 定镜轻推。 陆争：“我懂了，谢谢姨母！”\n38 王映凤卧房·桌边 陆争 陆争把一包点心递到桌上。 陆争手与点心包+特写+俯视+纸包放在桌面中央，手指推向前+暖灯照在纸包上。 定镜轻推。 陆争：“姨母，这是碧柳城的特产，雪花膏，你的最爱。”\n39 王映凤卧房·桌边 王映凤 王映凤看着点心包，脸上露出笑意。 王映凤+近景+平视+脸部居中，点心包在下方虚化+暖灯变柔，边缘冷灰。 定镜轻推。 王映凤：“你呀，不好好修炼，专门钻研讨人欢喜的把戏。”\n40 王映凤卧房·门内 陆争 陆争站起身，拱手赔笑。 陆争+中近景+平视+他站在门内拱手，笑容讨好+暖光照正脸，背景屏风虚化。 小幅推近。 陆争：“讨姨母欢心，那是侄儿的本分。”\n\n## 第09段｜41-45｜约15秒\n上传参考：参考图：王映凤卧房、王映凤、陆争、雪花膏点心包。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第45镜陆争转身前补话；第46镜王映凤提检测塔。\n声音规则：【不要字幕、配乐，只保留音效和对白】点心包只做轻纸声。\n\n41 王映凤卧房·门内 陆争 陆争转身前笑着补上一句。 陆争+中近景+侧面平视+他半转身，笑意挂在脸上+门外青灰冷光压进来。 定镜轻推。 陆争：“侄儿这就回去帮着江凡布置婚事，让他们尽快成婚。”\n42 王映凤卧房·榻边 王映凤 王映凤含笑叮嘱陆争。 王映凤+中近景+平视+她坐在榻边，桌灯在侧+暖光柔和，背景深青。 定镜轻推。 王映凤：“明天别忘了早起，姨母陪你去一趟检测塔，复测你的灵根等级。”\n43 王映凤卧房·门外廊下 陆争 陆争走出房门，脸上的笑慢慢消失。 陆争+中近景+侧面平视+他站在廊下，门内暖光在背后，前方青灰冷光压脸。 缓慢推近。 音效：房门轻合；无对白。\n44 王映凤卧房·门外廊下 陆争 陆争垂眼冷笑，语气阴狠。 陆争+近景+平视+脸部居中，笑意变冷+青灰廊光压住脸侧，背后暖光变窄。 定镜轻推。 陆争：“让我娶江凡用过的东西？真亏这个老女人想得出来！”\n45 王映凤卧房·门外廊下 陆争 陆争握紧拳头，抬眼看向远处。 陆争+中近景+略低角度+拳头在前景，脸部在后景+冷光加重，廊柱形成压迫线。 小幅推近。 陆争：“我陆争要就要最好的！”\n\n## 第10段｜46-50｜约15秒\n上传参考：参考图：王映凤卧房、王映凤、陆争、王映凤卧房门外廊下。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第50镜陆争握拳；第51镜接陆争转身离开。\n声音规则：【不要字幕、配乐，只保留音效和对白】段末冷光压下，脚步轻。\n\n46 王映凤卧房·门外廊下 陆争 陆争转身离开，眼神阴沉。 陆争+近景+背侧平视+他回头一眼，半张脸被阴影切开+墨蓝冷光压住走廊。 跟拍半步。 陆争：“等明天复测完，我一定要当着许家众人的面把许悠然抢回来！”\n47 王映凤卧房门外廊下 陆争 陆争快步消失在廊影深处。 陆争+远景+平视+他背影走向廊道尽头，廊柱层层递进+冷青夜色吞没暖光。 缓慢拉远。 音效：脚步声远去；无对白。\n48 许府西院·简陋房间 江凡 清晨，江凡在屋中来回走动。 江凡+中景+平视+他在简陋房间里踱步，床和旧桌在两侧+晨前青灰光压住屋内。 横移跟随半步。 音效：急促脚步；无对白。\n49 许府西院·简陋房间 江凡 江凡停在窗边，眼中布满血丝。 江凡+近景+平视+脸部居中，眼底血丝清楚+窗外天色未亮，屋内冷灰。 定镜轻推。 江凡：“太阳怎么还不出来？”\n50 许府西院·简陋房间 江凡 江凡抬头看窗外，呼吸发紧。 江凡+中近景+侧面平视+他站在窗前，手指压住窗沿+冷青天光勾出侧脸。 缓慢推近。 江凡：“父亲没有骗我吧？”\n\n## 第11段｜51-55｜约15秒\n上传参考：参考图：王映凤卧房门外廊下、陆争、许府西院简陋房间、江凡。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第55镜江凡问种子；第56镜接江凡闭眼深呼吸。\n声音规则：【不要字幕、配乐，只保留音效和对白】从阴谋线转清晨线，环境声轻。\n\n51 许府西院·简陋房间 江凡 江凡按住胸口，强迫自己深呼吸。 江凡+近景+平视+手掌压在胸口，脸部紧绷+微弱金光在衣襟下闪动，屋内青灰。 定镜轻推。 江凡：“这颗种子真的能让我脱胎换骨吗？”\n52 许府西院·简陋房间 江凡 江凡闭上眼，慢慢吐出一口气。 江凡+特写+平视+脸部居中，睫毛轻颤+窗外微光将至，屋内安静。 定镜轻推。 音效：深呼吸、远处晨鸟很轻；无对白。\n53 许府西院·窗边 晨光 第一缕晨光穿透云层，射进屋内。 晨光与窗格+特写+侧面视角+金色光束斜穿窗棂落到地面+冷灰房间被暖光切开。 缓慢推入光束。 音效：清晨风声很轻；无对白。\n54 许府西院·简陋房间 江凡 江凡猛地睁眼，看向光束。 江凡+近景+平视+脸部居中，金色晨光照亮眼睛+背景冷灰退开。 定镜轻推。 音效：心跳加快；无对白。\n55 许府西院·简陋房间 江凡 江凡胸口金光裂开，像种壳破裂。 江凡胸口光影+特写+平视+衣襟下金色纹路向外扩散，脸部只露下颌+晨光与金光叠在一起。 定镜轻推。 音效：细小咔擦声连续响起；无对白。\n\n## 第12段｜56-57｜结尾补镜\n上传参考：参考图：许府西院简陋房间、江凡、晨光、金色种子光效。音色：使用你已有的角色音色；对白由本段文字台词驱动；不要配乐。\n衔接提醒：第57镜为本集结尾钩子。\n声音规则：【不要字幕、配乐，只保留音效和对白】最终金光轻鸣后收住。\n\n56 许府西院·简陋房间 江凡 江凡低头看着胸口光芒，声音发颤。 江凡+近景+平视+脸部与胸口光同时入画，眼神从紧张变明亮+金色暖光压过冷灰。 小幅推近。 江凡：“种子……发芽了。”\n57 许府西院·简陋房间 江凡 江凡站进晨光里，眼神彻底亮起。 江凡+中近景+低角度仰拍+他站在金色光束中央，旧屋背景退暗+金光形成强烈立体轮廓。 缓慢推近定住。 江凡：“十八年的等待，来了！”｜音效：金光轻鸣后收住。\n\n",
+              "status": "success",
+              "generationMode": "text",
+              "fontSize": 14,
+              "cineMake": {
+                "role": "seedance_prompt_cards",
+                "episode": 2
+              }
+            }
+          }
+        ],
+        "connections": [
+          {
+            "id": "environment-ref-xu-sky-thunder-bible-to-environment-ref-xu-sky-thunder",
+            "fromNodeId": "environment-ref-xu-sky-thunder-bible",
+            "toNodeId": "environment-ref-xu-sky-thunder"
+          },
+          {
+            "id": "environment-ref-wang-bedroom-bible-to-environment-ref-wang-bedroom",
+            "fromNodeId": "environment-ref-wang-bedroom-bible",
+            "toNodeId": "environment-ref-wang-bedroom"
+          },
+          {
+            "id": "environment-ref-wang-corridor-bible-to-environment-ref-wang-corridor",
+            "fromNodeId": "environment-ref-wang-corridor-bible",
+            "toNodeId": "environment-ref-wang-corridor"
+          },
+          {
+            "id": "environment-ref-west-room-bible-to-environment-ref-west-room",
+            "fromNodeId": "environment-ref-west-room-bible",
+            "toNodeId": "environment-ref-west-room"
+          },
+          {
+            "id": "character-ref-luzheng-bible-to-character-ref-luzheng",
+            "fromNodeId": "character-ref-luzheng-bible",
+            "toNodeId": "character-ref-luzheng"
+          },
+          {
+            "id": "prop-ref-snow-cake-bible-to-prop-ref-snow-cake",
+            "fromNodeId": "prop-ref-snow-cake-bible",
+            "toNodeId": "prop-ref-snow-cake"
+          },
+          {
+            "id": "environment-ref-xu-sky-thunder-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "environment-ref-xu-sky-thunder",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          },
+          {
+            "id": "environment-ref-wang-bedroom-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "environment-ref-wang-bedroom",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          },
+          {
+            "id": "environment-ref-wang-corridor-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "environment-ref-wang-corridor",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          },
+          {
+            "id": "environment-ref-west-room-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "environment-ref-west-room",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          },
+          {
+            "id": "character-ref-luzheng-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "character-ref-luzheng",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          },
+          {
+            "id": "prop-ref-snow-cake-to-seedance-prompt-cards-ep02",
+            "fromNodeId": "prop-ref-snow-cake",
+            "toNodeId": "seedance-prompt-cards-ep02"
+          }
+        ],
+        "chatSessions": [],
+        "activeChatId": null,
+        "backgroundMode": "lines",
+        "showImageInfo": false,
+        "viewport": {
+          "x": 0,
+          "y": 0,
+          "k": 0.85
+        }
+      },
+      "files": []
+    }
+  ],
+  "updatedAt": "2026-06-13T11:00:51.957387"
+}
