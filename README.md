@@ -37,8 +37,10 @@ Removed user entries: `--mode draft`, `--mode visual`, `--draft`, and `--visual`
 1. `GPT-image-2 reference prompts`
 2. `reference asset bindings`
 3. `global negative constraints`
-4. copy-ready single-line video texts
-5. copyable bottom notes
+4. original-fidelity and shot-language rules
+5. Xiaoyunque camera tag library
+6. copy-ready single-line video texts
+7. copyable bottom notes
 
 The mandatory video-text shape is:
 
@@ -55,6 +57,7 @@ Every 5 video text lines equals 15 seconds unless the user explicitly overrides.
 - Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
 - Each video-text line has one main action. Subject, shot size, camera position, composition, lighting, and camera movement must serve the current story information.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
+- Movement uses Xiaoyunque-supported tags exactly, for example `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, `拉开离场`.
 
 The GPT-image-2 tri-view prompt is one image: front full-body, side full-body, back full-body, plus a separate upper-body + head detail panel on the far left, white background, clean professional layout. 三视图为一张图.
 

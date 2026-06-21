@@ -26,7 +26,7 @@
   ],
   "xlsx": "E:\\cine\\cine-make\\runs\\taixu-ep03-nirvana-return-20260613-1509\\太虚至尊_第三章_标准分镜脚本.xlsx",
   "created_at": "2026-06-13T15:09:40.535968",
-  "validated_at": "2026-06-13T15:11:21",
+  "validated_at": "2026-06-21T23:20:00+08:00",
   "xlsx_xml_valid": true,
   "xlsx_sheet_rows_including_header": 56,
   "first_shot": "01 许府西院简陋房间 江凡 江凡盘膝坐在地上，双手按住膝盖。 江凡+中近景+平视+坐在房间中央，旧床和木桌在后方+窗外晨光很弱，房间冷灰。 定镜轻推。 音效：细小破壳声；无对白。",
@@ -43,5 +43,12 @@
     "README.md",
     "storyboard-standard.md",
     "太虚至尊_第三章_标准分镜脚本.xlsx"
+  ],
+  "xiaoyunque_camera_tags": true,
+  "xiaoyunque_camera_tag_count": 33,
+  "camera_tag_examples": [
+    "镜头前推（缓慢轻推）",
+    "手持拍摄（轻微震动）",
+    "手持拍摄（轻震后稳定）"
   ]
 }

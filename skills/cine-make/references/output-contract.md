@@ -5,7 +5,7 @@ Normal short-script / excerpt user-facing output:
 - `seedance-all-reference-feed.md`
 - `README.md`
 
-The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint: it must include GPT-image-2 reference prompts, reference asset binding, global negative constraints, original-fidelity rules, shot-language rules, copy-ready single-line video text, and a bottom note the user can paste into ChatGPT or the video tool.
+The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint: it must include GPT-image-2 reference prompts, reference asset binding, global negative constraints, original-fidelity rules, shot-language rules, the Xiaoyunque camera tag library, copy-ready single-line video text, and a bottom note the user can paste into ChatGPT or the video tool.
 
 Normal runs must not expose `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.
 
@@ -40,6 +40,7 @@ Seedance feed:
 - use single-line video text: `序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`;
 - every 5 video text lines equals 15 seconds unless the user explicitly overrides;
 - split longer videos into multiple 15-second groups for later external editing/stitching;
+- include the Xiaoyunque camera tag library before video text, and use exact supported tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field;
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;
 - final video synthesis and stitching happen outside Cine Make.
 

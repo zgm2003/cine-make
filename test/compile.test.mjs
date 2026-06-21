@@ -31,6 +31,8 @@ test('cli writes the default ChatGPT-only Seedance package', async () => {
 
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
     assert.match(feed, /逐条视频文本/u)
+    assert.match(feed, /小云雀运镜标签库/u)
+    assert.match(feed, /固定镜头｜建立冷静秩序/u)
     assert.match(result.stdout, /ChatGPT-only Seedance feed ready/u)
   } finally {
     await rm(out, { recursive: true, force: true })
@@ -88,6 +90,7 @@ test('cli writes a Seedance all-reference feed without storyboard artifacts', as
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
     assert.match(feed, /GPT-image-2 参考图生成提示词/u)
+    assert.match(feed, /小云雀运镜标签库/u)
     assert.match(feed, /最左侧单独的上半身\+头部细节展示/u)
     assert.match(feed, /三视图为一张图/u)
     assert.match(feed, /16:9/u)

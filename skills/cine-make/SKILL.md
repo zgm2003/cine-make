@@ -50,8 +50,19 @@ Cine Make does **not** generate final MP4, does **not** call external video APIs
 - A good Seedance video text line is concrete and AI-facing: location, roles, action, performance, shot size, lens/camera position, composition, blocking, lighting, camera movement, dialogue, sound, and negative constraints.
 - Do not use subtitles or music by default; keep environment sound, action sound, and necessary dialogue.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
+- The movement field must prefer Xiaoyunque-supported camera tags exactly as written below; add speed/emotion only in parentheses, e.g. `镜头前推（缓慢靠近）`.
 - GPT-image-2 reference prompts must use in-frame camera language only: visible blocking, camera position, shot size, character orientation, foreground/background, body pose, expression, spatial relationship, lighting, and negative constraints. Avoid abstract phrases like “男主看着建筑”; write “背对镜头的男主站在画面下方中央，头微微仰起，视线朝向前方居民楼入口”.
 - Prop / 道具 selection must be value-gated before prompting: only create standalone prop assets for high-content props that directly drive conflict, action, identity reveal, mystery, or the decisive beat. Low-content accessories / incidental objects such as ordinary pendants, cups, tableware, decorative tags, or background ornaments must not become reference assets, anchors, or repeated prompt details. If a prop passes the gate, its reference prompt must be a single clean product shot: only one complete prop subject, clean white or light-gray background, no character, no hand holding, no scene staging, no prop bundle, no split panels.
+
+## Xiaoyunque camera tags / 小云雀运镜标签库
+
+Use these exact tags in the `运镜` field. Do not replace them with loose synonyms.
+
+- 基础控制：固定镜头｜建立冷静秩序；镜头上摇｜展示高度威压；镜头下摇｜从环境落到人；镜头左摇｜横向展示空间；镜头右摇｜引出画外信息；镜头上升｜展开场景规模；镜头下降｜从全局聚焦；镜头左移｜制造空间视差；镜头右移｜制造空间视差；镜头前推｜强调情绪靠近；镜头后移｜展示人物孤独；变焦推进｜突出表情反应；变焦拉远｜从局部到全貌。
+- 人物跟拍：跟随拍摄｜跟住人物行动；迎面跟拍｜保留人物表情；侧面跟拍｜强化行进节奏；手持拍摄｜增加真实紧张；第一视角｜进入角色视角。
+- 提示转场：横滑揭示｜从遮挡露主体；前景擦过｜用遮挡完成切换；甩摇｜快速切换信息；焦点转移｜注意力换目标。
+- 情绪强化：急速变焦｜放大狗血反应；希区柯克｜现实崩塌瞬间；环绕拍摄｜强化人物气场；盘旋抬升｜高光登场时刻；盘旋下降｜巨物压迫登场。
+- 空间航拍：穿越机运镜｜高速掠过空间；稳定器行进｜平稳进入现场；穿越镜头｜穿过边界入场；高空航拍｜建立宏大世界；俯冲下降｜从高空压向目标；拉开离场｜人变小世界变大。
 
 ## Layered cinematic pipeline
 

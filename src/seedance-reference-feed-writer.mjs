@@ -1,3 +1,5 @@
+import { formatXiaoyunqueCameraTagLines } from './xiaoyunque-camera-tags.mjs'
+
 function codeBlock(text) {
   return ['```text', text, '```'].join('\n')
 }
@@ -29,9 +31,21 @@ const SHOT_LANGUAGE_RULES = [
   '- 单行格式固定：`序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`。',
   '- 一条只做一个主要动作；动作必须可见，不能写抽象情绪替代画面。',
   '- 主体、景别、机位、构图、光影、运镜都要服务本条剧情信息，不堆镜头术语。',
+  '- 运镜字段优先使用“小云雀运镜标签库”的原始标签；可以在标签后用括号补充速度/情绪，例如：`镜头前推（缓慢靠近）`。',
   '- 无字幕、无配乐；只保留环境音、动作音效和必要对白。',
   '- 威胁声、神识传音、旁白要标明声源和质感；不能把角色对白误写成普通解说。'
 ]
+
+function xiaoyunqueCameraTagSection() {
+  return [
+    '## 小云雀运镜标签库',
+    '',
+    '使用方式：运镜字段先写下列原始标签，再用括号补充速度、幅度或情绪；不要自造同义词替代标签。',
+    '',
+    ...formatXiaoyunqueCameraTagLines(),
+    ''
+  ]
+}
 
 function composeTijiaFeedMarkdown(pack) {
   return [
@@ -50,6 +64,7 @@ function composeTijiaFeedMarkdown(pack) {
     '',
     pack.globalNegative,
     '',
+    ...xiaoyunqueCameraTagSection(),
     '## 逐条视频文本',
     '',
     ...pack.videoLines.map((line, index) => numberedLine(line, index)),
@@ -78,6 +93,7 @@ export function composeSeedanceAllReferenceFeedMarkdown(pack) {
     '',
     ...SHOT_LANGUAGE_RULES,
     '',
+    ...xiaoyunqueCameraTagSection(),
     '---',
     '',
     '## GPT-image-2 参考图生成提示词',
