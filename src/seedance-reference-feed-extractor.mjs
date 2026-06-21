@@ -18,6 +18,17 @@ function stripSourcePrefix(sourceText) {
   return compact(sourceText).replace(/^(画面|剧情|剧本|小说片段|粗剧本|广告短片|广告文案)[:：]\s*/u, '')
 }
 
+function normalizeOriginalQuote(value) {
+  const text = String(value ?? '').trim()
+  if (!text) return ''
+  const inner = text
+    .replace(/^[「“]/u, '')
+    .replace(/[」”]$/u, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+  return inner ? `「${inner}」` : ''
+}
+
 function hasAny(text, patterns) {
   return patterns.some((pattern) => pattern.test(text))
 }
@@ -203,16 +214,41 @@ function snowQilinVideoLines() {
 
 function genericVideoLines(sourceText) {
   const cleaned = stripSourcePrefix(sourceText)
-  const chunks = cleaned
-    .split(/[。！？!?；;]\s*/u)
+  const parts = sourceSegmentsPreservingOriginalDialogue(cleaned)
+  const safeParts = parts.length ? parts : [{ type: 'narration', text: cleaned }]
+  const scene = sceneName(sourceText).split('/')[0].trim()
+  return safeParts.map((part, index) => {
+    const shot = index % 3 === 0 ? '中景' : index % 3 === 1 ? '近景' : '特写'
+    if (part.type === 'dialogue') {
+      return `${scene} 原著对白 ${part.text}。${shot} + 平视或轻微低机位 + 说话者或受声者反应清楚 + 不改台词、不删称谓、不改标点。台词：${part.text}`
+    }
+    return `${scene} ${part.text}。${shot} + 平视或轻微低机位 + 画面主体清楚 + 动作只保留当前句的可见内容。环境音：按场景保留真实声音，无对白时不加对白。`
+  })
+}
+
+function splitNarrativeSegments(text) {
+  return String(text ?? '')
+    .split(/[。！？!?；;\n]\s*/u)
     .map((part) => part.trim())
     .filter((part) => part.length >= 4)
-  const parts = chunks.length ? chunks : [cleaned]
-  const scene = sceneName(sourceText).split('/')[0].trim()
-  return parts.map((part, index) => {
-    const shot = index % 3 === 0 ? '中景' : index % 3 === 1 ? '近景' : '特写'
-    return `${scene} ${part}。${shot} + 平视或轻微低机位 + 画面主体清楚 + 动作只保留当前句的可见内容。环境音：按场景保留真实声音，无对白时不加对白。`
-  })
+}
+
+function sourceSegmentsPreservingOriginalDialogue(sourceText) {
+  const segments = []
+  const regex = /[「“][\s\S]*?[」”]/gu
+  let lastIndex = 0
+  for (const match of sourceText.matchAll(regex)) {
+    for (const part of splitNarrativeSegments(sourceText.slice(lastIndex, match.index))) {
+      segments.push({ type: 'narration', text: part })
+    }
+    const quote = normalizeOriginalQuote(match[0])
+    if (quote) segments.push({ type: 'dialogue', text: quote })
+    lastIndex = match.index + match[0].length
+  }
+  for (const part of splitNarrativeSegments(sourceText.slice(lastIndex))) {
+    segments.push({ type: 'narration', text: part })
+  }
+  return segments
 }
 
 function buildVideoLines({ sourceText, expandScript }) {
@@ -240,6 +276,7 @@ function globalNegative({ sourceText, style, aspectRatio }) {
   if (isTijiaGuomanSource(sourceText)) return tijiaGuomanGlobalNegative({ style, aspectRatio })
   const base = [
     `不要字幕、不要配乐，只保留环境音和必要对白。${style}，${aspectRatio}，参考图优先于文字。`,
+    '原著台词、专名、功法、境界、地点、因果必须以输入原文为准；直接引号内台词不得改写、压缩、换称谓。',
     '人物造型不能变，角色体型不能变，服装配饰不能乱，场景方向不能乱。',
     '不要现代无关元素，不要无关人物，不要卡通，不要魔法爆炸，不要画面切到剧本以外的地点。'
   ]

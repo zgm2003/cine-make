@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-test('cli writes the default Seedance + Canvas package', async () => {
+test('cli writes the default ChatGPT-only Seedance package', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-run-'))
   try {
     const result = spawnSync(process.execPath, ['src/cli.mjs', '--out', out, '--aspect', '16:9', '--style', '3D国漫', '广告短片：一杯咖啡让疲惫的程序员重新抬头。'], {
@@ -19,9 +19,10 @@ test('cli writes the default Seedance + Canvas package', async () => {
 
     assert.equal(result.status, 0, result.stderr)
     assert.ok(existsSync(join(out, 'seedance-all-reference-feed.md')))
-    assert.ok(existsSync(join(out, 'canvas-project.zip')))
-    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
-    assert.ok(existsSync(join(out, 'prompt-pack.md')))
+    assert.equal(existsSync(join(out, 'canvas-project.zip')), false)
+    assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
+    assert.equal(existsSync(join(out, 'projects.json')), false)
+    assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
     assert.ok(existsSync(join(out, 'README.md')))
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
@@ -30,13 +31,13 @@ test('cli writes the default Seedance + Canvas package', async () => {
 
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
     assert.match(feed, /逐条视频文本/u)
-    assert.match(result.stdout, /Seedance \+ Canvas pack ready/u)
+    assert.match(result.stdout, /ChatGPT-only Seedance feed ready/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }
 })
 
-test('cli help promotes Seedance + Canvas only', () => {
+test('cli help promotes ChatGPT-only Seedance only', () => {
   const result = spawnSync(process.execPath, ['src/cli.mjs', '--help'], {
     cwd: root,
     encoding: 'utf8'
@@ -44,146 +45,31 @@ test('cli help promotes Seedance + Canvas only', () => {
 
   assert.equal(result.status, 0, result.stderr)
   assert.match(result.stdout, /seedance-pack/u)
-  assert.match(result.stdout, /Seedance all-reference feed/u)
-  assert.doesNotMatch(result.stdout, /--mode <draft\|visual>|--mode draft|--mode visual/u)
+  assert.match(result.stdout, /ChatGPT-only Seedance all-reference feed/u)
+  assert.doesNotMatch(result.stdout, /canvas-pack|canvas-storyboard-pack|canvas-full-pack|novel canvas|--mode <draft\|visual>|--mode draft|--mode visual/u)
 })
 
-test('cli writes a manual Canvas prompt pack without storyboard images', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-pack-cli-'))
-  const input = join(out, 'script.txt')
-  try {
-    await writeFile(input, `第一集剧本：【分崩离析的10分钟】
-[场景：孤岛别墅 - 客厅 - 夜]
-角色设定：
-林默（男主角）：私家侦探。冷静、神经质。
-安娜（女性）：心理医生，知性、冷静。
-雷队（中年男）：脾气暴躁的警探。
-阿杰（青年男）：胆小、唯唯诺诺的瘸子。
-▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。
-▲ 【画面】 镜头拉开，客厅里还有另外三个人。
-雷队（咬牙切齿）：
-“林默，你终于醒了。”
-安娜（温柔安抚）：
-“林默，看着我。”
-▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。`, 'utf8')
+for (const command of ['canvas-pack', 'canvas-storyboard-pack', 'canvas-full-pack']) {
+  test(`cli rejects deprecated Canvas command: ${command}`, async () => {
+    const out = await mkdtemp(join(tmpdir(), `cine-make-${command}-disabled-`))
+    const input = join(out, 'script.txt')
+    try {
+      await writeFile(input, '第一集剧本：林默醒来，看见血手。', 'utf8')
+      const result = spawnSync(process.execPath, ['src/cli.mjs', command, '--input', input, '--out', out, '--aspect', '9:16'], {
+        cwd: root,
+        encoding: 'utf8'
+      })
 
-    const result = spawnSync(process.execPath, ['src/cli.mjs', 'canvas-pack', '--input', input, '--out', out, '--aspect', '9:16'], {
-      cwd: root,
-      encoding: 'utf8'
-    })
-
-    assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'canvas-project.zip')))
-    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
-    assert.ok(existsSync(join(out, 'prompt-pack.md')))
-    assert.ok(existsSync(join(out, 'README.md')))
-    assert.equal(existsSync(join(out, 'storyboard-images')), false)
-    const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
-    assert.equal(manifest.nodes.some((node) => node.role === 'video_segment'), false)
-    assert.equal(manifest.nodes.some((node) => node.role === 'style_bible'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), false)
-    assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), false)
-    assert.equal(manifest.connections.every((connection) => /^(style-reference|character-ref-|environment-ref-)/u.test(connection.toNodeId)), true)
-    assert.match(result.stdout, /manual Canvas generation/)
-  } finally {
-    await rm(out, { recursive: true, force: true })
-  }
-})
-
-test('cli writes a manual Canvas storyboard append pack without foundation nodes', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-storyboard-pack-cli-'))
-  const input = join(out, 'script.txt')
-  try {
-    await writeFile(input, `第一集剧本：【分崩离析的10分钟】
-[场景：孤岛别墅 - 客厅 - 夜]
-角色设定：
-林默（男主角）：私家侦探。冷静、神经质。
-安娜（女性）：心理医生，知性、冷静。
-雷队（中年男）：脾气暴躁的警探。
-阿杰（青年男）：胆小、唯唯诺诺的瘸子。
-▲ 【画面】 林默猛地从沙发上惊醒，大口喘气。他看向自己的双手，满是鲜血。
-▲ 【画面】 镜头拉开，客厅里还有另外三个人。
-雷队（咬牙切齿）：
-“林默，你终于醒了。”
-安娜（温柔安抚）：
-“林默，看着我。”
-▲ 【画面】 林默的手机突然定时闹钟响起：【00:00:00】时间到。`, 'utf8')
-
-    const result = spawnSync(process.execPath, ['src/cli.mjs', 'canvas-storyboard-pack', '--input', input, '--out', out, '--aspect', '9:16'], {
-      cwd: root,
-      encoding: 'utf8'
-    })
-
-    assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'canvas-project.zip')))
-    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
-    assert.equal(existsSync(join(out, 'storyboard-images')), false)
-    const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
-    assert.equal(manifest.kind, 'cine-make-canvas-storyboard-pack')
-    assert.equal(manifest.packageType, 'manual_canvas_storyboard_append')
-    assert.equal(manifest.mergeTarget, 'current_canvas')
-    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), false)
-    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), false)
-    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), false)
-    assert.match(result.stdout, /storyboard Canvas append/i)
-  } finally {
-    await rm(out, { recursive: true, force: true })
-  }
-})
-
-test('cli writes a full Canvas pack with reference-to-keyframe and storyboard-flow connections', async () => {
-  const out = await mkdtemp(join(tmpdir(), 'cine-make-canvas-full-pack-cli-'))
-  const input = join(out, 'script.txt')
-  try {
-    await writeFile(input, `AI漫剧剧本：收租偶遇同班哑巴校花
-人物
-- 江渝白：男主，高中生
-- 林听晚：女主，同班校花，对外装作哑巴
-- 李大妈：二房东
-- 晚晚：和林听晚容貌一致的少女
-
-【分镜1】外景·老旧居民楼 全景
-时长：3s
-画面：江渝白站在楼下，抬头望楼。
-
-【分镜2】楼道·楼梯间 中景
-时长：4s
-画面：江渝白缓步走上楼梯，前方传来一高一低两道女声。
-
-【分镜3】结尾定格画面 双人+少女 全景
-时长：5s
-画面：江渝白震惊地看着里屋门口的少女。林听晚挡在前方，晚晚从门口探出。`, 'utf8')
-
-    const result = spawnSync(process.execPath, ['src/cli.mjs', 'canvas-full-pack', '--input', input, '--out', out, '--aspect', '9:16', '--style', '国漫现实主义风格'], {
-      cwd: root,
-      encoding: 'utf8'
-    })
-
-    assert.equal(result.status, 0, result.stderr)
-    assert.ok(existsSync(join(out, 'canvas-project.zip')))
-    assert.ok(existsSync(join(out, 'canvas-manifest.json')))
-    assert.equal(existsSync(join(out, 'storyboard-images')), false)
-    const manifest = JSON.parse(await readFile(join(out, 'canvas-manifest.json'), 'utf8'))
-    assert.equal(manifest.kind, 'cine-make-canvas-full-pack')
-    assert.equal(manifest.packageType, 'manual_canvas_full_generation')
-    assert.equal(manifest.nodes.some((node) => node.role === 'style_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'character_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'environment_reference'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'shot_list'), true)
-    assert.equal(manifest.nodes.some((node) => node.role === 'keyframe'), true)
-    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'shot-list' && connection.toNodeId === 'keyframe-s01'), true)
-    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'keyframe-s01' && connection.toNodeId === 'keyframe-s02'), true)
-    assert.equal(manifest.connections.some((connection) => connection.fromNodeId === 'style-reference' && connection.toNodeId === 'keyframe-s01'), true)
-    assert.match(result.stdout, /full Canvas generation/i)
-  } finally {
-    await rm(out, { recursive: true, force: true })
-  }
-})
+      assert.notEqual(result.status, 0)
+      assert.match(result.stderr, /Canvas package output is disabled/u)
+      assert.equal(existsSync(join(out, 'canvas-project.zip')), false)
+      assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
+      assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
+    } finally {
+      await rm(out, { recursive: true, force: true })
+    }
+  })
+}
 
 test('cli writes a Seedance all-reference feed without storyboard artifacts', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-seedance-feed-cli-'))

@@ -1,6 +1,6 @@
 # Novel Project Mode
 
-Use this reference for whole novels and large `.txt` sources. Short excerpts, scripts, ad briefs, and small story fragments stay on the normal draft -> visual flow in `SKILL.md`.
+Use this reference for whole novels and large `.txt` sources. Short excerpts, scripts, ad briefs, and small story fragments stay on the normal ChatGPT-only Seedance feed flow in `SKILL.md`.
 
 ## Core rule
 
@@ -16,7 +16,6 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
-cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 ## Workflow
@@ -27,25 +26,16 @@ cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 4. Build the series bible after enough summaries are accepted. The bible is the continuity source for characters, settings, arcs, and adaptation rules.
 5. Run visual-bible planning after bible planning. It produces reference plans and prompts; it does not generate images.
 6. Generate S/A character references only after the bible and visual bible are reviewed. Use explicit `$imagegen` only after approval.
-7. Plan episodes from the bible, then export one episode at a time into the existing Cine Make draft artifacts.
-8. If the user uses the Canvas system, export the episode package with `novel canvas` and import `canvas-project.zip` through the Canvas `导入画布` button.
+7. Plan episodes from the bible, then export one episode at a time into ChatGPT-ready Seedance feed text.
+8. Do not run `novel canvas`; Canvas package output is disabled. Use the episode package and Seedance feed text with ChatGPT / the external video tool.
 
-## Canvas handoff
+## Canvas output disabled
 
-`novel canvas` writes two files into the episode directory:
+`novel canvas` is no longer a user delivery path. Do not create canvas-manifest.json, canvas-project.zip, projects.json, or prompt-pack.md for user handoff. Use the episode package plus ChatGPT-ready Seedance feed text instead.
 
-```text
-canvas-manifest.json
-canvas-project.zip
-```
+## Visual and video-tool policy
 
-- `canvas-manifest.json` is Cine Make's renderer-neutral director handoff. It keeps semantic roles, continuity, warnings, and Jimeng upload-image budget notes.
-- `canvas-project.zip` is the current Canvas import adapter. It contains `projects.json` with text-only nodes and no media files.
-- Do not treat this as image or video generation. Canvas remains the downstream editing and generation workspace.
-
-## Visual and Jimeng policy
-
-- Default style: 超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性.
-- Novel Studio MVP does not generate images automatically. It plans visual references; `$imagegen` is explicit after visual bible approval.
-- Each Jimeng feed card can upload at most 9 images. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
+- Keep visual style from the user or the accepted project bible; do not force a live-action default over explicit guoman / xianxia style.
+- Novel Studio MVP does not generate images automatically. It plans visual references and GPT-image-2 prompts; `$imagegen` is explicit after visual bible approval.
+- The user-facing handoff is ChatGPT-ready Seedance text, not a platform-specific upload-budget package or Canvas import package.
 - Reuse continuity hooks between exported episodes instead of recreating identities from raw text.

@@ -3,16 +3,13 @@
 Normal short-script / excerpt user-facing output:
 
 - `seedance-all-reference-feed.md`
-- `canvas-project.zip`
-- `canvas-manifest.json`
-- `prompt-pack.md`
 - `README.md`
 
-The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint: it must include GPT-image-2 reference prompts, reference asset binding, global negative constraints, copy-ready single-line video text, and a bottom note the user can paste into the video tool.
+The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint: it must include GPT-image-2 reference prompts, reference asset binding, global negative constraints, original-fidelity rules, shot-language rules, copy-ready single-line video text, and a bottom note the user can paste into ChatGPT or the video tool.
 
-Normal runs must not expose `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.
+Normal runs must not expose `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.
 
-Removed user modes:
+Removed user modes and commands:
 
 - `draft`
 - `visual`
@@ -20,16 +17,23 @@ Removed user modes:
 - `--mode visual`
 - `--draft`
 - `--visual`
+- `canvas-pack`
+- `canvas-storyboard-pack`
+- `canvas-full-pack`
+- `novel canvas`
 
 Main commands:
 
-- default CLI and `seedance-pack`: create the Seedance feed plus Canvas foundation import pack.
+- default CLI and `seedance-pack`: create the ChatGPT-only Seedance feed plus README.
 - `reference-feed`: create only `seedance-all-reference-feed.md`.
-- `canvas-pack`: create only the first Canvas foundation import pack.
-- `canvas-storyboard-pack`: create a merge-friendly Canvas append pack after foundation references are locked.
-- `canvas-full-pack`: create one full Canvas import containing foundation references and keyframes.
 
 No artifact may claim final MP4 generation.
+
+Original-fidelity contract:
+
+- directly quoted source dialogue must be copied exactly;
+- source names, factions, skills, cultivation realms, locations, props, and cause-effect logic must not be invented or renamed;
+- narrative prose may become visible action, but event order, motivation, reveal order, and ending hooks must stay intact.
 
 Seedance feed:
 
@@ -48,9 +52,8 @@ Prop reference contract:
 - forbid characters, hands, scene staging, prop bundles, split panels, or multiple variants in the same image;
 - describe material and silhouette on that single object instead of adding companion objects.
 
-Canvas pack:
+Canvas output:
 
-- all Canvas handoff commands write `canvas-project.zip`, `canvas-manifest.json`, `prompt-pack.md`, and `README.md`;
-- Canvas packs are media-free: no generated images, no video files;
-- foundation packs contain style, character, environment, and prop reference generation nodes;
-- append/full packs may contain keyframe nodes, but still no generated media.
+- disabled for public user delivery;
+- do not create Canvas zip, manifest, projects json, or prompt pack from normal runs;
+- if a legacy internal exporter remains in code, do not route user requests to it.

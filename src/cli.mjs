@@ -31,10 +31,8 @@ import { readNovelTaskPrompt } from './novel/task-prompts.mjs'
 import { buildSeriesBible } from './novel/bible-builder.mjs'
 import { planNovelEpisodes } from './novel/episode-planner.mjs'
 import { exportNovelEpisode } from './novel/episode-exporter.mjs'
-import { exportNovelCanvas } from './novel/canvas-exporter.mjs'
 import { updateProjectContinuity } from './novel/continuity-manager.mjs'
 import { planVisualBible } from './novel/visual-bible-planner.mjs'
-import { exportCanvasPromptPack, exportCanvasStoryboardPack, exportCanvasFullPack } from './canvas-prompt-pack-exporter.mjs'
 import { buildSeedanceReferenceFeedPackage } from './seedance-reference-feed-extractor.mjs'
 import { composeSeedanceAllReferenceFeedMarkdown } from './seedance-reference-feed-writer.mjs'
 
@@ -42,9 +40,6 @@ function usage() {
   return [
     'Usage:',
     '  node src/cli.mjs [seedance-pack] --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
-    '  node src/cli.mjs canvas-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
-    '  node src/cli.mjs canvas-storyboard-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
-    '  node src/cli.mjs canvas-full-pack --out <output-dir> [--input <file>] [--aspect <9:16|16:9|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
@@ -53,12 +48,11 @@ function usage() {
     '  node src/cli.mjs novel visual-bible --run <project-dir> [--max-s-tier <number>]',
     '  node src/cli.mjs novel plan-episodes --run <project-dir> [--episode-minutes <number>]',
     '  node src/cli.mjs novel episode --run <project-dir> --episode <number> [--out <episode-dir>] [--episode-minutes <number>]',
-    '  node src/cli.mjs novel canvas --run <project-dir> --episode <number> [--out <episode-dir>]',
     '  node src/cli.mjs ready --run <output-dir> [--done <task-id>]',
     '  node src/cli.mjs task --run <output-dir> --id <task-id>',
     '  node src/cli.mjs validate --run <output-dir> [--stage <skeleton|production>]',
     '',
-    'Default output is the Seedance all-reference feed plus a media-free Canvas import pack.',
+    'Default output is a ChatGPT-only Seedance all-reference feed. Canvas package output is disabled.',
     'Removed: draft/visual user modes and storyboard image folders.',
     '',
     'Example:',
@@ -66,6 +60,8 @@ function usage() {
     '  node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"'
   ].join('\n')
 }
+
+const CANVAS_DISABLED_MESSAGE = 'Canvas package output is disabled; Cine Make now outputs a ChatGPT-only Seedance feed. Use the default command, seedance-pack, or reference-feed.'
 
 function defaultOutDir(cineMakeRoot) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
@@ -343,86 +339,6 @@ async function exportNovelProjectEpisode(argv) {
   console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }
 
-async function exportNovelProjectCanvas(argv) {
-  const options = parseNovelFlagArgs(argv, {
-    command: 'canvas',
-    required: ['--run', '--episode'],
-    allowed: ['--run', '--episode', '--out']
-  })
-  const episodeNumber = Number(options.episode)
-  if (!Number.isInteger(episodeNumber) || episodeNumber < 1) {
-    throw new Error('--episode must be a positive integer')
-  }
-
-  const result = await exportNovelCanvas({
-    runDir: resolve(options.run),
-    episodeNumber,
-    outDir: options.out ? resolve(options.out) : undefined
-  })
-
-  console.log('Cine Make exported canvas project:')
-  console.log(`- manifest: ${result.manifestPath}`)
-  console.log(`- canvas zip: ${result.zipPath}`)
-  if (result.warnings.length) console.log(`- warnings: ${result.warnings.length}`)
-}
-
-async function exportManualCanvasPromptPack(argv, cineMakeRoot) {
-  const options = parseArgs(argv)
-  if (options.help) {
-    console.log(usage())
-    return
-  }
-
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
-  const contract = await createInputContract(options)
-  const result = await exportCanvasPromptPack({ outDir, contract })
-
-  console.log('Cine Make manual Canvas generation pack ready:')
-  console.log(`- canvas zip: ${result.zipPath}`)
-  console.log(`- manifest: ${result.manifestPath}`)
-  console.log(`- prompt pack: ${result.promptPackPath}`)
-  console.log(`- README: ${result.readmePath}`)
-  console.log('- images/videos: none; generate manually inside Canvas')
-}
-
-async function exportManualCanvasStoryboardPack(argv, cineMakeRoot) {
-  const options = parseArgs(argv)
-  if (options.help) {
-    console.log(usage())
-    return
-  }
-
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
-  const contract = await createInputContract(options)
-  const result = await exportCanvasStoryboardPack({ outDir, contract })
-
-  console.log('Cine Make storyboard Canvas append pack ready:')
-  console.log(`- canvas zip: ${result.zipPath}`)
-  console.log(`- manifest: ${result.manifestPath}`)
-  console.log(`- prompt pack: ${result.promptPackPath}`)
-  console.log(`- README: ${result.readmePath}`)
-  console.log('- images/videos: none; merge into current Canvas, then generate keyframes manually')
-}
-
-async function exportManualCanvasFullPack(argv, cineMakeRoot) {
-  const options = parseArgs(argv)
-  if (options.help) {
-    console.log(usage())
-    return
-  }
-
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
-  const contract = await createInputContract(options)
-  const result = await exportCanvasFullPack({ outDir, contract })
-
-  console.log('Cine Make full Canvas generation pack ready:')
-  console.log(`- canvas zip: ${result.zipPath}`)
-  console.log(`- manifest: ${result.manifestPath}`)
-  console.log(`- prompt pack: ${result.promptPackPath}`)
-  console.log(`- README: ${result.readmePath}`)
-  console.log('- images/videos: none; import once, generate references first, then follow S01→Sxx keyframe chain')
-}
-
 async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
   const options = parseArgs(argv)
   if (options.help) {
@@ -450,7 +366,7 @@ async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
   console.log('- images/videos: none; generate GPT-image-2 reference images manually, then upload the bound references to the video tool')
 }
 
-async function exportSeedanceCanvasPack(argv, cineMakeRoot) {
+async function exportChatGptSeedancePack(argv, cineMakeRoot) {
   const options = parseArgs(argv)
   if (options.help) {
     console.log(usage())
@@ -470,15 +386,30 @@ async function exportSeedanceCanvasPack(argv, cineMakeRoot) {
   await mkdir(outDir, { recursive: true })
   const feedPath = join(outDir, 'seedance-all-reference-feed.md')
   await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(pack)}\n`, 'utf8')
-  const canvas = await exportCanvasPromptPack({ outDir, contract })
+  const readmePath = join(outDir, 'README.md')
+  await writeFile(readmePath, [
+    `# ${pack.title}`,
+    '',
+    '本包是 ChatGPT-only / Seedance 全能参考投喂包。',
+    '',
+    '## 文件',
+    '',
+    '- seedance-all-reference-feed.md',
+    '',
+    '## 使用',
+    '',
+    '1. 把 `seedance-all-reference-feed.md` 粘给 ChatGPT，先按“原著守则”和“镜头语言规则”校对。',
+    '2. 用 GPT-image-2 生成或确认参考图。',
+    '3. 把逐条视频文本复制到外部视频工具。',
+    '',
+    '不生成 Canvas 包、不生成图片、不生成视频。'
+  ].join('\n') + '\n', 'utf8')
 
-  console.log('Seedance + Canvas pack ready:')
+  console.log('ChatGPT-only Seedance feed ready:')
   console.log(`- feed: ${feedPath}`)
-  console.log(`- canvas zip: ${canvas.zipPath}`)
-  console.log(`- manifest: ${canvas.manifestPath}`)
-  console.log(`- prompt pack: ${canvas.promptPackPath}`)
-  console.log(`- README: ${canvas.readmePath}`)
-  console.log('- images/videos: none; generate references manually inside Canvas, then paste Seedance feed text into the video tool')
+  console.log(`- README: ${readmePath}`)
+  console.log('- canvas: disabled')
+  console.log('- images/videos: none; use ChatGPT/GPT-image-2 prompts, then paste Seedance feed text into the video tool')
 }
 
 async function findProjectChapter(projectDir, chapterId) {
@@ -554,11 +485,13 @@ async function runNovelCommand(argv) {
     'visual-bible': () => planNovelProjectVisualBible(args),
     'plan-episodes': () => planNovelProjectEpisodes(args),
     episode: () => exportNovelProjectEpisode(args),
-    canvas: () => exportNovelProjectCanvas(args)
+    canvas: () => {
+      throw new Error(CANVAS_DISABLED_MESSAGE)
+    }
   }
 
   if (!subcommand || !Object.hasOwn(commands, subcommand)) {
-    throw new Error(`Unknown novel command: ${subcommand ?? '(missing)'}. Supported now: novel ingest, novel task, novel accept-summary, novel build-bible, novel visual-bible, novel plan-episodes, novel episode, novel canvas`)
+    throw new Error(`Unknown novel command: ${subcommand ?? '(missing)'}. Supported now: novel ingest, novel task, novel accept-summary, novel build-bible, novel visual-bible, novel plan-episodes, novel episode`)
   }
 
   await commands[subcommand]()
@@ -647,18 +580,15 @@ async function main() {
   }
 
   if (process.argv[2] === 'canvas-pack') {
-    await exportManualCanvasPromptPack(process.argv.slice(3), cineMakeRoot)
-    return
+    throw new Error(CANVAS_DISABLED_MESSAGE)
   }
 
   if (process.argv[2] === 'canvas-storyboard-pack') {
-    await exportManualCanvasStoryboardPack(process.argv.slice(3), cineMakeRoot)
-    return
+    throw new Error(CANVAS_DISABLED_MESSAGE)
   }
 
   if (process.argv[2] === 'canvas-full-pack') {
-    await exportManualCanvasFullPack(process.argv.slice(3), cineMakeRoot)
-    return
+    throw new Error(CANVAS_DISABLED_MESSAGE)
   }
 
   if (process.argv[2] === 'reference-feed') {
@@ -667,7 +597,7 @@ async function main() {
   }
 
   if (process.argv[2] === 'seedance-pack') {
-    await exportSeedanceCanvasPack(process.argv.slice(3), cineMakeRoot)
+    await exportChatGptSeedancePack(process.argv.slice(3), cineMakeRoot)
     return
   }
 
@@ -693,7 +623,7 @@ async function main() {
     return
   }
 
-  await exportSeedanceCanvasPack(process.argv.slice(2), cineMakeRoot)
+  await exportChatGptSeedancePack(process.argv.slice(2), cineMakeRoot)
 }
 
 main().catch((error) => {

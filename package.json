@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "private": false,
   "type": "module",
-  "description": "Local AI short-drama pre-production compiler: Seedance all-reference feeds and media-free Canvas import packs.",
+  "description": "Local AI short-drama pre-production compiler: ChatGPT-ready Seedance all-reference feeds.",
   "license": "MIT",
   "keywords": [
     "codex",

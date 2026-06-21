@@ -1,8 +1,8 @@
 # Cine Make
 
-Cine Make 是一个给 Codex 风格 Agent 使用的本地 AI 短剧前期编译器。它把小说片段、粗剧本、广告 brief、故事素材，直接编成 **Seedance 全能参考投喂包 + Canvas 无媒体导入包**。
+Cine Make 是一个给 Codex 风格 Agent 使用的本地 AI 短剧前期编译器。它把小说片段、粗剧本、广告 brief、故事素材，直接编成 **ChatGPT 可用的 Seedance 全能参考投喂包**。
 
-Cine Make **不渲染 MP4**。它只写文本提示词、参考资产计划、Canvas 节点和连续性说明。最终视频合成属于外部视频工具。
+Cine Make **不渲染 MP4**。它只写文本提示词、参考资产计划、原著守则、镜头语言规则和连续性说明。最终视频合成属于外部视频工具。
 
 ## 当前版本
 
@@ -16,9 +16,6 @@ Cine Make **不渲染 MP4**。它只写文本提示词、参考资产计划、Ca
 
 ```text
 seedance-all-reference-feed.md
-canvas-project.zip
-canvas-manifest.json
-prompt-pack.md
 README.md
 ```
 
@@ -49,6 +46,14 @@ node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --s
 
 除非用户明确改规则，否则每 5 条视频文本 = 15 秒。Feed 不写首帧、尾帧、S01、segment 续接，也不写旧图片文件夹。
 
+## 原著守则和镜头语言规则
+
+- 原著直接引号台词必须照抄：不改字、不压缩、不换称谓、不改标点。
+- 人名、势力、功法、境界、地点、道具和因果关系以原文为准；没出现的设定不补。
+- 可以把叙述转成可见动作，但不能改变事件顺序、人物动机、信息揭示顺序和章末钩子。
+- 每条视频文本只做一个主要动作，主体、景别、机位、构图、光影、运镜都必须服务当前剧情信息。
+- 威胁声、神识传音、旁白必须标明声源和质感，不能把角色对白误写成普通解说。
+
 GPT-image-2 三视图是一张图：正面全身、侧面全身、背面全身，最左侧单独放上半身+头部细节，白底，专业排版。三视图为一张图。
 
 道具参考图先过“内容价值”筛选：只有直接推动冲突、动作、身份反转、悬疑揭示或关键爆点的道具，才单独建资产。普通玉佩、茶杯、餐具、装饰牌、背景摆件这类低内容感物件，不建参考图、不当锚点、不反复写进提示词。通过筛选的道具才生成一个完整单体产品图；白色/浅灰背景；不要人物、不要手持、不要场景摆拍、不要分栏、不要多版本、不要道具组合。
@@ -59,19 +64,9 @@ GPT-image-2 三视图是一张图：正面全身、侧面全身、背面全身�
 node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D国漫" "故事素材..."
 ```
 
-## Canvas 导入包
+## Canvas 输出已关闭
 
-Canvas 交接沿用同一套导演层级。所有 Canvas 包都是无媒体包：只创建可导入的文本/节点，不生成图片、不生成视频。
-
-```bash
-node src/cli.mjs canvas-pack --out .cine-make-runs/canvas --aspect 16:9 --style "3D国漫" "故事素材..."
-node src/cli.mjs canvas-storyboard-pack --out .cine-make-runs/canvas-next --aspect 16:9 --style "3D国漫" "故事素材..."
-node src/cli.mjs canvas-full-pack --out .cine-make-runs/canvas-full --aspect 16:9 --style "3D国漫" "故事素材..."
-```
-
-- `canvas-pack`：第一阶段基础图谱。World Bible / Art Direction、Character Bible、Environment Bible，加 style_reference（风格参考）、character_reference（角色参考）、environment_reference（场景参考）节点。
-- `canvas-storyboard-pack`：主图锁定后合并到当前画布；关键帧节点带 `requiredAnchors`。
-- `canvas-full-pack`：一次导入基础参考、Shot List、Keyframes、真实参考到关键帧连线，以及 `shot-list -> keyframe-s01 -> keyframe-s02` 故事流。
+Cine Make 以后不再生产 `canvas-project.zip`、`canvas-manifest.json`、`projects.json` 或 `prompt-pack.md`。公开 Canvas 命令会快速失败，并提示用户改用 ChatGPT-only Seedance feed。后续流程是：把 feed 交给 ChatGPT 校对，生成/确认 GPT-image-2 参考提示词，再把逐条视频文本投喂外部视频工具。
 
 ## 分层电影管线
 
@@ -91,7 +86,7 @@ ART_DIRECTION       # 色彩、光线、镜头语言
 ANCHOR_POLICY       # 全局 / 角色 / 故事 / 单行锚点限制
 Shot Definition     # 静态镜头设计
 Director Cut        # 导演删减版，不是机械删减
-Keyframe Prompt     # 需要时给 Canvas / 图像模型的静态提示词
+Keyframe Prompt     # 需要时给 ChatGPT / GPT-image-2 的静态提示词
 Motion Prompt       # 给视频模型的最小状态转移
 QUALITY_CHECK       # 通过 / 警告 / 失败
 AI_RISK_WARNINGS    # 图像/视频生成风险
@@ -112,18 +107,15 @@ Cine Make 的关键是判断，不是把提示词写长。`SCRIPT_BEATS` 先整�
 ## 自然语言用法
 
 ```text
-$cine-make 把这段替嫁冲突拆成 Seedance 全能参考投喂包和 Canvas 导入包：……
+$cine-make 把这段替嫁冲突拆成 ChatGPT 可校对的 Seedance 全能参考投喂包：……
 ```
 
 ```text
 $cine-make 给我 3D国漫，国风仙侠，偏水墨+古风写实结合，每5条=15s：……
 ```
 
-```text
-$cine-make 我不想在这里抽卡，直接给我 Canvas 提示词包，我导入画布手动生成：……
-```
 
-用户不需要指定视频平台。Cine Make 默认交付 Seedance feed 文本 + Canvas 参考资产。
+用户不需要指定视频平台。Cine Make 默认交付 ChatGPT 可校对的 Seedance feed，内置原著守则和镜头语言规则。
 
 ## 安装
 
@@ -143,7 +135,6 @@ $cine-make ...
 cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫" "故事素材..."
 cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"
 cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D国漫"
-cine-make canvas-pack --out .cine-make-runs/canvas --input script.txt --style "3D国漫"
 ```
 
 ### 长篇小说项目模式
@@ -158,34 +149,17 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
-cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 Novel Studio MVP 不自动生成图片。视觉 bible 批准后，再显式使用 `$imagegen`。
 
-单集导出包属于旧的单集交接，可能包含：
-
-```text
-episode-input.md
-deliverable.md
-storyboard-images/
-jimeng-feed-cards.json
-```
-
-旧即梦素材预算仍是每张卡 9 张上传图片。角色图、场景图、首帧、分镜关键帧、尾帧都算上传图片。
-
-如果用户也跑 Canvas 系统，`novel canvas` 会创建：
-
-```text
-canvas-manifest.json
-canvas-project.zip
-```
+小说项目命令只负责章节规划和单集整理。新的用户交付仍然是 ChatGPT 可校对的 `seedance-all-reference-feed.md`；不要再为新交付创建 Canvas 包或即梦素材预算包。
 
 ## 投喂视频工具
 
 普通运行直接用 `seedance-all-reference-feed.md`：
 
-1. 生成或确认 feed / Canvas 包里的 GPT-image-2 参考资产。
+1. 生成或确认 feed 里的 GPT-image-2 参考资产。
 2. 按参考资产绑定表绑定素材。
 3. 按 5 条 / 15 秒复制逐条视频文本。
 4. 在外部视频工具生成片段。
@@ -227,7 +201,7 @@ npm view cine-make version --registry=https://registry.npmjs.org/
 Cine Make 负责前期：
 
 ```text
-故事素材 -> seedance-all-reference-feed.md + canvas-project.zip -> 外部视频工具
+故事素材 -> seedance-all-reference-feed.md -> ChatGPT 校对 -> 外部视频工具
 ```
 
 外部视频工具负责最终合成：

@@ -23,7 +23,7 @@ test('installs cine-make skill and records compiler path', async () => {
   }
 })
 
-test('cine-make docs describe novel project mode and Jimeng material budget', async () => {
+test('cine-make docs describe novel project mode and ChatGPT-only Seedance handoff', async () => {
   const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
   const novelReferencePath = join(root, 'skills', 'cine-make', 'references', 'novel-project-mode.md')
   const novelReference = await readFile(novelReferencePath, 'utf8')
@@ -45,7 +45,7 @@ test('cine-make docs describe novel project mode and Jimeng material budget', as
   assert.match(readme, /cine-make novel ingest --input \.\/novel\.txt --out \.cine-make-runs\/my-novel/)
   assert.match(combinedDocs, /Seedance 全能参考投喂包|Seedance all-reference/u)
   assert.match(combinedDocs, /3D国漫|3D guoman/u)
-  assert.match(combinedDocs, /9 uploaded images|9 张图片/i)
+  assert.doesNotMatch(combinedDocs, /9 uploaded images|9 张图片/i)
   assert.match(combinedDocs, /novel accept-summary/)
   assert.match(combinedDocs, /novel visual-bible/)
 })
@@ -57,21 +57,23 @@ test('public docs avoid stale novel package and material-budget wording', async 
   const publicDocs = [readme, readmeZh, shareDoc].join('\n')
 
   assert.match(readme, /normal short-script and excerpt runs/i)
-  assert.match(readme, /Seedance all-reference feed plus a media-free Canvas import pack/i)
+  assert.match(readme, /ChatGPT-ready Seedance all-reference feed/i)
   assert.match(readmeZh, /普通短片和小说片段运行/)
-  assert.match(readmeZh, /Seedance 全能参考投喂包 \+ Canvas 无媒体导入包/u)
+  assert.match(readmeZh, /ChatGPT 可用的 Seedance 全能参考投喂包/u)
 
   assert.doesNotMatch(shareDoc, /continuity-bible\.json \+ episodes\//)
   assert.doesNotMatch(shareDoc, /episodes\/<episode>\/video-tasks/)
   assert.doesNotMatch(shareDoc, /逐镜视频任务卡/)
   assert.doesNotMatch(publicDocs, /12 images/i)
   assert.doesNotMatch(publicDocs, /12 张/)
+  assert.doesNotMatch(publicDocs, /cine-make novel canvas|node src\/cli\.mjs canvas-pack/)
+  assert.doesNotMatch(publicDocs, /episode-input\.md|jimeng-feed-cards\.json/)
+  assert.doesNotMatch(publicDocs, /Novel Studio 会暴露项目工作区产物和单集导出包/)
 
   assert.match(shareDoc, /cine-make@0\.0\.5/)
-  assert.match(shareDoc, /episode-input\.md/)
-  assert.match(shareDoc, /jimeng-feed-cards\.json/)
   assert.match(shareDoc, /普通短片和小说片段运行会直接交付/)
-  assert.match(shareDoc, /Novel Studio 会暴露项目工作区产物和单集导出包/)
+  assert.match(shareDoc, /seedance-all-reference-feed\.md/)
+  assert.match(shareDoc, /ChatGPT/)
 })
 
 test('skill docs use upload-image budget wording consistently', async () => {

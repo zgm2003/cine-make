@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url'
 const root = fileURLToPath(new URL('..', import.meta.url))
 const source = '雨夜，外卖骑手林野接到一单没有地址的医院订单。13楼护士站空无一人，桌上滚出一颗红色玻璃弹珠。'
 
-test('short-drama CLI main path is Seedance feed plus Canvas assets only', async () => {
+test('short-drama CLI main path is ChatGPT-only Seedance feed', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-ai-package-'))
   try {
     const result = spawnSync(process.execPath, [
@@ -26,9 +26,10 @@ test('short-drama CLI main path is Seedance feed plus Canvas assets only', async
 
     assert.equal(result.status, 0, result.stderr)
     assert.equal(existsSync(join(out, 'seedance-all-reference-feed.md')), true)
-    assert.equal(existsSync(join(out, 'canvas-project.zip')), true)
-    assert.equal(existsSync(join(out, 'canvas-manifest.json')), true)
-    assert.equal(existsSync(join(out, 'prompt-pack.md')), true)
+    assert.equal(existsSync(join(out, 'canvas-project.zip')), false)
+    assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
+    assert.equal(existsSync(join(out, 'projects.json')), false)
+    assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
     assert.equal(existsSync(join(out, 'README.md')), true)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)

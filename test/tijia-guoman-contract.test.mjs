@@ -129,7 +129,7 @@ test('替嫁国漫 Canvas pack exports only 3D guoman foundation assets', async 
   }
 })
 
-test('seedance-pack CLI writes only Seedance feed and Canvas import assets', async () => {
+test('seedance-pack CLI writes only ChatGPT Seedance feed assets', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-tijia-guoman-seedance-pack-'))
   try {
     const result = spawnSync(process.execPath, [
@@ -146,13 +146,14 @@ test('seedance-pack CLI writes only Seedance feed and Canvas import assets', asy
 
     assert.equal(result.status, 0, result.stderr)
     assert.equal(existsSync(join(out, 'seedance-all-reference-feed.md')), true)
-    assert.equal(existsSync(join(out, 'canvas-project.zip')), true)
-    assert.equal(existsSync(join(out, 'canvas-manifest.json')), true)
-    assert.equal(existsSync(join(out, 'prompt-pack.md')), true)
+    assert.equal(existsSync(join(out, 'canvas-project.zip')), false)
+    assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
+    assert.equal(existsSync(join(out, 'projects.json')), false)
+    assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
     assert.equal(existsSync(join(out, 'README.md')), true)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
-    assert.match(result.stdout, /Seedance \+ Canvas pack ready/u)
+    assert.match(result.stdout, /ChatGPT-only Seedance feed ready/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

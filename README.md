@@ -2,9 +2,9 @@
 
 **中文优先**: Simplified Chinese documentation is the primary entrypoint: [`README.zh-CN.md`](./README.zh-CN.md)
 
-Cine Make is a local AI short-drama pre-production compiler for Codex-style agents. It turns novels, rough scripts, ad briefs, and story fragments into a Seedance all-reference feed plus a media-free Canvas import pack.
+Cine Make is a local AI short-drama pre-production compiler for Codex-style agents. It turns novels, rough scripts, ad briefs, and story fragments into a ChatGPT-ready Seedance all-reference feed.
 
-Cine Make does **not** render MP4 videos. It writes text prompts, reference-asset plans, Canvas nodes, and continuity notes. Final video synthesis belongs to the external video tool.
+Cine Make does **not** render MP4 videos. It writes text prompts, reference-asset plans, original-fidelity rules, shot-language rules, and continuity notes. Final video synthesis belongs to the external video tool.
 
 ## Current version
 
@@ -18,9 +18,6 @@ For normal short-script and excerpt runs, the user-facing package exposes only:
 
 ```text
 seedance-all-reference-feed.md
-canvas-project.zip
-canvas-manifest.json
-prompt-pack.md
 README.md
 ```
 
@@ -51,6 +48,14 @@ The mandatory video-text shape is:
 
 Every 5 video text lines equals 15 seconds unless the user explicitly overrides. The feed must not mention start frames, end frames, S01, segment continuation, or storyboard image folders.
 
+## Original-fidelity and shot-language rules
+
+- Directly quoted source dialogue must be copied exactly: no rewritten words, no compression, no changed forms of address, no punctuation changes.
+- Names, factions, skills, cultivation realms, locations, props, and cause-effect logic come from the source text; do not invent missing lore.
+- Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
+- Each video-text line has one main action. Subject, shot size, camera position, composition, lighting, and camera movement must serve the current story information.
+- Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
+
 The GPT-image-2 tri-view prompt is one image: front full-body, side full-body, back full-body, plus a separate upper-body + head detail panel on the far left, white background, clean professional layout. 三视图为一张图.
 
 Prop references are value-gated before prompting. Only story-critical props that drive conflict, action, identity reveal, mystery, or the decisive beat become standalone assets. Low-content objects such as ordinary pendants, cups, tableware, decorative tags, or background ornaments are not reference assets and should not be repeated as prompt anchors. If a prop passes the gate, generate one isolated complete object only on a clean white/light-gray background. No people, hands, scene staging, split panels, variants, or bundled props.
@@ -61,19 +66,9 @@ If the user wants only the feed file:
 node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D guoman" "story material..."
 ```
 
-## Canvas handoff
+## Canvas output disabled
 
-Manual Canvas generation uses the same layer structure. All Canvas handoffs are media-free: they create importable text/node packages, not images or videos.
-
-```bash
-node src/cli.mjs canvas-pack --out .cine-make-runs/canvas --aspect 16:9 --style "3D guoman" "story material..."
-node src/cli.mjs canvas-storyboard-pack --out .cine-make-runs/canvas-next --aspect 16:9 --style "3D guoman" "story material..."
-node src/cli.mjs canvas-full-pack --out .cine-make-runs/canvas-full --aspect 16:9 --style "3D guoman" "story material..."
-```
-
-- `canvas-pack`: first foundation graph. World Bible / Art Direction, Character Bible, Environment Bible, plus style_reference, character_reference, and environment_reference image nodes.
-- `canvas-storyboard-pack`: merge into current canvas after foundation references are locked; keyframes declare `requiredAnchors`.
-- `canvas-full-pack`: one import with foundation references, Shot List, Keyframes, real reference-to-keyframe edges, and `shot-list -> keyframe-s01 -> keyframe-s02` story flow.
+Cine Make no longer produces `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, or `prompt-pack.md`. Public Canvas commands now fail fast and tell the user to use the ChatGPT-only Seedance feed. Use ChatGPT to review the feed, generate/confirm GPT-image-2 reference prompts, and then paste the video lines into the external video tool.
 
 ## Layered cinematic pipeline
 
@@ -93,7 +88,7 @@ ART_DIRECTION       # color, light, camera language
 ANCHOR_POLICY       # global / character / story / per-line anchor limits
 Shot Definition     # static shot design with shot_function and audience_takeaway
 Director Cut        # recommended reduced design, not just full coverage
-Keyframe Prompt     # static image prompt for Canvas/image models when needed
+Keyframe Prompt     # static image prompt for ChatGPT/GPT-image-2 when needed
 Motion Prompt       # minimal state transition for the video model
 QUALITY_CHECK       # pass / warning / fail self-checks
 AI_RISK_WARNINGS    # image/video generation risk warnings
@@ -114,18 +109,15 @@ Keyframe output uses localized Keyframe prompts: each prompt carries only local 
 ## Natural-language usage
 
 ```text
-$cine-make 把这段替嫁冲突拆成 Seedance 全能参考投喂包和 Canvas 导入包：……
+$cine-make 把这段替嫁冲突拆成 ChatGPT 可校对的 Seedance 全能参考投喂包：……
 ```
 
 ```text
 $cine-make 给我 3D国漫，国风仙侠，偏水墨+古风写实结合，每5条=15s：……
 ```
 
-```text
-$cine-make 我不想在这里抽卡，直接给我 Canvas 提示词包，我导入画布手动生成：……
-```
 
-Users do not need to specify a video platform. Cine Make's normal handoff is Seedance feed text plus Canvas reference assets.
+Users do not need to specify a video platform. Cine Make's normal handoff is a ChatGPT-ready Seedance feed with original-fidelity and shot-language rules.
 
 ## Install
 
@@ -145,7 +137,6 @@ $cine-make ...
 cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D guoman" "Story material here..."
 cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D guoman"
 cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D guoman"
-cine-make canvas-pack --out .cine-make-runs/canvas --input script.txt --style "3D guoman"
 ```
 
 ### Whole-novel project mode
@@ -160,34 +151,17 @@ cine-make novel build-bible --run .cine-make-runs/my-novel
 cine-make novel visual-bible --run .cine-make-runs/my-novel
 cine-make novel plan-episodes --run .cine-make-runs/my-novel
 cine-make novel episode --run .cine-make-runs/my-novel --episode 1
-cine-make novel canvas --run .cine-make-runs/my-novel --episode 1
 ```
 
 Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
 
-An exported novel episode package is a legacy episode handoff and may contain:
-
-```text
-episode-input.md
-deliverable.md
-storyboard-images/
-jimeng-feed-cards.json
-```
-
-Legacy Jimeng material budget remains 9 uploaded images per feed card. Character, scene, start frame, storyboard keyframes, and end frame all count as uploaded images.
-
-For users who also run the Canvas system, `novel canvas` creates:
-
-```text
-canvas-manifest.json
-canvas-project.zip
-```
+Novel project commands are planning and episode-preparation steps. The user-facing handoff remains the ChatGPT-ready `seedance-all-reference-feed.md`; do not create Canvas packages or platform-specific upload-budget packages for new delivery.
 
 ## Feeding AI video tools
 
 For normal runs, use `seedance-all-reference-feed.md` directly:
 
-1. Generate or confirm the GPT-image-2 reference assets listed in the feed or Canvas pack.
+1. Generate or confirm the GPT-image-2 reference assets listed in the feed.
 2. Bind assets according to the reference asset table.
 3. Copy the single-line video texts in 5-line / 15-second groups.
 4. Generate clips in the external video tool.
@@ -229,7 +203,7 @@ npm view cine-make version --registry=https://registry.npmjs.org/
 Cine Make owns pre-production:
 
 ```text
-story material -> seedance-all-reference-feed.md + canvas-project.zip -> external video tool
+story material -> seedance-all-reference-feed.md -> ChatGPT check -> external video tool
 ```
 
 External video tools own final synthesis:

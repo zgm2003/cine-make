@@ -92,7 +92,7 @@ test('exports a semantic manifest and image-generation canvas zip from an episod
   }
 })
 
-test('CLI fails clearly when the episode package is missing', async () => {
+test('CLI rejects deprecated novel canvas command', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-canvas-export-missing-'))
   try {
     await writeCanvasProject(workspace, { writeEpisodePackage: false })
@@ -111,8 +111,7 @@ test('CLI fails clearly when the episode package is missing', async () => {
     })
 
     assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /Episode package is missing/)
-    assert.match(result.stderr, /cine-make novel episode --run/)
+    assert.match(result.stderr, /Canvas package output is disabled/)
   } finally {
     await rm(workspace, { recursive: true, force: true })
   }

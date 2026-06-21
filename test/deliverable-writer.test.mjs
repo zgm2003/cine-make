@@ -27,7 +27,7 @@ test('removed deliverable/storyboard user path is not reachable through CLI', as
   }
 })
 
-test('default CLI replaces deliverable/storyboard with Seedance and Canvas artifacts', async () => {
+test('default CLI replaces deliverable/storyboard with ChatGPT-only Seedance artifacts', async () => {
   const out = await mkdtemp(join(tmpdir(), 'cine-make-deliverable-replaced-'))
   try {
     const result = spawnSync(process.execPath, ['src/cli.mjs', '--out', out, '--style', '3D国漫', source], {
@@ -37,7 +37,10 @@ test('default CLI replaces deliverable/storyboard with Seedance and Canvas artif
 
     assert.equal(result.status, 0, result.stderr)
     assert.equal(existsSync(join(out, 'seedance-all-reference-feed.md')), true)
-    assert.equal(existsSync(join(out, 'canvas-project.zip')), true)
+    assert.equal(existsSync(join(out, 'canvas-project.zip')), false)
+    assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
+    assert.equal(existsSync(join(out, 'projects.json')), false)
+    assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
   } finally {
