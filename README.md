@@ -52,9 +52,11 @@ Every 5 video text lines equals 15 seconds unless the user explicitly overrides.
 
 ## Original-fidelity and shot-language rules
 
-- Directly quoted source dialogue must be copied exactly: no rewritten words, no compression, no changed forms of address, no punctuation changes.
+- The highest-fidelity items are character motivation, event order, cause-effect logic, key reveals, ending hooks, and decisive conflict lines.
+- Directly quoted source dialogue should be copied exactly when it is short and load-bearing. Long dialogue may use light adaptation: excerpt the strongest original clause or slightly smooth wording so each 15-second group remains breathable.
 - Names, factions, skills, cultivation realms, locations, props, and cause-effect logic come from the source text; do not invent missing lore.
 - Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
+- Each 5-line / 15-second group usually keeps only 2-3 short dialogue lines; the rest should be carried by action, reaction, pause, expression, and sound.
 - Each video-text line has one main action. Subject, shot size, camera position, composition, lighting, and camera movement must serve the current story information.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
 - Movement uses Xiaoyunque-supported tags exactly, for example `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, `拉开离场`.

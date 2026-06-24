@@ -75,6 +75,19 @@ test('skill disables Canvas package output and routes to ChatGPT feed', async ()
   assert.doesNotMatch(chinese, /node src\/cli\.mjs canvas-pack/u)
 })
 
+test('docs allow light adaptation for breathable 15-second video segments', async () => {
+  const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
+  const outputContract = await readFile(join(root, 'skills', 'cine-make', 'references', 'output-contract.md'), 'utf8')
+  const combined = [skill, outputContract].join('\n')
+
+  assert.match(combined, /视频呼吸|breathable/u)
+  assert.match(combined, /长台词/u)
+  assert.match(combined, /轻微.*改造|light adaptation/u)
+  assert.match(combined, /事件顺序|event order/u)
+  assert.match(combined, /人物动机|motivation/u)
+  assert.match(combined, /章节?钩子|ending hooks/u)
+})
+
 test('readmes describe Seedance reference-feed and GPT-image-2 tri-view prompts', async () => {
   const english = await readFile(join(root, 'README.md'), 'utf8')
   const chinese = await readFile(join(root, 'README.zh-CN.md'), 'utf8')

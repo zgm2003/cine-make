@@ -35,10 +35,11 @@ Cine Make does **not** generate final MP4, does **not** call external video APIs
 
 ## Original-fidelity rules / 原著守则
 
-- Directly quoted source dialogue must be copied exactly: no rewritten words, no compression, no changed forms of address, no punctuation changes.
+- The highest-fidelity items are character motivation, event order, cause-effect logic, key reveals, ending hooks, and decisive conflict lines.
+- Keep direct source dialogue exact when it is short and load-bearing. For long dialogue / 长台词, use light adaptation / 轻微改造: excerpt the strongest original clause or slightly smooth wording so the 15-second video remains breathable.
 - Names, factions, skills, cultivation realms, locations, props, and cause-effect logic come from the source text; do not invent missing lore.
 - Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
-- If shortening is required, remove non-critical narration first; do not remove key dialogue or alter meaning.
+- If shortening is required, remove repeated explanation, low-value description, and internal monologue first; do not remove the key conflict or alter meaning.
 - When evidence conflicts, live/current source text beats generated artifacts.
 
 ## Shot-language rules / 镜头语言规则
@@ -47,6 +48,8 @@ Cine Make does **not** generate final MP4, does **not** call external video APIs
 - The single-line video text format is mandatory: `序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`.
 - Treat external AI video generation as a short Seedance feed-text workflow. Every 5 single-line video texts equal 15 seconds unless the user explicitly overrides.
 - Each line has one main action, one visible story target, enough room for camera movement, performance, and suspense beats.
+- A 15-second group needs 视频呼吸 / breathable pacing: usually 2-3 short dialogue lines at most, with the rest carried by action, reaction, pause, expression, and sound.
+- Do not force a whole long quote / 长台词 into one video line. Preserve the conflict point instead of the full wording when the full wording would break generation.
 - A good Seedance video text line is concrete and AI-facing: location, roles, action, performance, shot size, lens/camera position, composition, blocking, lighting, camera movement, dialogue, sound, and negative constraints.
 - Do not use subtitles or music by default; keep environment sound, action sound, and necessary dialogue.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
@@ -71,7 +74,7 @@ Cine Make uses a layered cinematic pipeline: `SCRIPT_BEATS`, `DIRECTOR_DECISION`
 - `SCRIPT_BEATS` identifies real narrative beats before shot count is decided; it should not become one beat per shot.
 - `DIRECTOR_DECISION` is mandatory director judgment: each shot must prove why it should stay. Use explicit `keep / merge / delete / rewrite` outcomes.
 - `TEXT_READABILITY_POLICY` catches carved text, phone screens, labels, photo backs, and wall blood text: readable text must be the primary anchor and must use close-up / insert framing.
-- `DIALOGUE_POLICY` keeps source dialogue exact, then creates concise visual-cut support only around it.
+- `DIALOGUE_POLICY` protects short load-bearing dialogue exactly, and for overlong dialogue chooses the strongest original clause or light adaptation that preserves motivation, event order, and ending hooks.
 - `SHOT_DENSITY_CONTROLLER` recommends a manageable shot count for the runtime; it should push Director Cut to rewrite rhythm instead of mechanically deleting shots.
 - `ENVIRONMENT_BIBLES` is the multi-location Environment Bibles layer.
 - `ANCHOR_POLICY` / Anchor Policy separates global, character, story, and per-line anchors. Each line uses at most one primary anchor and at most two secondary anchors.

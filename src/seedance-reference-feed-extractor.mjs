@@ -9,6 +9,20 @@ import {
 
 const DEFAULT_ASPECT = '16:9'
 const FORBIDDEN_VIDEO_META = /续接|承接|下一段|下一场|后续|首帧|尾帧|首尾|segment|storyboard-images|S\d{2}|keyframe|控制帧|分镜图/u
+const BREATHABLE_DIALOGUE_CHAR_LIMIT = 38
+const DIALOGUE_PRIORITY_PATTERNS = [
+  /骨气/u,
+  /靠.*女人/u,
+  /欺负/u,
+  /不服/u,
+  /后悔/u,
+  /你配/u,
+  /不嫁/u,
+  /废物/u,
+  /吐口痰/u,
+  /赢|输/u,
+  /杀|死|滚/u
+]
 
 function compact(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim()
@@ -27,6 +41,78 @@ function normalizeOriginalQuote(value) {
     .replace(/\s+/gu, ' ')
     .trim()
   return inner ? `「${inner}」` : ''
+}
+
+function unwrapOriginalQuote(value) {
+  return String(value ?? '')
+    .trim()
+    .replace(/^[「“]/u, '')
+    .replace(/[」”]$/u, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+}
+
+function wrapOriginalQuote(value) {
+  const inner = String(value ?? '').trim()
+  return inner ? `「${inner}」` : ''
+}
+
+function splitDialogueClauses(inner) {
+  const clauses = inner.match(/[^，。！？；,!?;]+[，。！？；,!?;]?/gu) ?? [inner]
+  return clauses
+    .map((clause, index) => ({
+      index,
+      text: clause.trim()
+    }))
+    .filter((clause) => clause.text)
+}
+
+function cleanDialogueExcerpt(text) {
+  return String(text ?? '')
+    .replace(/[，,；;。！？!?]+$/u, '')
+    .trim()
+}
+
+function dialogueClauseScore(clause) {
+  const text = clause.text
+  const priority = DIALOGUE_PRIORITY_PATTERNS.reduce((score, pattern) => score + (pattern.test(text) ? 5 : 0), 0)
+  const directAddress = /你|他|她|我|们/u.test(text) ? 2 : 0
+  const force = /！|!|？|\?/u.test(text) ? 2 : 0
+  return priority + directAddress + force
+}
+
+function selectBreathableDialogueExcerpt(inner) {
+  const clauses = splitDialogueClauses(inner)
+  const scored = clauses
+    .map((clause) => ({ ...clause, score: dialogueClauseScore(clause) }))
+    .sort((a, b) => b.score - a.score || a.index - b.index)
+
+  const selected = []
+  let length = 0
+  for (const clause of scored) {
+    const cleaned = cleanDialogueExcerpt(clause.text)
+    if (!cleaned) continue
+    const nextLength = length + cleaned.length + (selected.length ? 1 : 0)
+    if (nextLength > BREATHABLE_DIALOGUE_CHAR_LIMIT) continue
+    selected.push({ index: clause.index, text: cleaned })
+    length = nextLength
+    if (length >= BREATHABLE_DIALOGUE_CHAR_LIMIT * 0.65) break
+  }
+
+  const ordered = selected.sort((a, b) => a.index - b.index)
+  if (ordered.length) return ordered.map((clause) => clause.text).join('，')
+
+  return cleanDialogueExcerpt(clauses[0]?.text ?? inner).slice(0, BREATHABLE_DIALOGUE_CHAR_LIMIT)
+}
+
+function dialogueForVideo(quote) {
+  const inner = unwrapOriginalQuote(quote)
+  if (!inner) return { text: '', excerpted: false }
+  if (inner.length <= BREATHABLE_DIALOGUE_CHAR_LIMIT) return { text: wrapOriginalQuote(inner), excerpted: false }
+  return {
+    text: wrapOriginalQuote(selectBreathableDialogueExcerpt(inner)),
+    excerpted: true
+  }
 }
 
 function hasAny(text, patterns) {
@@ -220,7 +306,10 @@ function genericVideoLines(sourceText) {
   return safeParts.map((part, index) => {
     const shot = index % 3 === 0 ? '中景' : index % 3 === 1 ? '近景' : '特写'
     if (part.type === 'dialogue') {
-      return `${scene} 原著对白 ${part.text}。${shot} + 平视或轻微低机位 + 说话者或受声者反应清楚 + 不改台词、不删称谓、不改标点。镜头前推（贴近原著对白反应）。台词：${part.text}`
+      const dialogue = dialogueForVideo(part.text)
+      const label = dialogue.excerpted ? '台词摘句' : '台词'
+      const intent = dialogue.excerpted ? '长台词取核心冲突句' : '原著对白'
+      return `${scene} ${intent} ${dialogue.text}。${shot} + 平视或轻微低机位 + 说话者和受声者反应清楚 + 留出呼吸停顿。镜头前推（情绪靠近）。${label}：${dialogue.text}`
     }
     return `${scene} ${part.text}。${shot} + 平视或轻微低机位 + 画面主体清楚 + 动作只保留当前句的可见内容。固定镜头（建立冷静秩序）。环境音：按场景保留真实声音，无对白时不加对白。`
   })
@@ -276,7 +365,7 @@ function globalNegative({ sourceText, style, aspectRatio }) {
   if (isTijiaGuomanSource(sourceText)) return tijiaGuomanGlobalNegative({ style, aspectRatio })
   const base = [
     `不要字幕、不要配乐，只保留环境音和必要对白。${style}，${aspectRatio}，参考图优先于文字。`,
-    '原著台词、专名、功法、境界、地点、因果必须以输入原文为准；直接引号内台词不得改写、压缩、换称谓。',
+    '原著专名、功法、境界、地点、因果必须以输入原文为准；关键台词优先保留原句，长台词可为视频呼吸摘取核心短句或轻微顺口改造。',
     '人物造型不能变，角色体型不能变，服装配饰不能乱，场景方向不能乱。',
     '不要现代无关元素，不要无关人物，不要卡通，不要魔法爆炸，不要画面切到剧本以外的地点。'
   ]
