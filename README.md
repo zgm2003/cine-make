@@ -1,4 +1,4 @@
-# Cine Make
+﻿# Cine Make
 
 **中文优先**: Simplified Chinese documentation is the primary entrypoint: [`README.zh-CN.md`](./README.zh-CN.md)
 
@@ -21,11 +21,12 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-The default CLI and `seedance-pack` produce the same package:
+Run Cine Make from the story project directory. When `--out` is omitted, the package is written to that project's `runs/<timestamp>/`; the tool repository should not own project outputs. The default CLI and `seedance-pack` produce the same package:
 
 ```bash
-node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D guoman xianxia, ink-wash + ancient realistic" "story material..."
-node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D guoman"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D guoman xianxia, ink-wash + ancient realistic" "story material..."
+cine-make seedance-pack --input script.txt --style "3D guoman"
 ```
 
 Removed user entries: `--mode draft`, `--mode visual`, `--draft`, and `--visual`. Normal runs must not create `deliverable.md` or `storyboard-images/`.
@@ -68,7 +69,7 @@ Prop references are value-gated before prompting. Only story-critical props that
 If the user wants only the feed file:
 
 ```bash
-node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D guoman" "story material..."
+cine-make reference-feed --aspect 16:9 --style "3D guoman" "story material..."
 ```
 
 ## Canvas output disabled
@@ -139,9 +140,10 @@ $cine-make ...
 ## CLI usage
 
 ```bash
-cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D guoman" "Story material here..."
-cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D guoman"
-cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D guoman"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D guoman" "Story material here..."
+cine-make seedance-pack --input script.txt --style "3D guoman"
+cine-make reference-feed --input script.txt --style "3D guoman"
 ```
 
 ### Whole-novel project mode
@@ -149,13 +151,13 @@ cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "
 Use project mode for a whole novel or a large `.txt` file. It keeps the source out of one prompt, summarizes bounded chapter tasks, builds a series bible, plans visual references, and exports one episode at a time.
 
 ```bash
-cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
-cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
-cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
-cine-make novel build-bible --run .cine-make-runs/my-novel
-cine-make novel visual-bible --run .cine-make-runs/my-novel
-cine-make novel plan-episodes --run .cine-make-runs/my-novel
-cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel ingest --input ./novel.txt --out runs/my-novel
+cine-make novel task --run runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run runs/my-novel
+cine-make novel visual-bible --run runs/my-novel
+cine-make novel plan-episodes --run runs/my-novel
+cine-make novel episode --run runs/my-novel --episode 1
 ```
 
 Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
@@ -176,7 +178,7 @@ For normal runs, use `seedance-all-reference-feed.md` directly:
 
 ```bash
 npm test
-node src/cli.mjs validate --run .cine-make-runs/demo --stage production
+node src/cli.mjs validate --run ../some-story-project/runs/demo --stage production
 npm pack --dry-run
 node scripts/install-codex-skill.mjs
 ```

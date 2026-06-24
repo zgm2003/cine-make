@@ -1,19 +1,19 @@
-# 太虚至尊第五至十章 Seedance 投喂包设计
+﻿# 太虚至尊第五至十章 Seedance 投喂包设计
 
 ## 背景
 
-当前项目 `cine-make` 的最新交付形态以第四章为准：每章一个独立 `runs/` 目录，正常交付只包含 `seedance-all-reference-feed.md` 和 `README.md`。第五至十章剧本位于 `E:/太虚古蒂/taixuzhizun/剧本资产/`，用户已选择只做新版包，不补旧版 `storyboard-standard.md`、xlsx、Canvas 包、图片或视频。
+当前项目 `cine-make` 的最新交付形态以第四章为准：每章一个独立 `E:/太虚古蒂/taixuzhizun/runs/` 目录，正常交付只包含 `seedance-all-reference-feed.md` 和 `README.md`。第五至十章剧本位于 `E:/太虚古蒂/taixuzhizun/剧本资产/`，用户已选择只做新版包，不补旧版 `storyboard-standard.md`、xlsx、Canvas 包、图片或视频。
 
 ## 交付范围
 
 为第五、六、七、八、九、十章分别创建独立 run 目录：
 
-- `runs/taixu-ep05-fake-dragon-20260622-*`
-- `runs/taixu-ep06-deadly-alignment-20260622-*`
-- `runs/taixu-ep07-fathers-relic-20260622-*`
-- `runs/taixu-ep08-soul-master-20260622-*`
-- `runs/taixu-ep09-nine-grade-fails-20260622-*`
-- `runs/taixu-ep10-true-dragon-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-*`
 
 每个目录只交付：
 

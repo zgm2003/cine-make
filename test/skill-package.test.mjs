@@ -23,6 +23,19 @@ test('installs cine-make skill and records compiler path', async () => {
   }
 })
 
+test('published package excludes project runs and historical planning archives', async () => {
+  const pkg = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'))
+
+  assert.deepEqual(pkg.files, [
+    'bin/',
+    'scripts/',
+    'skills/',
+    'src/',
+    'README.md',
+    'README.zh-CN.md'
+  ])
+})
+
 test('cine-make docs describe novel project mode and ChatGPT-only Seedance handoff', async () => {
   const skill = await readFile(join(root, 'skills', 'cine-make', 'SKILL.md'), 'utf8')
   const novelReferencePath = join(root, 'skills', 'cine-make', 'references', 'novel-project-mode.md')
@@ -42,7 +55,7 @@ test('cine-make docs describe novel project mode and ChatGPT-only Seedance hando
   assert.match(novelReference, /bible planning/i)
   assert.match(novelReference, /S\/A character references/i)
 
-  assert.match(readme, /cine-make novel ingest --input \.\/novel\.txt --out \.cine-make-runs\/my-novel/)
+  assert.match(readme, /cine-make novel ingest --input \.\/novel\.txt --out runs\/my-novel/)
   assert.match(combinedDocs, /Seedance 全能参考投喂包|Seedance all-reference/u)
   assert.match(combinedDocs, /3D国漫|3D guoman/u)
   assert.doesNotMatch(combinedDocs, /9 uploaded images|9 张图片/i)

@@ -1,4 +1,4 @@
-# Cine Make：把小说片段变成真人电影质感 AI 短剧前期制片包
+﻿# Cine Make：把小说片段变成真人电影质感 AI 短剧前期制片包
 
 我做了一个 Codex Skill：**Cine Make**。
 
@@ -172,13 +172,13 @@ C:\Users\you\Desktop\refs\style.png
 整本小说或很大的 `.txt` 文件不要直接塞进一次上下文。Novel Studio MVP 使用项目模式：
 
 ```bash
-cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
-cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
-cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
-cine-make novel build-bible --run .cine-make-runs/my-novel
-cine-make novel visual-bible --run .cine-make-runs/my-novel
-cine-make novel plan-episodes --run .cine-make-runs/my-novel
-cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel ingest --input ./novel.txt --out runs/my-novel
+cine-make novel task --run runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run runs/my-novel
+cine-make novel visual-bible --run runs/my-novel
+cine-make novel plan-episodes --run runs/my-novel
+cine-make novel episode --run runs/my-novel --episode 1
 ```
 
 这里的 `novel visual-bible` 只规划视觉参考，不自动生成图片；必须在视觉 bible 确认后，才显式使用 `$imagegen`。用户交付仍以 ChatGPT-ready Seedance feed 为主，不生成 Canvas 工程包。

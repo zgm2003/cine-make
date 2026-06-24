@@ -39,8 +39,8 @@ import { composeSeedanceAllReferenceFeedMarkdown } from './seedance-reference-fe
 function usage() {
   return [
     'Usage:',
-    '  node src/cli.mjs [seedance-pack] --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
-    '  node src/cli.mjs reference-feed --out <output-dir> [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
+    '  node src/cli.mjs [seedance-pack] [--out <output-dir>] [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
+    '  node src/cli.mjs reference-feed [--out <output-dir>] [--input <file>] [--aspect <16:9|9:16|1:1>] [--style <style>] "<story material>"',
     '  node src/cli.mjs novel ingest --input <file> --out <project-dir> [--title <title>] [--style <style>] [--target-chunk-chars <number>]',
     '  node src/cli.mjs novel task --run <project-dir> --id <task-id>',
     '  node src/cli.mjs novel accept-summary --run <project-dir> --file <summary-json>',
@@ -56,16 +56,17 @@ function usage() {
     'Removed: draft/visual user modes and storyboard image folders.',
     '',
     'Example:',
-    '  node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "许怡宁举剑拒婚，许悠然被迫替嫁，江凡在角落平静喝茶。"',
-    '  node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"'
+    '  cd path/to/story-project',
+    '  node path/to/cine-make/src/cli.mjs --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "许怡宁举剑拒婚，许悠然被迫替嫁，江凡在角落平静喝茶。"',
+    '  node path/to/cine-make/src/cli.mjs seedance-pack --input script.txt --style "3D国漫"'
   ].join('\n')
 }
 
 const CANVAS_DISABLED_MESSAGE = 'Canvas package output is disabled; Cine Make now outputs a ChatGPT-only Seedance feed. Use the default command, seedance-pack, or reference-feed.'
 
-function defaultOutDir(cineMakeRoot) {
+function defaultOutDir(cwd = process.cwd()) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
-  return resolve(cineMakeRoot, '.cine-make-runs', stamp)
+  return resolve(cwd, 'runs', stamp)
 }
 
 async function readAgentPlan(runDir) {
@@ -339,7 +340,7 @@ async function exportNovelProjectEpisode(argv) {
   console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }
 
-async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
+async function exportSeedanceReferenceFeed(argv) {
   const options = parseArgs(argv)
   if (options.help) {
     console.log(usage())
@@ -347,7 +348,7 @@ async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
   }
 
   if (!argv.includes('--aspect')) options.aspect = '16:9'
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
+  const outDir = resolve(options.out ?? defaultOutDir())
   const contract = await createInputContract(options)
   const pack = buildSeedanceReferenceFeedPackage({
     sourceText: contract.sourceText,
@@ -366,7 +367,7 @@ async function exportSeedanceReferenceFeed(argv, cineMakeRoot) {
   console.log('- images/videos: none; generate GPT-image-2 reference images manually, then upload the bound references to the video tool')
 }
 
-async function exportChatGptSeedancePack(argv, cineMakeRoot) {
+async function exportChatGptSeedancePack(argv) {
   const options = parseArgs(argv)
   if (options.help) {
     console.log(usage())
@@ -374,7 +375,7 @@ async function exportChatGptSeedancePack(argv, cineMakeRoot) {
   }
 
   if (!argv.includes('--aspect')) options.aspect = '16:9'
-  const outDir = resolve(options.out ?? defaultOutDir(cineMakeRoot))
+  const outDir = resolve(options.out ?? defaultOutDir())
   const contract = await createInputContract(options)
   const pack = buildSeedanceReferenceFeedPackage({
     sourceText: contract.sourceText,

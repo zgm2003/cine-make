@@ -122,17 +122,20 @@ When triggered by a story-to-video-preproduction request:
 2. Before generating the package, ask two short questions when the answer is not already present:
    - 询问视觉风格：例如 `3D国漫，国风仙侠，偏水墨+古风写实结合`。
    - 询问是否扩写剧本：不扩写 = 严格按原文拆；扩写 = 可扩成更完整的逐条视频文本。
-3. For normal short scripts and pasted excerpts, run:
+3. Locate the story project directory first. Run the compiler from that directory so generated packages stay under that project's `runs/` folder, not inside the Cine Make tool repository.
+4. For normal short scripts and pasted excerpts, run:
    ```bash
-   node src/cli.mjs --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
-   node src/cli.mjs seedance-pack --out <run-dir> --aspect <ratio> --style <style> [--input <file>] "<source material>"
+   cd <story-project-dir>
+   node <cine-make-root>/src/cli.mjs --aspect <ratio> --style <style> [--input <file>] "<source material>"
+   node <cine-make-root>/src/cli.mjs seedance-pack --aspect <ratio> --style <style> [--input <file>] "<source material>"
    ```
-4. Run `reference-feed` only when the user wants just the feed file:
+5. Run `reference-feed` only when the user wants just the feed file:
    ```bash
-   node src/cli.mjs reference-feed --out <run-dir> --aspect 16:9 --style <style> [--input <file>] "<source material>"
+   cd <story-project-dir>
+   node <cine-make-root>/src/cli.mjs reference-feed --aspect 16:9 --style <style> [--input <file>] "<source material>"
    ```
-5. If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
-6. Summarize only the relevant user-facing feed path and next action.
+6. If the user asks for “导演思维”, “分镜逻辑”, or you need stronger cinematic guidance, read `references/director-prompts.md`.
+7. Summarize only the relevant user-facing feed path and next action.
 
 ## GPT-image-2 三视图生成模板
 

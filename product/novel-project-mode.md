@@ -1,4 +1,4 @@
-# Novel Project Mode
+﻿# Novel Project Mode
 
 Use this reference for whole novels and large `.txt` sources. Short excerpts, scripts, ad briefs, and small story fragments stay on the normal ChatGPT-only Seedance feed flow in `SKILL.md`.
 
@@ -9,13 +9,13 @@ Never paste the whole source into context. Ingest the file, then work from bound
 ## Command sequence
 
 ```bash
-cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
-cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
-cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
-cine-make novel build-bible --run .cine-make-runs/my-novel
-cine-make novel visual-bible --run .cine-make-runs/my-novel
-cine-make novel plan-episodes --run .cine-make-runs/my-novel
-cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel ingest --input ./novel.txt --out runs/my-novel
+cine-make novel task --run runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run runs/my-novel
+cine-make novel visual-bible --run runs/my-novel
+cine-make novel plan-episodes --run runs/my-novel
+cine-make novel episode --run runs/my-novel --episode 1
 ```
 
 ## Workflow

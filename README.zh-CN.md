@@ -1,4 +1,4 @@
-# Cine Make
+﻿# Cine Make
 
 Cine Make 是一个给 Codex 风格 Agent 使用的本地 AI 短剧前期编译器。它把小说片段、粗剧本、广告 brief、故事素材，直接编成 **ChatGPT 可用的 Seedance 全能参考投喂包**。
 
@@ -19,11 +19,12 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-默认 CLI 和 `seedance-pack` 等价：
+请在具体剧本项目目录里运行 Cine Make。省略 `--out` 时，产物会写入该项目的 `runs/<timestamp>/`；工具仓库本身不应该承载项目产物。默认 CLI 和 `seedance-pack` 等价：
 
 ```bash
-node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "故事素材..."
-node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D国漫，国风仙侠，偏水墨+古风写实结合" "故事素材..."
+cine-make seedance-pack --input script.txt --style "3D国漫"
 ```
 
 已删除用户入口：`--mode draft`、`--mode visual`、`--draft`、`--visual`。普通运行不得再创建 `deliverable.md` 或 `storyboard-images/`。
@@ -66,7 +67,7 @@ GPT-image-2 三视图是一张图：正面全身、侧面全身、背面全身�
 只要单独 feed 文件时：
 
 ```bash
-node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D国漫" "故事素材..."
+cine-make reference-feed --aspect 16:9 --style "3D国漫" "故事素材..."
 ```
 
 ## Canvas 输出已关闭
@@ -137,9 +138,10 @@ $cine-make ...
 ## CLI 用法
 
 ```bash
-cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D国漫" "故事素材..."
-cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D国漫"
-cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D国漫"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D国漫" "故事素材..."
+cine-make seedance-pack --input script.txt --style "3D国漫"
+cine-make reference-feed --input script.txt --style "3D国漫"
 ```
 
 ### 长篇小说项目模式
@@ -147,13 +149,13 @@ cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "
 整本小说或很大的 `.txt` 文件走项目模式。它不会把全文塞进一个 prompt，而是拆章节任务、接收摘要、构建系列 bible、规划视觉参考，再逐集导出。
 
 ```bash
-cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
-cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
-cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
-cine-make novel build-bible --run .cine-make-runs/my-novel
-cine-make novel visual-bible --run .cine-make-runs/my-novel
-cine-make novel plan-episodes --run .cine-make-runs/my-novel
-cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel ingest --input ./novel.txt --out runs/my-novel
+cine-make novel task --run runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run runs/my-novel
+cine-make novel visual-bible --run runs/my-novel
+cine-make novel plan-episodes --run runs/my-novel
+cine-make novel episode --run runs/my-novel --episode 1
 ```
 
 Novel Studio MVP 不自动生成图片。视觉 bible 批准后，再显式使用 `$imagegen`。
@@ -174,7 +176,7 @@ Novel Studio MVP 不自动生成图片。视觉 bible 批准后，再显式使�
 
 ```bash
 npm test
-node src/cli.mjs validate --run .cine-make-runs/demo --stage production
+node src/cli.mjs validate --run ../some-story-project/runs/demo --stage production
 npm pack --dry-run
 node scripts/install-codex-skill.mjs
 ```
