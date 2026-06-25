@@ -105,3 +105,42 @@ test('keeps video dialogue breathable by excerpting overlong source quotes', () 
   assert.match(markdown, /视频呼吸/u)
   assert.match(markdown, /长台词/u)
 })
+
+test('renders five-line copy blocks with references, voice, and unified requirements', () => {
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: source,
+    style: '3D国漫，国风仙侠，轻喜剧反差',
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+  const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+
+  assert.match(markdown, /## 每5条复制制作块/u)
+  assert.match(markdown, /### 第1组｜第1-5条/u)
+  assert.match(markdown, /上传参考图：雪山之巅=图片1；老年道清=图片2；麒麟幼兽=图片3/u)
+  assert.match(markdown, /音色：按本组必要对白匹配角色年龄、身份和情绪；没有对白的组不要新增旁白。必要对白只保留本组逐条文本里的短句。/u)
+  assert.match(markdown, /统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】3D国漫，国风仙侠，轻喜剧反差，16:9。/u)
+})
+
+test('dialogue video lines use speaker-only shots instead of foreground/background spatial staging', () => {
+  const novel = [
+    '鬼王宗宗门大殿，骨灵教枯瘦老者缓缓起身。',
+    '枯瘦老者禀报道：',
+    '「正道奸细已处理，骨骸炼成法器」',
+    '林夜面无表情，指尖压紧扶手。'
+  ].join('\n')
+
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: novel,
+    style: '3D国漫，国风仙侠，轻喜剧反差',
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+
+  const dialogueLines = pack.videoLines.filter((line) => /台词/.test(line))
+  assert.ok(dialogueLines.length > 0)
+  for (const line of dialogueLines) {
+    assert.match(line, /说话者单人主镜头/u)
+    assert.doesNotMatch(line, /前景|后景|受声者反应|双主体|同框反应/u)
+  }
+})

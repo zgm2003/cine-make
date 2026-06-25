@@ -8,6 +8,43 @@ function assetBindingLine(asset) {
   return `${asset.title} = ${asset.bindingLabel}`
 }
 
+function copyBlockAssetName(asset) {
+  return String(asset.title ?? '')
+    .replace(/\s*\/.*$/u, '')
+    .replace(/三视图$/u, '')
+    .trim()
+}
+
+function copyBlockReferenceLine(pack) {
+  const imageAssets = pack.assets.filter((asset) => asset.kind === 'image')
+  if (!imageAssets.length) return '上传参考图：无'
+  return `上传参考图：${imageAssets.map((asset) => `${copyBlockAssetName(asset)}=${asset.bindingLabel}`).join('；')}`
+}
+
+function composeFiveLineCopyBlocks(pack) {
+  const blocks = []
+  const referenceLine = copyBlockReferenceLine(pack)
+  const voiceLine = '音色：按本组必要对白匹配角色年龄、身份和情绪；没有对白的组不要新增旁白。必要对白只保留本组逐条文本里的短句。'
+  const requirementLine = `统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】${pack.style}，${pack.aspectRatio}。`
+
+  for (let start = 0; start < pack.videoLines.length; start += 5) {
+    const group = pack.videoLines.slice(start, start + 5)
+    const end = start + group.length
+    blocks.push(`### 第${Math.floor(start / 5) + 1}组｜第${start + 1}-${end}条`)
+    blocks.push('')
+    blocks.push(...group.map((line, offset) => numberedLine(line, start + offset)))
+    blocks.push('')
+    blocks.push(referenceLine)
+    blocks.push('')
+    blocks.push(voiceLine)
+    blocks.push('')
+    blocks.push(requirementLine)
+    blocks.push('')
+  }
+
+  return blocks
+}
+
 function numberedLine(line, index) {
   return `${index + 1} ${line}`
 }
@@ -34,6 +71,7 @@ const SHOT_LANGUAGE_RULES = [
   '- 每 5 条约 15 秒要有呼吸感：起、压、爆、冷、落；不要把整段长台词硬塞进一条。',
   '- 每个 15 秒段落核心对白通常只保留 2-3 句短句；其余信息用动作、停顿、表情和声音补回。',
   '- 主体、景别、机位、构图、光影、运镜都要服务本条剧情信息，不堆镜头术语。',
+  '- 有对白的条目必须以说话者为单人主镜头，清楚写嘴型、眼神、手势和停顿；不要写“前景/后景/受声者反应/双主体同框”这类视频模型难理解的空间调度。',
   '- 运镜字段优先使用“小云雀运镜标签库”的原始标签；可以在标签后用括号补充速度/情绪，例如：`镜头前推（缓慢靠近）`。',
   '- 无字幕、无配乐；只保留环境音、动作音效和必要对白。',
   '- 威胁声、神识传音、旁白要标明声源和质感；不能把角色对白误写成普通解说。'
@@ -130,6 +168,13 @@ export function composeSeedanceAllReferenceFeedMarkdown(pack) {
     '## 逐条视频文本',
     '',
     ...pack.videoLines.map((line, index) => numberedLine(line, index)),
+    '---',
+    '',
+    '## 每5条复制制作块',
+    '',
+    '> 使用方法：每组直接复制本组 5 条视频文本、上传参考图、音色和统一要求。',
+    '',
+    ...composeFiveLineCopyBlocks(pack),
     '---',
     '',
     '## 底部备注栏可复制',

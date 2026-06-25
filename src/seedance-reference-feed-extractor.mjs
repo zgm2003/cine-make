@@ -309,7 +309,7 @@ function genericVideoLines(sourceText) {
       const dialogue = dialogueForVideo(part.text)
       const label = dialogue.excerpted ? '台词摘句' : '台词'
       const intent = dialogue.excerpted ? '长台词取核心冲突句' : '原著对白'
-      return `${scene} ${intent} ${dialogue.text}。${shot} + 平视或轻微低机位 + 说话者和受声者反应清楚 + 留出呼吸停顿。镜头前推（情绪靠近）。${label}：${dialogue.text}`
+      return `${scene} ${intent} ${dialogue.text}。${shot} + 平视 + 说话者单人主镜头 + 嘴型、眼神、手势和停顿清楚 + 环境只保留当前地点氛围。镜头前推（情绪靠近）。${label}：${dialogue.text}`
     }
     return `${scene} ${part.text}。${shot} + 平视或轻微低机位 + 画面主体清楚 + 动作只保留当前句的可见内容。固定镜头（建立冷静秩序）。环境音：按场景保留真实声音，无对白时不加对白。`
   })

@@ -51,6 +51,8 @@ Cine Make does **not** generate final MP4, does **not** call external video APIs
 - A 15-second group needs 视频呼吸 / breathable pacing: usually 2-3 short dialogue lines at most, with the rest carried by action, reaction, pause, expression, and sound.
 - Do not force a whole long quote / 长台词 into one video line. Preserve the conflict point instead of the full wording when the full wording would break generation.
 - A good Seedance video text line is concrete and AI-facing: location, roles, action, performance, shot size, lens/camera position, composition, blocking, lighting, camera movement, dialogue, sound, and negative constraints.
+- User-facing delivery must include copy-ready 5-line production blocks: five single-line video texts first, then `上传参考图`, then `音色`, then `统一要求`. The user should be able to copy one whole block directly into the external video tool without reassembling text from the full feed.
+- Dialogue shots must be speaker-first. When a character speaks, make the speaker the single main shot and describe mouth shape, eyes, gesture, pause, voice texture, and environment light. Do not write video-model-hostile spatial staging such as `A 前景 B 后景`, `speaker foreground listener background`, `speaker and listener reaction clear`, or `dual-subject reaction`. If the listener reaction matters, write it as the next separate line.
 - Do not use subtitles or music by default; keep environment sound, action sound, and necessary dialogue.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
 - The movement field must prefer Xiaoyunque-supported camera tags exactly as written below; add speed/emotion only in parentheses, e.g. `镜头前推（缓慢靠近）`.
