@@ -1,19 +1,19 @@
-# 太虚至尊第五至十章 Seedance 投喂包设计
+﻿# 太虚至尊第五至十章 Seedance 投喂包设计
 
 ## 背景
 
-当前项目 `cine-make` 的最新交付形态以第四章为准：每章一个独立 `runs/` 目录，正常交付只包含 `seedance-all-reference-feed.md` 和 `README.md`。第五至十章剧本位于 `E:/太虚古蒂/taixuzhizun/剧本资产/`，用户已选择只做新版包，不补旧版 `storyboard-standard.md`、xlsx、Canvas 包、图片或视频。
+当前项目 `cine-make` 的最新交付形态以第四章为准：每章一个独立 `E:/太虚古蒂/taixuzhizun/runs/` 目录，正常交付只包含 `seedance-all-reference-feed.md` 和 `README.md`。第五至十章剧本位于 `E:/太虚古蒂/taixuzhizun/剧本资产/`，用户已选择只做新版包，不补旧版 `storyboard-standard.md`、xlsx、Canvas 包、图片或视频。
 
 ## 交付范围
 
 为第五、六、七、八、九、十章分别创建独立 run 目录：
 
-- `runs/taixu-ep05-fake-dragon-20260622-*`
-- `runs/taixu-ep06-deadly-alignment-20260622-*`
-- `runs/taixu-ep07-fathers-relic-20260622-*`
-- `runs/taixu-ep08-soul-master-20260622-*`
-- `runs/taixu-ep09-nine-grade-fails-20260622-*`
-- `runs/taixu-ep10-true-dragon-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-*`
+- `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-*`
 
 每个目录只交付：
 
@@ -37,7 +37,7 @@
 
 ## 叙事和资产策略
 
-所有直接引号台词按对应章节剧本逐字保留，不改字、不改标点、不压缩称呼。叙事可转成可见动作，但不能改变事件顺序、动机、误会因果、信息揭示顺序和章末钩子。
+原著优先级最高的是人物动机、事件顺序、误会因果、关键信息、章节钩子和爆点台词。短而承重的直接引号台词优先按对应章节剧本逐字保留；过长台词允许为了 15 秒视频呼吸做轻微改造，方式是摘取原文最有冲突力的短句，或把同义重复、低价值修饰和旁白性心理活动删掉。删减不得改变人物立场、因果、信息揭示顺序或章末钩子。
 
 角色资产优先复用已有：江凡、陆争、检测塔主、许怡宁、许悠然、许正言、王映凤。第五至十章按剧情价值新增少量关键资产，例如城主叶继风、秦长生、陈思灵、秦家长老、血蝠宫汉子。普通围观者、族人、老怪物、丫鬟和掌柜等可以作为群像或临时角色写入镜头，不默认单独做人设资产。
 
@@ -62,5 +62,6 @@
 - feed 中有参考资产清单、GPT-image-2 提示词、资产绑定、全局负面约束、原著守则、小云雀标签库、逐条视频文本和底部备注栏；
 - 直接引号台词可在对应剧本中找到，关键台词逐字一致；
 - 每段为 5 条视频文本，最后一段可少于 5 条但必须承接章末钩子；
+- 每个 15 秒段落通常只保留 2-3 句核心短对白，避免把整段长台词硬塞进单条视频文本；
 - 每条视频文本只有一个主要动作，并使用小云雀支持的运镜标签；
 - 不声称已生成图片、视频或 MP4，明确最终合成在外部工具完成。

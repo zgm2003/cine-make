@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 import { resolve } from 'node:path'
 import { formatValidationResult, validateRunDirectory } from '../src/run-validator.mjs'
 
@@ -8,7 +8,7 @@ function usage() {
     '  node scripts/validate-run.mjs --run <output-dir> [--stage <skeleton|production>]',
     '',
     'Examples:',
-    '  node scripts/validate-run.mjs --run .cine-make-runs/demo --stage skeleton',
+    '  node scripts/validate-run.mjs --run runs/demo --stage skeleton',
     '  node scripts/validate-run.mjs --run examples/rain-alley --stage production'
   ].join('\n')
 }

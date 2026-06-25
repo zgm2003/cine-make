@@ -1,10 +1,10 @@
-# Taixu Chapters 05-10 Feed Packages Implementation Plan
+﻿# Taixu Chapters 05-10 Feed Packages Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Produce chapter-specific ChatGPT-ready Seedance all-reference feed packages for 太虚至尊 chapters 5 through 10.
 
-**Architecture:** This is an artifact-generation pass, not a compiler change. Each chapter gets one isolated run directory under `runs/` containing only a `seedance-all-reference-feed.md` and a `README.md`, with the feed structure matching chapter 4 and the original-fidelity rules from the Cine Make skill.
+**Architecture:** This is an artifact-generation pass, not a compiler change. Each chapter gets one isolated run directory under `E:/太虚古蒂/taixuzhizun/runs/` containing only a `seedance-all-reference-feed.md` and a `README.md`, with the feed structure matching chapter 4 and the original-fidelity rules from the Cine Make skill.
 
 **Tech Stack:** Markdown artifacts, PowerShell file inspection, `rg` / `Select-String` verification, Git commits per chapter.
 
@@ -12,18 +12,18 @@
 
 ## File Structure
 
-- Create: `runs/taixu-ep05-fake-dragon-20260622-1100/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep05-fake-dragon-20260622-1100/README.md`
-- Create: `runs/taixu-ep06-deadly-alignment-20260622-1110/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep06-deadly-alignment-20260622-1110/README.md`
-- Create: `runs/taixu-ep07-fathers-relic-20260622-1120/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep07-fathers-relic-20260622-1120/README.md`
-- Create: `runs/taixu-ep08-soul-master-20260622-1130/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep08-soul-master-20260622-1130/README.md`
-- Create: `runs/taixu-ep09-nine-grade-fails-20260622-1140/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep09-nine-grade-fails-20260622-1140/README.md`
-- Create: `runs/taixu-ep10-true-dragon-20260622-1150/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep10-true-dragon-20260622-1150/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150/README.md`
 
 The source scripts remain unchanged:
 
@@ -37,8 +37,8 @@ The source scripts remain unchanged:
 ### Task 1: Chapter 5 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep05-fake-dragon-20260622-1100/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep05-fake-dragon-20260622-1100/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第五章剧本.txt`
 
 - [ ] **Step 1: Read chapter 5 and existing chapter 4 feed**
@@ -47,7 +47,7 @@ Run:
 
 ```powershell
 Get-Content -LiteralPath 'E:\太虚古蒂\taixuzhizun\剧本资产\第五章剧本.txt' -Encoding UTF8
-Get-Content -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep04-fatal-misunderstanding-20260622-0040\seedance-all-reference-feed.md' -Encoding UTF8 -TotalCount 220
+Get-Content -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep04-fatal-misunderstanding-20260622-0040\seedance-all-reference-feed.md' -Encoding UTF8 -TotalCount 220
 ```
 
 Expected: chapter 5 title is `第5章 假龙天子`; chapter 4 feed shows the approved structure and Xiaoyunque tag library.
@@ -57,7 +57,7 @@ Expected: chapter 5 title is `第5章 假龙天子`; chapter 4 feed shows the ap
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep05-fake-dragon-20260622-1100'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep05-fake-dragon-20260622-1100'
 ```
 
 Expected: directory exists and is empty before writing the two markdown files.
@@ -102,8 +102,8 @@ Create `README.md` with title, files list, original-fidelity notes for chapter 5
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep05-fake-dragon-20260622-1100' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep05-fake-dragon-20260622-1100\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '江凡？你不服？|陆争检测出九品灵根了。|安心修炼，静待未来。|不要字幕、不要配乐'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep05-fake-dragon-20260622-1100' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep05-fake-dragon-20260622-1100\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '江凡？你不服？|陆争检测出九品灵根了。|安心修炼，静待未来。|不要字幕、不要配乐'
 ```
 
 Expected: only `seedance-all-reference-feed.md` and `README.md`; all selected chapter 5 anchors appear.
@@ -113,7 +113,7 @@ Expected: only `seedance-all-reference-feed.md` and `README.md`; all selected ch
 Run:
 
 ```powershell
-git add runs/taixu-ep05-fake-dragon-20260622-1100
+git add ../taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100
 git commit -m "feat: add taixu chapter 5 feed package"
 ```
 
@@ -122,8 +122,8 @@ Expected: commit includes only the chapter 5 run directory.
 ### Task 2: Chapter 6 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep06-deadly-alignment-20260622-1110/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep06-deadly-alignment-20260622-1110/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第六章剧本.txt`
 
 - [ ] **Step 1: Read chapter 6**
@@ -141,7 +141,7 @@ Expected: chapter title is `第6章 致命的站队`.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep06-deadly-alignment-20260622-1110'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep06-deadly-alignment-20260622-1110'
 ```
 
 - [ ] **Step 3: Write chapter 6 feed**
@@ -157,8 +157,8 @@ Create README with chapter title, files, original-fidelity notes, and no-image/n
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep06-deadly-alignment-20260622-1110' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep06-deadly-alignment-20260622-1110\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '你配？|我愿与陆争比一场！|禁止对江凡售卖练气液|翻不起大浪'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep06-deadly-alignment-20260622-1110' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep06-deadly-alignment-20260622-1110\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '你配？|我愿与陆争比一场！|禁止对江凡售卖练气液|翻不起大浪'
 ```
 
 Expected: only two markdown files; all anchors appear.
@@ -168,15 +168,15 @@ Expected: only two markdown files; all anchors appear.
 Run:
 
 ```powershell
-git add runs/taixu-ep06-deadly-alignment-20260622-1110
+git add ../taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110
 git commit -m "feat: add taixu chapter 6 feed package"
 ```
 
 ### Task 3: Chapter 7 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep07-fathers-relic-20260622-1120/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep07-fathers-relic-20260622-1120/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第七章剧本.txt`
 
 - [ ] **Step 1: Read chapter 7**
@@ -194,7 +194,7 @@ Expected: chapter title is `第7章 父亲遗物`.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep07-fathers-relic-20260622-1120'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep07-fathers-relic-20260622-1120'
 ```
 
 - [ ] **Step 3: Write chapter 7 feed**
@@ -210,8 +210,8 @@ Create README with chapter title, files, original-fidelity notes, and no-image/n
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep07-fathers-relic-20260622-1120' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep07-fathers-relic-20260622-1120\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '练气二层|求你不要抢走|我自己会想办法|随着木匣被打开'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep07-fathers-relic-20260622-1120' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep07-fathers-relic-20260622-1120\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '练气二层|求你不要抢走|我自己会想办法|随着木匣被打开'
 ```
 
 Expected: only two markdown files; all anchors appear.
@@ -221,15 +221,15 @@ Expected: only two markdown files; all anchors appear.
 Run:
 
 ```powershell
-git add runs/taixu-ep07-fathers-relic-20260622-1120
+git add ../taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120
 git commit -m "feat: add taixu chapter 7 feed package"
 ```
 
 ### Task 4: Chapter 8 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep08-soul-master-20260622-1130/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep08-soul-master-20260622-1130/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第八章剧本.txt`
 
 - [ ] **Step 1: Read chapter 8**
@@ -247,7 +247,7 @@ Expected: chapter title is `第8章 魂师`.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep08-soul-master-20260622-1130'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep08-soul-master-20260622-1130'
 ```
 
 - [ ] **Step 3: Write chapter 8 feed**
@@ -263,8 +263,8 @@ Create README with chapter title, files, original-fidelity notes, and no-image/n
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep08-soul-master-20260622-1130' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep08-soul-master-20260622-1130\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '中品练气液|二星魂师|太乙魂术|阁下，难道是一位……魂师？'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep08-soul-master-20260622-1130' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep08-soul-master-20260622-1130\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '中品练气液|二星魂师|太乙魂术|阁下，难道是一位……魂师？'
 ```
 
 Expected: only two markdown files; all anchors appear.
@@ -274,15 +274,15 @@ Expected: only two markdown files; all anchors appear.
 Run:
 
 ```powershell
-git add runs/taixu-ep08-soul-master-20260622-1130
+git add ../taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130
 git commit -m "feat: add taixu chapter 8 feed package"
 ```
 
 ### Task 5: Chapter 9 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep09-nine-grade-fails-20260622-1140/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep09-nine-grade-fails-20260622-1140/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第九章剧本.txt`
 
 - [ ] **Step 1: Read chapter 9**
@@ -300,7 +300,7 @@ Expected: chapter title is `第9章 九品灵根不灵`.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep09-nine-grade-fails-20260622-1140'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep09-nine-grade-fails-20260622-1140'
 ```
 
 - [ ] **Step 3: Write chapter 9 feed**
@@ -316,8 +316,8 @@ Create README with chapter title, files, original-fidelity notes, and no-image/n
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep09-nine-grade-fails-20260622-1140' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep09-nine-grade-fails-20260622-1140\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '血蝠宫令牌|七瓶是上品练气液，一瓶是极品|练气四层|我都喝光了，怎幺还没突破？'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep09-nine-grade-fails-20260622-1140' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep09-nine-grade-fails-20260622-1140\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '血蝠宫令牌|七瓶是上品练气液，一瓶是极品|练气四层|我都喝光了，怎幺还没突破？'
 ```
 
 Expected: only two markdown files; all anchors appear.
@@ -327,15 +327,15 @@ Expected: only two markdown files; all anchors appear.
 Run:
 
 ```powershell
-git add runs/taixu-ep09-nine-grade-fails-20260622-1140
+git add ../taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140
 git commit -m "feat: add taixu chapter 9 feed package"
 ```
 
 ### Task 6: Chapter 10 Feed Package
 
 **Files:**
-- Create: `runs/taixu-ep10-true-dragon-20260622-1150/seedance-all-reference-feed.md`
-- Create: `runs/taixu-ep10-true-dragon-20260622-1150/README.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150/seedance-all-reference-feed.md`
+- Create: `E:/太虚古蒂/taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150/README.md`
 - Source: `E:/太虚古蒂/taixuzhizun/剧本资产/第十章剧本`
 
 - [ ] **Step 1: Read chapter 10**
@@ -353,7 +353,7 @@ Expected: chapter title is `第10章 谁才是真龙`.
 Run:
 
 ```powershell
-New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\cine-make\runs\taixu-ep10-true-dragon-20260622-1150'
+New-Item -ItemType Directory -Force -Path 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep10-true-dragon-20260622-1150'
 ```
 
 - [ ] **Step 3: Write chapter 10 feed**
@@ -369,8 +369,8 @@ Create README with chapter title, files, original-fidelity notes, and no-image/n
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep10-true-dragon-20260622-1150' -Force | Select-Object Name
-Select-String -LiteralPath 'E:\太虚古蒂\cine-make\runs\taixu-ep10-true-dragon-20260622-1150\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '现在，以后，皆如此！|还行。|就这？|一缕精纯的灵气，震动了空气'
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep10-true-dragon-20260622-1150' -Force | Select-Object Name
+Select-String -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs\taixu-ep10-true-dragon-20260622-1150\seedance-all-reference-feed.md' -Encoding UTF8 -Pattern '现在，以后，皆如此！|还行。|就这？|一缕精纯的灵气，震动了空气'
 ```
 
 Expected: only two markdown files; all anchors appear.
@@ -380,7 +380,7 @@ Expected: only two markdown files; all anchors appear.
 Run:
 
 ```powershell
-git add runs/taixu-ep10-true-dragon-20260622-1150
+git add ../taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150
 git commit -m "feat: add taixu chapter 10 feed package"
 ```
 
@@ -403,7 +403,7 @@ $dirs = @(
   'taixu-ep10-true-dragon-20260622-1150'
 )
 foreach ($dir in $dirs) {
-  $files = Get-ChildItem -LiteralPath "E:\太虚古蒂\cine-make\runs\$dir" -File
+  $files = Get-ChildItem -LiteralPath "E:\太虚古蒂\taixuzhizun\runs\$dir" -File
   "$dir => $($files.Count) files: $($files.Name -join ', ')"
 }
 ```
@@ -415,7 +415,7 @@ Expected: every directory reports exactly two files: `seedance-all-reference-fee
 Run:
 
 ```powershell
-Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs' -Recurse -Force |
+Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs' -Recurse -Force |
   Where-Object { $_.FullName -match 'taixu-ep0[5-9]|taixu-ep10' -and $_.Name -match 'canvas|manifest|projects|prompt-pack|storyboard|xlsx|deliverable|mp4|png|jpg' } |
   Select-Object FullName
 ```
@@ -427,7 +427,7 @@ Expected: no output.
 Run:
 
 ```powershell
-$feeds = Get-ChildItem -LiteralPath 'E:\太虚古蒂\cine-make\runs' -Recurse -Filter 'seedance-all-reference-feed.md' |
+$feeds = Get-ChildItem -LiteralPath 'E:\太虚古蒂\taixuzhizun\runs' -Recurse -Filter 'seedance-all-reference-feed.md' |
   Where-Object { $_.FullName -match 'taixu-ep0[5-9]|taixu-ep10' }
 foreach ($feed in $feeds) {
   $content = Get-Content -LiteralPath $feed.FullName -Encoding UTF8 -Raw
@@ -445,6 +445,6 @@ Expected: no `MISSING` lines.
 If no fixes were needed, do not create a commit. If a feed had to be corrected during audit, commit only the corrected feed files with:
 
 ```powershell
-git add runs/taixu-ep05-fake-dragon-20260622-1100 runs/taixu-ep06-deadly-alignment-20260622-1110 runs/taixu-ep07-fathers-relic-20260622-1120 runs/taixu-ep08-soul-master-20260622-1130 runs/taixu-ep09-nine-grade-fails-20260622-1140 runs/taixu-ep10-true-dragon-20260622-1150
+git add ../taixuzhizun/runs/taixu-ep05-fake-dragon-20260622-1100 ../taixuzhizun/runs/taixu-ep06-deadly-alignment-20260622-1110 ../taixuzhizun/runs/taixu-ep07-fathers-relic-20260622-1120 ../taixuzhizun/runs/taixu-ep08-soul-master-20260622-1130 ../taixuzhizun/runs/taixu-ep09-nine-grade-fails-20260622-1140 ../taixuzhizun/runs/taixu-ep10-true-dragon-20260622-1150
 git commit -m "fix: polish taixu chapter feed packages"
 ```

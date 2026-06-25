@@ -81,3 +81,27 @@ test('preserves original novel dialogue exactly and exposes fidelity rules', () 
   assert.match(markdown, /「当个凡人过一辈子，有什么不好呢？何必追求自己得不到的东西？」/u)
   assert.doesNotMatch(markdown, /旁白音色：“不管你是谁，不管你在哪，我们都会找到你！”/u)
 })
+
+test('keeps video dialogue breathable by excerpting overlong source quotes', () => {
+  const novel = [
+    '许府后院墙角，许悠然蹲在泥地里。',
+    '王映凤不以为然地拍了拍手掌，道：',
+    '「练气液是我们许家的，他有骨气就自己弄去，靠一个女人偷偷给他，别说我们许府的人看不起，就是路边的乞丐都吐口痰。」',
+    '「我们走！」'
+  ].join('\n')
+
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: novel,
+    style: '3D国漫，国风仙侠，偏水墨+古风写实结合',
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+  const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+  const longQuote = '「练气液是我们许家的，他有骨气就自己弄去，靠一个女人偷偷给他，别说我们许府的人看不起，就是路边的乞丐都吐口痰。」'
+
+  assert.doesNotMatch(pack.videoLines.join('\n'), new RegExp(longQuote, 'u'))
+  assert.match(pack.videoLines.join('\n'), /台词摘句：.*他有骨气就自己弄去/u)
+  assert.match(pack.videoLines.join('\n'), /靠一个女人偷偷给他/u)
+  assert.match(markdown, /视频呼吸/u)
+  assert.match(markdown, /长台词/u)
+})

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -36,6 +36,24 @@ test('cli writes the default ChatGPT-only Seedance package', async () => {
     assert.match(result.stdout, /ChatGPT-only Seedance feed ready/u)
   } finally {
     await rm(out, { recursive: true, force: true })
+  }
+})
+
+test('cli default output stays in the calling project runs directory', async () => {
+  const projectDir = await mkdtemp(join(tmpdir(), 'cine-make-project-'))
+  try {
+    const result = spawnSync(process.execPath, [join(root, 'src', 'cli.mjs'), '--aspect', '16:9', '--style', '3D国漫', '广告短片：少年在雨夜推门，看见桌上一封旧信。'], {
+      cwd: projectDir,
+      encoding: 'utf8'
+    })
+
+    assert.equal(result.status, 0, result.stderr)
+    const runDirs = await readdir(join(projectDir, 'runs'))
+    assert.equal(runDirs.length, 1)
+    assert.ok(existsSync(join(projectDir, 'runs', runDirs[0], 'seedance-all-reference-feed.md')))
+    assert.match(result.stdout, new RegExp(projectDir.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')))
+  } finally {
+    await rm(projectDir, { recursive: true, force: true })
   }
 })
 

@@ -20,15 +20,11 @@
   },
   "files": [
     "bin/",
-    "examples/",
-    "product/",
-    "prompts/",
     "scripts/",
     "skills/",
     "src/",
     "README.md",
-    "README.zh-CN.md",
-    "docs/"
+    "README.zh-CN.md"
   ],
   "scripts": {
     "test": "node --test test/*.test.mjs",

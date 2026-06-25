@@ -1,4 +1,4 @@
-# Cine Make
+﻿# Cine Make
 
 **中文优先**: Simplified Chinese documentation is the primary entrypoint: [`README.zh-CN.md`](./README.zh-CN.md)
 
@@ -21,11 +21,12 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-The default CLI and `seedance-pack` produce the same package:
+Run Cine Make from the story project directory. When `--out` is omitted, the package is written to that project's `runs/<timestamp>/`; the tool repository should not own project outputs. The default CLI and `seedance-pack` produce the same package:
 
 ```bash
-node src/cli.mjs --out .cine-make-runs/demo --aspect 16:9 --style "3D guoman xianxia, ink-wash + ancient realistic" "story material..."
-node src/cli.mjs seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D guoman"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D guoman xianxia, ink-wash + ancient realistic" "story material..."
+cine-make seedance-pack --input script.txt --style "3D guoman"
 ```
 
 Removed user entries: `--mode draft`, `--mode visual`, `--draft`, and `--visual`. Normal runs must not create `deliverable.md` or `storyboard-images/`.
@@ -52,9 +53,11 @@ Every 5 video text lines equals 15 seconds unless the user explicitly overrides.
 
 ## Original-fidelity and shot-language rules
 
-- Directly quoted source dialogue must be copied exactly: no rewritten words, no compression, no changed forms of address, no punctuation changes.
+- The highest-fidelity items are character motivation, event order, cause-effect logic, key reveals, ending hooks, and decisive conflict lines.
+- Directly quoted source dialogue should be copied exactly when it is short and load-bearing. Long dialogue may use light adaptation: excerpt the strongest original clause or slightly smooth wording so each 15-second group remains breathable.
 - Names, factions, skills, cultivation realms, locations, props, and cause-effect logic come from the source text; do not invent missing lore.
 - Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
+- Each 5-line / 15-second group usually keeps only 2-3 short dialogue lines; the rest should be carried by action, reaction, pause, expression, and sound.
 - Each video-text line has one main action. Subject, shot size, camera position, composition, lighting, and camera movement must serve the current story information.
 - Threat voices, divine transmission, and narration must name their source and vocal texture; do not turn character dialogue into generic voiceover.
 - Movement uses Xiaoyunque-supported tags exactly, for example `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, `拉开离场`.
@@ -66,7 +69,7 @@ Prop references are value-gated before prompting. Only story-critical props that
 If the user wants only the feed file:
 
 ```bash
-node src/cli.mjs reference-feed --out .cine-make-runs/feed --aspect 16:9 --style "3D guoman" "story material..."
+cine-make reference-feed --aspect 16:9 --style "3D guoman" "story material..."
 ```
 
 ## Canvas output disabled
@@ -137,9 +140,10 @@ $cine-make ...
 ## CLI usage
 
 ```bash
-cine-make --out .cine-make-runs/demo --aspect 16:9 --style "3D guoman" "Story material here..."
-cine-make seedance-pack --out .cine-make-runs/demo --input script.txt --style "3D guoman"
-cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "3D guoman"
+cd path/to/story-project
+cine-make --aspect 16:9 --style "3D guoman" "Story material here..."
+cine-make seedance-pack --input script.txt --style "3D guoman"
+cine-make reference-feed --input script.txt --style "3D guoman"
 ```
 
 ### Whole-novel project mode
@@ -147,13 +151,13 @@ cine-make reference-feed --out .cine-make-runs/feed --input script.txt --style "
 Use project mode for a whole novel or a large `.txt` file. It keeps the source out of one prompt, summarizes bounded chapter tasks, builds a series bible, plans visual references, and exports one episode at a time.
 
 ```bash
-cine-make novel ingest --input ./novel.txt --out .cine-make-runs/my-novel
-cine-make novel task --run .cine-make-runs/my-novel --id summarize-chapter-0001
-cine-make novel accept-summary --run .cine-make-runs/my-novel --file ./chapter-0001.summary.json
-cine-make novel build-bible --run .cine-make-runs/my-novel
-cine-make novel visual-bible --run .cine-make-runs/my-novel
-cine-make novel plan-episodes --run .cine-make-runs/my-novel
-cine-make novel episode --run .cine-make-runs/my-novel --episode 1
+cine-make novel ingest --input ./novel.txt --out runs/my-novel
+cine-make novel task --run runs/my-novel --id summarize-chapter-0001
+cine-make novel accept-summary --run runs/my-novel --file ./chapter-0001.summary.json
+cine-make novel build-bible --run runs/my-novel
+cine-make novel visual-bible --run runs/my-novel
+cine-make novel plan-episodes --run runs/my-novel
+cine-make novel episode --run runs/my-novel --episode 1
 ```
 
 Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
@@ -174,7 +178,7 @@ For normal runs, use `seedance-all-reference-feed.md` directly:
 
 ```bash
 npm test
-node src/cli.mjs validate --run .cine-make-runs/demo --stage production
+node src/cli.mjs validate --run ../some-story-project/runs/demo --stage production
 npm pack --dry-run
 node scripts/install-codex-skill.mjs
 ```
