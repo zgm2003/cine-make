@@ -779,7 +779,7 @@ function composeArtDirection({ contract }) {
   return [
     `- 色彩：${contract.target.style}；优先低饱和蓝灰、真实肤色、少量高亮信号色。`,
     '- 光线：practical lighting / motivated lighting；每个高光必须有场内来源。',
-    '- 构图：负空间、前景遮挡、分层景深、环境压迫；不做海报式摆拍。',
+    '- 构图：负空间、遮挡物、远处环境层次、环境压迫；不做海报式摆拍。',
     '- 镜头：广角建立空间，标准镜头做关系，85mm/macro 做线索和心理压缩。',
     '- Keyframe 提示词是静态画面提示；Motion Prompt 才描述视频运动。'
   ]

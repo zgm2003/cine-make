@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
 
 import { buildSeedanceReferenceFeedPackage } from '../src/seedance-reference-feed-extractor.mjs'
 import { composeSeedanceAllReferenceFeedMarkdown } from '../src/seedance-reference-feed-writer.mjs'
@@ -7,6 +8,7 @@ import { composeSeedanceAllReferenceFeedMarkdown } from '../src/seedance-referen
 const source = '画面:雪山之巅，风雪之中。头发花白且凌乱的老道人身穿蓑衣，头戴斗笠，艰难的迎着风雪行走，双手放在胸前，怀里紧紧抱着一只虚弱的麒麟幼兽。身后的雪地上滴下长长的一道血痕，没走几步老道终于支撑不住倒在雪地里。怀里的麒麟幼兽摔在雪地上，看着倒在雪地的老道，坚强的起身用舌头舔舐老道的面颊，老道奄奄一息的伸出手触摸麒麟。'
 
 const forbiddenMeta = /续接|承接|下一段|下一场|后续|首帧|尾帧|首尾|segment|storyboard-images|S\d{2}|keyframe|控制帧|分镜图/u
+const riskySpatialStaging = /前景|后景|前后景关系|受声者反应|双主体|双人构图|同框反应/u
 
 test('builds Seedance reference-feed package with 16:9 and GPT-image-2 tri-view prompts', () => {
   const pack = buildSeedanceReferenceFeedPackage({
@@ -141,6 +143,45 @@ test('dialogue video lines use speaker-only shots instead of foreground/backgrou
   assert.ok(dialogueLines.length > 0)
   for (const line of dialogueLines) {
     assert.match(line, /说话者单人主镜头/u)
-    assert.doesNotMatch(line, /前景|后景|受声者反应|双主体|同框反应/u)
+    assert.doesNotMatch(line, riskySpatialStaging)
+  }
+})
+
+test('generated video delivery lines avoid spatial staging phrases that video tools misread', () => {
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: source,
+    style: '3D国漫，国风仙侠，轻喜剧反差',
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+
+  for (const line of pack.videoLines) {
+    assert.doesNotMatch(line, riskySpatialStaging)
+  }
+})
+
+test('legacy generator templates avoid foreground/background staging wording', () => {
+  const files = [
+    'src/seedance-reference-feed-extractor.mjs',
+    'src/draft-writer.mjs',
+    'src/deliverable-writer.mjs'
+  ]
+  const legacySpatialTemplatePhrases = [
+    '前景遮挡',
+    '背景纵深',
+    '占前景三分之一',
+    '团队轮廓在后景',
+    '沙发前景',
+    '安娜的手在前景',
+    '警惕眼神在后景',
+    '手机屏幕和血手占前景',
+    '客厅人物保持背景方位'
+  ]
+
+  for (const file of files) {
+    const text = readFileSync(file, 'utf8')
+    for (const phrase of legacySpatialTemplatePhrases) {
+      assert.equal(text.includes(phrase), false, `${file} still contains ${phrase}`)
+    }
   }
 })

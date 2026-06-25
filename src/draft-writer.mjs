@@ -118,7 +118,7 @@ const SHOT_BLUEPRINTS = [
     shotSize: 'insert-medium hybrid',
     lens: '60mm object-memory lens',
     camera: 'slow push toward the object',
-    composition: '物件占前景三分之一，主体脸部只在背景保留压低的轮廓',
+    composition: '物件占画面下方三分之一，主体脸部压在画面上方阴影里',
     blocking: '主体手停在物件上方，直到下一镜头才做选择'
   },
   {
@@ -250,7 +250,7 @@ const ENTERPRISE_DOCUMENTARY_BLUEPRINTS = [
     shotSize: 'insert-medium hybrid',
     lens: '60mm object-process lens',
     camera: 'slow push toward warped steel and measuring tool',
-    composition: '变形工件占前景三分之一，图纸和团队轮廓在后景',
+    composition: '变形工件占画面下方三分之一，图纸和团队轮廓压在画面上方',
     blocking: '主角蹲下测量，手指沿变形边缘停住'
   },
   {
@@ -961,7 +961,7 @@ function scriptBlocking({ action, characters = [], blueprint, anchors }) {
     return '阿杰仍在背光角落低位，冷笑先从嘴角出现，林默、安娜、雷队的视线从三个方向压向他'
   }
   if (/另外三个人|三个人|众人|所有人/u.test(action)) {
-    return '林默从沙发前景抬头，安娜靠茶几倒水，雷队堵在门口持枪，阿杰缩在背光角落，四个位置形成客厅四角压力'
+    return '林默从沙发位置抬头，安娜靠茶几倒水，雷队堵在门口持枪，阿杰缩在背光角落，四个位置形成客厅四角压力'
   }
   if (/雷队.*(终于醒了|死无对证|咬牙切齿)/u.test(action)) {
     return '雷队从门口向林默压近半步，出口仍被他身体挡住，林默被困在沙发和茶几之间不能后退'
@@ -1024,11 +1024,11 @@ function scriptPerformance({ action, characters = [], blueprint }) {
 }
 
 function scriptComposition({ action, characters = [], blueprint }) {
-  if (/另外三个人|三个人|众人|所有人/u.test(action)) return '客厅被分成四个清楚方位：沙发前景的林默、茶几旁的安娜、门口的雷队、角落的阿杰，观众一眼能读懂谁堵住出口、谁靠近、谁躲藏'
+  if (/另外三个人|三个人|众人|所有人/u.test(action)) return '客厅被分成四个清楚方位：沙发位置的林默、茶几旁的安娜、门口的雷队、角落的阿杰，观众一眼能读懂谁堵住出口、谁靠近、谁躲藏'
   if (/雷队.*(枪|门口)|拿着枪|守在门口/u.test(action)) return '门框竖线压住雷队身体，枪和出口在同一条视线上，林默只留成侧后方受压剪影'
-  if (/安娜.*倒.*水|热水/u.test(action)) return '热水杯位于两人中线，安娜的手在前景，林默的警惕眼神在后景，水汽切开安全和控制的边界'
+  if (/安娜.*倒.*水|热水/u.test(action)) return '热水杯位于两人中线，安娜的手占画面下方，林默警惕眼神压在画面上方，水汽切开安全和控制的边界'
   if (/阿杰.*冷笑|阿杰|瘸子|蜷缩/u.test(action)) return '地面线条把视线推到角落低位，拐杖和腿部支架先出现，脸最后进入焦点'
-  if (/手机|闹钟|倒计时/u.test(action)) return '手机屏幕和血手占前景，客厅人物保持背景方位，倒计时成为全场视线中心'
+  if (/手机|闹钟|倒计时/u.test(action)) return '手机屏幕和血手占画面下方中心，客厅人物保持远处方位，倒计时成为全场视线中心'
   if (/暴雨|闪电|客厅/u.test(action)) return '闪电短暂勾出沙发、茶几、门口、角落的空间地图，雨水反光形成冷色纵深'
   return blueprint.composition
 }
@@ -1762,7 +1762,7 @@ function composeAssetPlan(contract, { shotlist, characters }) {
       name: scene,
       type: index === 0 ? '核心母场景' : '转场/局部空间',
       era: /古|仙|宗门|祠堂/u.test(scene) ? '架空/古风' : '现代或按源剧本时代',
-      structure: '锁定入口、主体站位、前景遮挡、背景纵深和关键道具位置',
+      structure: '锁定入口、主体站位、遮挡物、远处环境层次和关键道具位置',
       keyElements: inferSceneElements(scene, contract.sourceText),
       lighting: composeGlobalVisualStyle(contract, { shotlist }).lighting,
       color: composeGlobalVisualStyle(contract, { shotlist }).color,
@@ -1781,7 +1781,7 @@ function inferSceneElements(scene, sourceText = '') {
   if (/海洋馆|水箱/u.test(text)) return '废弃水箱、玻璃、检修门、潮湿地面、深海光'
   if (/工厂|车间/u.test(text)) return '厂房门、焊光、钢材、图纸、工位灯'
   if (/祠堂|神龛/u.test(text)) return '神龛、烛火、供桌、香炉、木梁阴影'
-  return '入口、主体活动区、前景遮挡、背景纵深、关键道具落点'
+  return '入口、主体活动区、遮挡物、远处环境层次、关键道具落点'
 }
 
 function inferCameraPosition(shot) {
@@ -1889,7 +1889,7 @@ function composeConsistencyChecklist(contract, { shotlist, characters, props, ef
   return [
     `人物外观统一：${characterNames}保持同一张脸、发型、体型和服装材质；已有角色图优先于文字。`,
     '服装统一：同一场戏内服装颜色、破损、湿度、血迹或配饰状态不得漂移。',
-    `场景结构统一：${scenes}的入口、门窗、家具/建筑元素、前景遮挡和光线方向保持一致。`,
+    `场景结构统一：${scenes}的入口、门窗、家具/建筑元素、遮挡物和光线方向保持一致。`,
     `核心道具统一：${props.map((prop) => prop.name).slice(0, 6).join('、') || '关键道具'}只在服务镜头功能时出现，外观和位置连续。`,
     `画风统一：${contract.target?.style ?? '电影感短剧'}贯穿角色、场景、分镜和即梦提示词。`,
     '光线逻辑统一：每个高光来自场内明确光源，切镜后方向不反跳。',
