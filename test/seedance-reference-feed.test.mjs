@@ -55,8 +55,20 @@ test('renders clean Seedance all-reference feed without continuation or storyboa
   assert.match(markdown, /雪山之巅=图片1/u)
   assert.match(markdown, /老年道清=图片2/u)
   assert.match(markdown, /麒麟幼兽=图片3/u)
-  assert.match(markdown, /^1 雪山之巅.*镜头前推/mu)
+  assert.match(markdown, /^1 日 外 雪山之巅 老年道清 .*镜头前推/mu)
   assert.doesNotMatch(markdown, forbiddenMeta)
+})
+
+test('default story templates use time and interior-exterior fields, not legacy location-parentheses format', () => {
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: source,
+    style: '3D古风写实，超写实真人电影质感，冷蓝灰雪山',
+    aspectRatio: '16:9',
+    expandScript: false
+  })
+
+  assert.match(pack.videoLines[0], /^日 外 雪山之巅 老年道清 /u)
+  assert.doesNotMatch(pack.videoLines.join('\n'), /雪山之巅（日外）/u)
 })
 
 test('preserves original novel dialogue exactly and exposes fidelity rules', () => {
@@ -119,7 +131,8 @@ test('renders five-line copy blocks with references, voice, and unified requirem
 
   assert.match(markdown, /## 每5条复制制作块/u)
   assert.match(markdown, /### 第1组｜第1-5条/u)
-  assert.match(markdown, /上传参考图：雪山之巅=图片1；老年道清=图片2；麒麟幼兽=图片3/u)
+  assert.match(markdown, /上传参考图：图片1｜雪山之巅；图片2｜老年道清三视图；图片3｜麒麟幼兽三视图/u)
+  assert.doesNotMatch(markdown, /上传参考图：雪山之巅=图片1/u)
   assert.match(markdown, /音色：按本组必要对白匹配角色年龄、身份和情绪；没有对白的组不要新增旁白。必要对白只保留本组逐条文本里的短句。/u)
   assert.match(markdown, /统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】3D国漫，国风仙侠，轻喜剧反差，16:9。/u)
 })

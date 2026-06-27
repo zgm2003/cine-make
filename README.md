@@ -46,10 +46,10 @@ Removed user entries: `--mode draft`, `--mode visual`, `--draft`, and `--visual`
 The mandatory video-text shape is:
 
 ```text
-序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效
+序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效
 ```
 
-Every 5 video text lines equals 15 seconds unless the user explicitly overrides. The feed must not mention start frames, end frames, S01, segment continuation, or storyboard image folders.
+Every 5 video text lines equals 15 seconds unless the user explicitly overrides. If the requested runtime cannot naturally contain the source beats and exact OS/dialogue, flag the capacity problem before generating and either split the material or preserve the exact dialogue with tighter visual compression. The feed must not mention start frames, end frames, S01, segment continuation, or storyboard image folders.
 
 ## Original-fidelity and shot-language rules
 

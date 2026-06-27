@@ -45,7 +45,7 @@ test('cine-make docs describe novel project mode and ChatGPT-only Seedance hando
   const shareDoc = await readFile(join(root, 'docs', 'share-cine-make.zh-CN.md'), 'utf8')
   const combinedDocs = [readme, readmeZh, shareDoc].join('\n')
 
-  assert.match(skill, /project mode/i)
+  assert.match(skill, /novel-project-mode\.md/i)
   assert.match(skill, /whole novel|large `?\.txt`?/i)
   assert.match(skill, /references\/novel-project-mode\.md/)
   assert.doesNotMatch(skill, /(?:read|paste) (?:a )?10MB novel in one prompt/i)

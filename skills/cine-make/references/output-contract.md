@@ -33,16 +33,18 @@ Original-fidelity contract:
 
 - preserve character motivation, event order, cause-effect logic, key reveals, ending hooks, and decisive conflict lines;
 - directly quoted source dialogue should be copied exactly when it is short and load-bearing;
-- long dialogue may use light adaptation: excerpt the strongest original clause or slightly smooth wording for 视频呼吸 / breathable 15-second generation;
+- long dialogue / 长台词 may use light adaptation / 轻微改造: excerpt the strongest original clause or slightly smooth wording for 视频呼吸 / breathable 15-second generation;
 - source names, factions, skills, cultivation realms, locations, props, and cause-effect logic must not be invented or renamed;
 - narrative prose may become visible action, but event order, motivation, reveal order, and ending hooks must stay intact.
 
 Seedance feed:
 
-- use single-line video text: `序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`;
+- use single-line video text: `序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`;
 - every 5 video text lines equals 15 seconds unless the user explicitly overrides;
+- if a 15-second request cannot naturally contain the source beats and exact OS/dialogue, flag the capacity issue before generating and offer split, dialogue compression, or exact-dialogue-with-merged-visuals tradeoffs;
 - each 15-second group should usually keep only 2-3 short dialogue lines and use action, reaction, pause, expression, and sound for the rest;
 - do not force a whole long quote into one video line when it would break pacing or generation reliability;
+- copy-ready blocks use `上传参考图：图片1｜资产名；图片2｜资产名`, not `资产名=图片1`;
 - split longer videos into multiple 15-second groups for later external editing/stitching;
 - include the Xiaoyunque camera tag library before video text, and use exact supported tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field;
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;

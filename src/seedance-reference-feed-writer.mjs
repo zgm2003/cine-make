@@ -11,14 +11,13 @@ function assetBindingLine(asset) {
 function copyBlockAssetName(asset) {
   return String(asset.title ?? '')
     .replace(/\s*\/.*$/u, '')
-    .replace(/三视图$/u, '')
     .trim()
 }
 
 function copyBlockReferenceLine(pack) {
   const imageAssets = pack.assets.filter((asset) => asset.kind === 'image')
   if (!imageAssets.length) return '上传参考图：无'
-  return `上传参考图：${imageAssets.map((asset) => `${copyBlockAssetName(asset)}=${asset.bindingLabel}`).join('；')}`
+  return `上传参考图：${imageAssets.map((asset) => `${asset.bindingLabel}｜${copyBlockAssetName(asset)}`).join('；')}`
 }
 
 function composeFiveLineCopyBlocks(pack) {
@@ -66,7 +65,8 @@ const ORIGINAL_FIDELITY_RULES = [
 ]
 
 const SHOT_LANGUAGE_RULES = [
-  '- 单行格式固定：`序号 地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`。',
+  '- 单行格式固定：`序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`。',
+  '- 每条开头必须先给时间、内外、具体地点，例如：`日 内 鬼王宗宗门大殿`、`日 外 院子地窖口`。',
   '- 一条只做一个主要动作；动作必须可见，不能写抽象情绪替代画面。',
   '- 每 5 条约 15 秒要有呼吸感：起、压、爆、冷、落；不要把整段长台词硬塞进一条。',
   '- 每个 15 秒段落核心对白通常只保留 2-3 句短句；其余信息用动作、停顿、表情和声音补回。',
@@ -93,7 +93,7 @@ function composeTijiaFeedMarkdown(pack) {
   return [
     `# Seedance 全能参考投喂包｜${pack.title}`,
     '',
-    '说明：本组 1-5 条为一个完整 15 秒视频段。单行格式：序号 + 地点 + 角色 + 动作画面 + 镜头/构图/光影 + 运镜 + 台词/音效。',
+    '说明：本组 1-5 条为一个完整 15 秒视频段。单行格式：序号 + 时间 + 内/外 + 具体地点 + 角色 + 动作画面 + 主体/景别/机位/构图/光影 + 运镜 + 台词/音效。',
     '',
     '## GPT-image-2 参考图生成提示词',
     '',
@@ -116,6 +116,17 @@ function composeTijiaFeedMarkdown(pack) {
   ].join('\n')
 }
 
+function warningSection(pack) {
+  const warnings = pack.warnings ?? []
+  if (!warnings.length) return []
+  return [
+    '## 容量与节奏提醒',
+    '',
+    ...warnings.map((warning) => `- ${warning}`),
+    ''
+  ]
+}
+
 export function composeSeedanceAllReferenceFeedMarkdown(pack) {
   if (isTijiaPack(pack)) return composeTijiaFeedMarkdown(pack)
 
@@ -127,6 +138,7 @@ export function composeSeedanceAllReferenceFeedMarkdown(pack) {
     '',
     '---',
     '',
+    ...warningSection(pack),
     '## 原著守则',
     '',
     ...ORIGINAL_FIDELITY_RULES,

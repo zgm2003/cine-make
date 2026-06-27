@@ -354,7 +354,9 @@ async function exportSeedanceReferenceFeed(argv) {
     sourceText: contract.sourceText,
     style: contract.target.style,
     aspectRatio: contract.target.aspectRatio,
-    expandScript: false
+    expandScript: false,
+    targetSeconds: contract.target.requestedDurationSeconds ?? contract.target.durationSeconds,
+    preserveDialogueExact: /一字不改|不要改|原文|OS|os|（os）/u.test(contract.sourceText)
   })
 
   await mkdir(outDir, { recursive: true })
@@ -381,7 +383,9 @@ async function exportChatGptSeedancePack(argv) {
     sourceText: contract.sourceText,
     style: contract.target.style,
     aspectRatio: contract.target.aspectRatio,
-    expandScript: false
+    expandScript: false,
+    targetSeconds: contract.target.requestedDurationSeconds ?? contract.target.durationSeconds,
+    preserveDialogueExact: /一字不改|不要改|原文|OS|os|（os）/u.test(contract.sourceText)
   })
 
   await mkdir(outDir, { recursive: true })
