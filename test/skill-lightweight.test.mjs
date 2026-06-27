@@ -22,6 +22,6 @@ test('cine-make skill names the hard gates that caused the 15-second failure', a
   assert.match(skill, /先提醒/u)
   assert.match(skill, /OS\/对白.*一字不改/u)
   assert.match(skill, /序号 时间 内\/外 具体地点 角色 动作画面 主体\/景别\/机位\/构图\/光影 运镜 台词\/音效/u)
-  assert.match(skill, /上传参考图：图片1｜/u)
+  assert.match(skill, /上传参考图：.+ = 图片1/u)
   assert.match(skill, /GPT-image-2，<比例>，.*4K画质！/u)
 })

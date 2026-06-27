@@ -59,7 +59,7 @@ test('copy-ready Seedance lines use the reference single-line format with day in
   assert.doesNotMatch(markdown, /^1 院子地窖口/mu)
 })
 
-test('copy block reference line follows uploaded-reference style instead of asset equals image style', () => {
+test('copy block reference line follows asset-first uploaded-reference style', () => {
   const pack = buildSeedanceReferenceFeedPackage({
     sourceText: liuFeiSource,
     style: '仿真人，UE5超写实真人电影质感，Unreal Engine 5，Lumen电影级光照',
@@ -69,8 +69,8 @@ test('copy block reference line follows uploaded-reference style instead of asse
   })
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
-  assert.match(markdown, /上传参考图：图片1｜院子地窖口场景；图片2｜刘飞三视图/)
-  assert.doesNotMatch(markdown, /上传参考图：院子地窖口场景=图片1/)
+  assert.match(markdown, /上传参考图：院子地窖口场景 = 图片1；刘飞三视图 = 图片2/)
+  assert.doesNotMatch(markdown, /上传参考图：图片1｜院子地窖口场景/)
 })
 
 test('GPT-image-2 prompts start with model and ratio, keep UE5 face light constraints, and end with 4K quality', () => {

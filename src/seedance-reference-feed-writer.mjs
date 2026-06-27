@@ -17,7 +17,7 @@ function copyBlockAssetName(asset) {
 function copyBlockReferenceLine(pack) {
   const imageAssets = pack.assets.filter((asset) => asset.kind === 'image')
   if (!imageAssets.length) return '上传参考图：无'
-  return `上传参考图：${imageAssets.map((asset) => `${asset.bindingLabel}｜${copyBlockAssetName(asset)}`).join('；')}`
+  return `上传参考图：${imageAssets.map((asset) => `${copyBlockAssetName(asset)} = ${asset.bindingLabel}`).join('；')}`
 }
 
 function composeFiveLineCopyBlocks(pack) {

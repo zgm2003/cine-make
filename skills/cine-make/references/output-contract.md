@@ -44,7 +44,7 @@ Seedance feed:
 - if a 15-second request cannot naturally contain the source beats and exact OS/dialogue, flag the capacity issue before generating and offer split, dialogue compression, or exact-dialogue-with-merged-visuals tradeoffs;
 - each 15-second group should usually keep only 2-3 short dialogue lines and use action, reaction, pause, expression, and sound for the rest;
 - do not force a whole long quote into one video line when it would break pacing or generation reliability;
-- copy-ready blocks use `上传参考图：图片1｜资产名；图片2｜资产名`, not `资产名=图片1`;
+- copy-ready blocks use `上传参考图：资产名 = 图片1；资产名 = 图片2`, not `图片1｜资产名`;
 - split longer videos into multiple 15-second groups for later external editing/stitching;
 - include the Xiaoyunque camera tag library before video text, and use exact supported tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field;
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;
