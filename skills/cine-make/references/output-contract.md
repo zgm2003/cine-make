@@ -6,7 +6,7 @@ Normal short-script / excerpt user-facing output:
 
 When `--out` is omitted, default short-script and excerpt packages must be written under the calling story project's `生产资产/<timestamp>/` directory. Keep the tool repository free of project delivery outputs unless the user explicitly passes an output path there.
 
-The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint and should expose only the two sections users operate: GPT-image-2 reference prompts and `每5条复制制作块`. Reference binding belongs inside the GPT-image headings (`图片N = 资产名`) and each 5-line block's `上传参考图：资产名 = 图片N` line. Global negative constraints, original-fidelity rules, shot-language rules, and camera tag libraries are internal generation constraints or documentation, not front-loaded user-facing feed sections.
+The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint and should expose only the two sections users operate: GPT-image-2 reference prompts and `每5条复制制作块`. Reference binding belongs inside the GPT-image headings (`图片N = 资产名`) and each 5-line block's `上传参考图：资产名 = 图片N（用途参考）` line. Global negative constraints, original-fidelity rules, shot-language rules, and camera tag libraries are internal generation constraints or documentation, not front-loaded user-facing feed sections.
 
 Normal runs must not expose `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.
 
@@ -51,7 +51,8 @@ Seedance feed:
 - dialogue shots should be speaker-only: 谁说话就以谁为单人主镜头, with mouth shape, eyes, hands, pause, status pressure, and current environment light; listener reactions belong in a separate next line;
 - avoid video-model-confusing dialogue staging such as `A 前景 B 后景`, `说话者和受声者反应清楚`, `双主体同框反应`, and `前后景关系`;
 - copy-ready blocks must use this exact order: `5 条逐条视频文本 -> 上传参考图 -> 音色 -> 统一要求`;
-- copy-ready blocks use `上传参考图：资产名 = 图片1；资产名 = 图片2`, not `图片1｜资产名`;
+- copy-ready blocks use `上传参考图：资产名 = 图片1（用途参考）；资产名 = 图片2（用途参考）`, not `图片1｜资产名`;
+- the usage suffix must state what the uploaded image is borrowed for: `资产名 = 图片N（人物参考/场景参考/道具参考/界面参考/群像参考）`; use more specific labels such as `异兽参考` or `坐骑妖兽参考` when needed;
 - split longer videos into multiple 15-second groups for later external editing/stitching;
 - use exact supported camera tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field; keep the tag library in docs/internal guidance rather than the main user feed;
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;

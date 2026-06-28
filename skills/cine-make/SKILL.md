@@ -34,12 +34,12 @@ The copy-ready Seedance block must use this order:
 
 ```text
 序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效
-上传参考图：角色或场景名 = 图片1；角色或场景名 = 图片2
+上传参考图：角色或场景名 = 图片1（人物参考）；场景名 = 图片2（场景参考）
 音色：角色=声音说明。必要对白只保留本组逐条文本里的短句。
 统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】风格，比例。
 ```
 
-Use `上传参考图：资产名 = 图片1`, not `上传参考图：图片1｜资产名`, in copy blocks.
+Use `上传参考图：资产名 = 图片1（用途参考）`, not `上传参考图：图片1｜资产名`, in copy blocks. The usage suffix must say what the asset is borrowed for, such as 人物参考, 场景参考, 道具参考, 界面参考, 群像参考, 异兽参考, or 坐骑妖兽参考.
 
 ## Image Prompt Contract
 

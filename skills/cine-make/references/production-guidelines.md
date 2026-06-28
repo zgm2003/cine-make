@@ -13,6 +13,7 @@ These rules are reusable Seedance production constraints. They are not tied to o
 - Reuse locked character, core prop, and recurring location references across later episodes. Do not regenerate confirmed assets just because a new episode starts.
 - When a later episode needs a costume, state, or scene variant, tell the user to upload and reference the previous episode / episode 1 generated image. Preserve the same face, hairstyle, identity marks, body type, and core temperament; change only the needed costume, action, or scene state.
 - Keep feed reference slots bound as `图片1`, `图片2`, `图片3`, etc. Assets marked as reuse should upload the old image; only assets marked for GPT-image-2 should be newly generated.
+- In every copy block, upload bindings must explain what the asset is borrowed for: `资产名 = 图片N（人物参考/场景参考/道具参考/界面参考/群像参考）`. Use specific labels such as `异兽参考` or `坐骑妖兽参考` for creature mounts.
 
 ## Image prompt rules
 
@@ -33,6 +34,7 @@ These rules are reusable Seedance production constraints. They are not tied to o
 
 - Deliver copy-ready groups in this order: 5 条逐条视频文本 -> 上传参考图 -> 音色 -> 统一要求.
 - Each group should be copyable into the external video tool without requiring the user to reassemble lines from the full feed.
+- The `上传参考图` line must be self-contained: list only assets relevant to this group and include their usage suffix, for example `资产名 = 图片N（人物参考/场景参考/道具参考/界面参考/群像参考）`.
 - The voice line should preserve only short necessary dialogue already present in the group's video lines. If a group has no dialogue, do not add narration.
 - The unified requirement line should keep the no-subtitles/no-music constraint and only allow environment sound, system prompts, action sound effects, and necessary dialogue.
 

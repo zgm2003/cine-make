@@ -118,7 +118,7 @@ test('cli writes a Seedance all-reference feed without storyboard artifacts', as
     assert.match(feed, /### 图片1 = 雪山之巅/u)
     assert.match(feed, /### 图片2 = 老年道清三视图/u)
     assert.match(feed, /### 图片3 = 麒麟幼兽三视图/u)
-    assert.match(feed, /上传参考图：雪山之巅 = 图片1；老年道清三视图 = 图片2；麒麟幼兽三视图 = 图片3/u)
+    assert.match(feed, /上传参考图：雪山之巅 = 图片1（场景参考）；老年道清三视图 = 图片2（人物参考）；麒麟幼兽三视图 = 图片3（异兽参考）/u)
     assert.doesNotMatch(feed, /上传参考图：图片1｜雪山之巅/u)
     assert.doesNotMatch(feed, /续接|承接|下一段|首帧|尾帧|segment|storyboard-images|S01/u)
     assert.match(result.stdout, /Seedance all-reference feed ready/u)

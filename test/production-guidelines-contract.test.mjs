@@ -25,6 +25,7 @@ test('cine-make skill ships reusable Seedance production guidelines', async () =
   assert.match(combined, /内衬、里裙、安全短裤或不透明下摆/u)
   assert.match(combined, /禁止高开衩、整条腿暴露、同时露出双腿、低机位扫腿、腿部特写、胸臀腿特写、透明无遮挡/u)
   assert.match(combined, /5 条逐条视频文本 -> 上传参考图 -> 音色 -> 统一要求/u)
+  assert.match(combined, /资产名 = 图片N（人物参考\/场景参考\/道具参考\/界面参考\/群像参考）/u)
   assert.match(combined, /谁说话就以谁为单人主镜头/u)
   assert.match(combined, /场景资产必须贴合逐条视频文本的真实空间/u)
   assert.match(combined, /上传并参考上一集\/第 1 集生成图/u)

@@ -71,7 +71,7 @@ test('copy block reference line follows asset-first uploaded-reference style', (
   })
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
-  assert.match(markdown, /上传参考图：院子地窖口场景 = 图片1；刘飞三视图 = 图片2/)
+  assert.match(markdown, /上传参考图：院子地窖口场景 = 图片1（场景参考）；刘飞三视图 = 图片2（人物参考）/)
   assert.doesNotMatch(markdown, /上传参考图：图片1｜院子地窖口场景/)
 })
 

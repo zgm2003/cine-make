@@ -50,7 +50,7 @@ test('替嫁国漫 Seedance feed uses the proven single-line shot-text format', 
   assert.match(markdown, /3D国漫/u)
   assert.doesNotMatch(markdown, /青云宗玉牌|白瓷茶杯|茶杯|玉佩|茶案/u)
   assert.doesNotMatch(markdown, /16:9，参考图优先于文字|参考图优先于文字|每\s*5\s*条视频文本\s*=\s*15s/u)
-  assert.match(markdown, /上传参考图：许家大厅 = 图片1；许怡宁 = 图片2；许悠然 = 图片3；江凡 = 图片4；许正言 = 图片5；三尺青锋 = 图片6/u)
+  assert.match(markdown, /上传参考图：许家大厅 = 图片1（场景参考）；许怡宁 = 图片2（人物参考）；许悠然 = 图片3（人物参考）；江凡 = 图片4（人物参考）；许正言 = 图片5（人物参考）；三尺青锋 = 图片6（道具参考）/u)
   assert.doesNotMatch(markdown, /## 参考资产绑定|## 全局负面约束|## 原著守则|## 镜头语言规则|## 小云雀运镜标签库|## 逐条视频文本|## 底部备注栏可复制/u)
   assert.doesNotMatch(markdown, /^1 .*\n\n2 /mu)
   assert.doesNotMatch(markdown, /主要场景|含泪三视图|中景 \+ 平视或轻微低机位|心理悬疑|暴风雨|真人电影质感/u)

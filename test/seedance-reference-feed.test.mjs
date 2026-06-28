@@ -56,7 +56,7 @@ test('renders clean Seedance all-reference feed without continuation or storyboa
   assert.match(markdown, /### 图片1 = 雪山之巅/u)
   assert.match(markdown, /### 图片2 = 老年道清三视图/u)
   assert.match(markdown, /### 图片3 = 麒麟幼兽三视图/u)
-  assert.match(markdown, /上传参考图：雪山之巅 = 图片1；老年道清三视图 = 图片2；麒麟幼兽三视图 = 图片3/u)
+  assert.match(markdown, /上传参考图：雪山之巅 = 图片1（场景参考）；老年道清三视图 = 图片2（人物参考）；麒麟幼兽三视图 = 图片3（异兽参考）/u)
   assert.match(markdown, /^1 日 外 雪山之巅 老年道清 .*镜头前推/mu)
   assert.doesNotMatch(markdown, forbiddenMeta)
 })
@@ -159,7 +159,7 @@ test('renders five-line copy blocks with references, voice, and unified requirem
 
   assert.match(markdown, /## 每5条复制制作块/u)
   assert.match(markdown, /### 第1组｜第1-5条/u)
-  assert.match(markdown, /上传参考图：雪山之巅 = 图片1；老年道清三视图 = 图片2；麒麟幼兽三视图 = 图片3/u)
+  assert.match(markdown, /上传参考图：雪山之巅 = 图片1（场景参考）；老年道清三视图 = 图片2（人物参考）；麒麟幼兽三视图 = 图片3（异兽参考）/u)
   assert.doesNotMatch(markdown, /上传参考图：图片1｜雪山之巅/u)
   assert.match(markdown, /音色：按本组必要对白匹配角色年龄、身份和情绪；没有对白的组不要新增旁白。必要对白只保留本组逐条文本里的短句。/u)
   assert.match(markdown, /统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】3D国漫，国风仙侠，轻喜剧反差，16:9。/u)

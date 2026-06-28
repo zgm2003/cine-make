@@ -21,12 +21,30 @@ function groupUsesAsset(group, asset) {
   return copyBlockAssetMatchNames(asset).some((name) => text.includes(name))
 }
 
+function copyBlockReferenceUsage(asset) {
+  const title = copyBlockAssetName(asset)
+  const rawTitle = String(asset.title ?? '')
+  const id = String(asset.id ?? '')
+  const searchable = `${id} ${title} ${rawTitle}`
+
+  if (/群像|女修群|创作者群|首领群|众人/u.test(searchable)) return '群像参考'
+  if (/creature|妖兽|异兽|灵兽|麒麟|虎王|坐骑/u.test(searchable)) {
+    return /虎王|坐骑/u.test(searchable) ? '坐骑妖兽参考' : '异兽参考'
+  }
+  if (/scene|environment|场景|内景|外景|大殿|山门|石阶|雪山|地窖|院子|废墟|祠堂|楼道|客厅|大厅|高空飞行/u.test(searchable)) return '场景参考'
+  if (/界面|主页|信息流|消息|私信|发布界面|拍摄发布|系统界面/u.test(searchable)) return '界面参考'
+  if (/prop|手机|玉简|设计图|道具|储物袋|算盘|法器|青锋|剑/u.test(searchable)) return '道具参考'
+  if (/character|人物|角色|三视图|造型|林夜|白清玄|道清|刘飞|许怡宁|许悠然|江凡|许正言|老者|壮汉|鬼财神|冥河/u.test(searchable)) return '人物参考'
+
+  return '参考图'
+}
+
 function copyBlockReferenceLine(pack, group = pack.videoLines) {
   const imageAssets = pack.assets.filter((asset) => asset.kind === 'image')
   if (!imageAssets.length) return '上传参考图：无'
   const usedAssets = imageAssets.filter((asset) => groupUsesAsset(group, asset))
   const references = usedAssets.length ? usedAssets : imageAssets
-  return `上传参考图：${references.map((asset) => `${copyBlockAssetName(asset)} = ${asset.bindingLabel}`).join('；')}`
+  return `上传参考图：${references.map((asset) => `${copyBlockAssetName(asset)} = ${asset.bindingLabel}（${copyBlockReferenceUsage(asset)}）`).join('；')}`
 }
 
 const genericVoiceLine = '音色：按本组必要对白匹配角色年龄、身份和情绪；没有对白的组不要新增旁白。必要对白只保留本组逐条文本里的短句。'
