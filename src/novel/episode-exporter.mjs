@@ -1,16 +1,12 @@
 import { access, mkdir, readdir, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
-import { createInputContract } from '../input-contract.mjs'
-import { composeDraftAssets } from '../draft-writer.mjs'
-import { composeDeliverable, composeStoryboardImagesReadme } from '../deliverable-writer.mjs'
+import { buildSeedanceReferenceFeedPackage } from '../seedance-reference-feed-extractor.mjs'
+import { composeSeedanceAllReferenceFeedMarkdown } from '../seedance-reference-feed-writer.mjs'
 import { planNovelEpisodes } from './episode-planner.mjs'
 
 const FALLBACK_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
-const MAX_REFERENCE_MATERIALS = 12
-const MAX_UPLOAD_IMAGES = 9
-const MATERIAL_TYPES = new Set(['image', 'video', 'audio'])
 
-export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, episodeMinutes, referenceMaterials = [] }) {
+export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, episodeMinutes }) {
   if (!runDir) throw new Error('exportNovelEpisode requires runDir')
   const selectedEpisodeNumber = validateEpisodeNumber(episodeNumber)
   const projectDir = resolve(runDir)
@@ -45,59 +41,39 @@ export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, ep
     style
   })
 
-  const durationSeconds = Math.max(30, Math.round(episode.episodeMinutes * 60))
-  const contract = await createInputContract({
-    mode: 'draft',
-    input: null,
-    title: `${episode.episodeId}-${episode.title}`,
-    duration: `${durationSeconds}s`,
-    durationExplicit: true,
-    aspect: '9:16',
+  const feedPack = buildSeedanceReferenceFeedPackage({
+    sourceText,
     style,
-    platform: 'jimeng',
-    shots: null,
-    storyboards: null,
-    references: [],
-    visualReferences: {
-      characterImages: [],
-      sceneImages: [],
-      styleImages: []
-    },
-    sourceParts: [sourceText]
-  })
-  const draft = composeDraftAssets(contract)
-  const feedCards = composeJimengFeedCards({
-    contract,
-    draft,
-    episode,
-    characters,
-    summaries,
-    referenceMaterials
+    aspectRatio: '9:16',
+    expandScript: true,
+    targetSeconds: 15,
+    preserveDialogueExact: false
   })
 
-  await mkdir(join(episodeOutDir, 'storyboard-images'), { recursive: true })
+  await mkdir(episodeOutDir, { recursive: true })
   const episodeInputPath = join(episodeOutDir, 'episode-input.md')
-  const deliverablePath = join(episodeOutDir, 'deliverable.md')
-  const storyboardImagesReadmePath = join(episodeOutDir, 'storyboard-images', 'README.md')
-  const feedCardsPath = join(episodeOutDir, 'jimeng-feed-cards.json')
+  const feedPath = join(episodeOutDir, 'seedance-all-reference-feed.md')
+  const readmePath = join(episodeOutDir, 'README.md')
 
   await writeFile(episodeInputPath, `${episodeInput}\n`, 'utf8')
-  await writeFile(deliverablePath, `${composeDeliverable({ contract, draft })}\n`, 'utf8')
-  await writeFile(storyboardImagesReadmePath, `${composeStoryboardImagesReadme({ contract, draft })}\n`, 'utf8')
-  await writeFile(feedCardsPath, `${JSON.stringify(feedCards, null, 2)}\n`, 'utf8')
+  await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(feedPack)}\n`, 'utf8')
+  await writeFile(readmePath, `${composeSeedanceReadme(feedPack)}\n`, 'utf8')
 
   return {
     episodeInputPath,
-    deliverablePath,
-    storyboardImagesReadmePath,
-    feedCardsPath,
+    feedPath,
+    readmePath,
     episodePackage: {
       episode,
       summaries,
       characters,
       continuity,
-      contract,
-      feedCards
+      seedanceFeed: {
+        title: feedPack.title,
+        aspectRatio: feedPack.aspectRatio,
+        style: feedPack.style,
+        warnings: feedPack.warnings
+      }
     }
   }
 }
@@ -259,12 +235,33 @@ function composeEpisodeSourceText({ episode, summaries, characters, continuity, 
     `小说单集改编：${episode.title}`,
     `集目标：${episode.goal}`,
     `默认视觉风格：${style}`,
-    '只改编以下章节摘要，不要引入未列出的后续章节。',
+    '只改编以下章节摘要，不要引入未列出的章节。',
     ...summaries.map((summary) => `${summary.chapterId}《${summary.title}》：${summary.summary} 关键节拍：${summary.beats.map((beat) => beat.event).join('；')}`),
     `出场人物：${characters.map((character) => `${character.name}${character.visualHints?.length ? `（${character.visualHints.join('、')}）` : ''}`).join('；') || 'none'}`,
     `当前未解悬念：${continuity.unresolvedHooks.map((hook) => hook.note || hook.question || hook.id).filter(Boolean).join('；') || episode.endingHook || 'none'}`,
     `连续性指令：${continuity.notes || '保持人物外观、地点状态和悬念信息一致；本任务不写回连续性文件。'}`,
     `结尾钩子：${episode.endingHook}`
+  ].join('\n')
+}
+
+function composeSeedanceReadme(feedPack) {
+  return [
+    `# ${feedPack.title}`,
+    '',
+    '本包是 ChatGPT-only / Seedance 全能参考投喂包。',
+    '',
+    '## 文件',
+    '',
+    '- seedance-all-reference-feed.md',
+    '- episode-input.md',
+    '',
+    '## 使用',
+    '',
+    '1. 用 `seedance-all-reference-feed.md` 里的 `GPT-image-2 参考图生成提示词` 生成或确认参考图。',
+    '2. 按 `每5条复制制作块` 逐组复制；每组里的 `上传参考图：资产名 = 图片N` 是绑定说明。',
+    '3. 把整组复制到外部视频工具。',
+    '',
+    '不生成 Canvas 包、不生成图片、不生成视频。'
   ].join('\n')
 }
 
@@ -307,110 +304,4 @@ function formatContinuity(continuity) {
     }
   }
   return lines.join('\n') || '- No continuity files found. Maintain established appearance and unresolved hooks from selected summaries.'
-}
-
-function composeJimengFeedCards({ contract, draft, episode, characters, summaries, referenceMaterials }) {
-  const baseMaterials = normalizeReferenceMaterials(referenceMaterials)
-  const fallbackMaterials = buildFallbackMaterials({ episode, characters, summaries, draft })
-  const materials = capMaterials([...baseMaterials, ...fallbackMaterials])
-  const refsByType = groupRefsByType(materials)
-  const segments = Math.max(1, Math.ceil(contract.target.durationSeconds / 15))
-
-  return Array.from({ length: segments }, (_, index) => ({
-    id: `${episode.episodeId}-jimeng-${String(index + 1).padStart(2, '0')}`,
-    renderer: 'jimeng',
-    maxReferenceMaterials: MAX_REFERENCE_MATERIALS,
-    maxUploadImages: MAX_UPLOAD_IMAGES,
-    materials,
-    prompt: composeJimengPrompt({ episode, refsByType, segmentIndex: index })
-  }))
-}
-
-function normalizeReferenceMaterials(materials) {
-  const counters = { image: 0, video: 0, audio: 0 }
-  return materials
-    .filter((material) => MATERIAL_TYPES.has(material?.type) && material.path)
-    .map((material) => {
-      counters[material.type] += 1
-      return {
-        type: material.type,
-        ref: `@${capitalize(material.type)}${counters[material.type]}`,
-        path: material.path,
-        label: material.label || material.path
-      }
-    })
-}
-
-function buildFallbackMaterials({ episode, characters, summaries, draft }) {
-  const images = []
-  for (const character of characters) {
-    images.push({ path: `storyboard-images/character-${slugRef(character.name)}.png`, label: `${character.name} character reference` })
-  }
-  for (const location of collectLocations(summaries)) {
-    images.push({ path: `storyboard-images/scene-${slugRef(location)}.png`, label: `${location} scene reference` })
-  }
-  images.push(
-    { path: 'storyboard-images/segment-01-start.png', label: 'episode start frame' },
-    { path: 'storyboard-images/segment-01-end.png', label: 'episode end frame' }
-  )
-  for (const shot of draft.shotlist ?? []) {
-    images.push({ path: `storyboard-images/${shot.shot_id}.png`, label: `${shot.shot_id} storyboard reference` })
-  }
-
-  return images.map((material) => ({
-    type: 'image',
-    ...material
-  }))
-}
-
-function capMaterials(materials) {
-  const capped = []
-  const counters = { image: 0, video: 0, audio: 0 }
-  let imageCount = 0
-
-  for (const material of materials) {
-    if (material.type === 'image') {
-      if (imageCount >= MAX_UPLOAD_IMAGES) continue
-      imageCount += 1
-    }
-    counters[material.type] += 1
-    capped.push({
-      ...material,
-      ref: material.ref ?? `@${capitalize(material.type)}${counters[material.type]}`
-    })
-  }
-
-  return capped
-}
-
-function groupRefsByType(materials) {
-  return materials.reduce((refs, material) => {
-    refs[material.type].push(material.ref)
-    return refs
-  }, { image: [], video: [], audio: [] })
-}
-
-function composeJimengPrompt({ episode, refsByType, segmentIndex }) {
-  const parts = []
-  if (refsByType.image[0]) parts.push(`${refsByType.image[0]} 保持角色与场景外观`)
-  if (refsByType.video[0]) parts.push(`模仿 ${refsByType.video[0]} 的动作节奏`)
-  if (refsByType.audio[0]) parts.push(`音色参考 ${refsByType.audio[0]}`)
-  parts.push(`生成${episode.title}第${segmentIndex + 1}段，结尾保留悬念：${episode.endingHook}`)
-  return parts.join('，')
-}
-
-function collectLocations(summaries) {
-  const locations = new Set()
-  for (const summary of summaries) {
-    for (const location of summary.locations ?? []) locations.add(location)
-  }
-  return [...locations]
-}
-
-function slugRef(value) {
-  return String(value).toLowerCase().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'ref'
-}
-
-function capitalize(value) {
-  return `${value.slice(0, 1).toUpperCase()}${value.slice(1)}`
 }

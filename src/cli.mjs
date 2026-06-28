@@ -333,9 +333,8 @@ async function exportNovelProjectEpisode(argv) {
 
   console.log('Cine Make exported novel episode:')
   console.log(`- episode input: ${result.episodeInputPath}`)
-  console.log(`- deliverable: ${result.deliverablePath}`)
-  console.log(`- storyboard images: ${dirname(result.storyboardImagesReadmePath)}`)
-  console.log(`- jimeng feed cards: ${result.feedCardsPath}`)
+  console.log(`- feed: ${result.feedPath}`)
+  console.log(`- README: ${result.readmePath}`)
   console.log(`- continuity log: ${continuity.logPath}`)
   console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }

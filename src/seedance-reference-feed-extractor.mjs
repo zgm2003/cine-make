@@ -6,6 +6,13 @@ import {
   tijiaGuomanTitle,
   tijiaGuomanVideoLines
 } from './tijia-guoman-profile.mjs'
+import {
+  douyinXianjieAssetDefinitions,
+  douyinXianjieStyle,
+  douyinXianjieTitle,
+  douyinXianjieVideoLines,
+  isDouyinXianjieOpeningSource
+} from './douyin-xianjie-profile.mjs'
 import { analyzeSeedanceSpeechBudget } from './seedance-speech-budget.mjs'
 
 const DEFAULT_ASPECT = '16:9'
@@ -247,6 +254,18 @@ function buildAssets({ sourceText, style, aspectRatio }) {
     return assets
   }
 
+  if (isDouyinXianjieOpeningSource(sourceText)) {
+    const assets = []
+    for (const definition of douyinXianjieAssetDefinitions({ sourceText, style, aspectRatio })) {
+      addImageAsset(assets, {
+        id: definition.id,
+        title: definition.title,
+        prompt: definition.prompt
+      })
+    }
+    return assets
+  }
+
   const assets = []
   const scene = sceneName(sourceText)
   const character = characterName(sourceText)
@@ -448,12 +467,16 @@ function tightenVideoLinesForSpeechBudget(videoLines, { targetSeconds, preserveD
 function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDialogueExact }) {
   const lines = isTijiaGuomanSource(sourceText)
     ? tijiaGuomanVideoLines()
+    : isDouyinXianjieOpeningSource(sourceText)
+    ? douyinXianjieVideoLines()
     : isLiuFeiCellarSource(sourceText) && targetSeconds === VIDEO_GROUP_SECONDS && preserveDialogueExact
     ? liuFeiCellarVideoLines()
     : hasAny(sourceText, [/雪山/u, /麒麟/u, /老道|道清|老道人/u])
     ? snowQilinVideoLines()
     : genericVideoLines(sourceText)
-  const limit = targetSeconds === VIDEO_GROUP_SECONDS ? 5 : 14
+  const limit = isDouyinXianjieOpeningSource(sourceText)
+    ? lines.length
+    : targetSeconds === VIDEO_GROUP_SECONDS ? 5 : 14
   const selected = expandScript ? lines : lines.slice(0, Math.min(lines.length, limit))
   const checked = selected.map((line) => {
     if (FORBIDDEN_VIDEO_META.test(line)) {
@@ -466,6 +489,7 @@ function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDial
 
 function titleFromSource(sourceText) {
   if (isTijiaGuomanSource(sourceText)) return tijiaGuomanTitle()
+  if (isDouyinXianjieOpeningSource(sourceText)) return douyinXianjieTitle()
   if (isLiuFeiCellarSource(sourceText)) return '院子地窖口 15s'
   if (/雪山|麒麟|老道|道清/u.test(sourceText)) return '雪山之巅护麟'
   return sceneName(sourceText).replace(/\s*\/.*$/u, '')
@@ -501,7 +525,11 @@ export function buildSeedanceReferenceFeedPackage({
   const cleanSourceText = stripSourcePrefix(sourceText)
   if (!cleanSourceText) throw new Error('Seedance reference feed requires source story material')
   if (!compact(style)) throw new Error('Seedance reference feed requires a visual style')
-  const normalizedStyle = isTijiaGuomanSource(cleanSourceText) ? tijiaGuomanStyle(style) : compact(style)
+  const normalizedStyle = isTijiaGuomanSource(cleanSourceText)
+    ? tijiaGuomanStyle(style)
+    : isDouyinXianjieOpeningSource(cleanSourceText)
+    ? douyinXianjieStyle(style)
+    : compact(style)
   const assets = buildAssets({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio })
   const normalizedTargetSeconds = Number.isFinite(Number(targetSeconds)) ? Number(targetSeconds) : undefined
   const videoLines = buildVideoLines({

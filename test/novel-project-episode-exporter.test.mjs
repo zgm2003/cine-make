@@ -11,7 +11,7 @@ import { planNovelEpisodes } from '../src/novel/episode-planner.mjs'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 
-test('exports one planned novel episode into existing Cine Make draft artifacts', async () => {
+test('exports one planned novel episode into the ChatGPT-only Seedance feed package', async () => {
   const workspace = await mkdtemp(path.join(tmpdir(), 'cine-make-novel-export-'))
   try {
     await writeProject(workspace)
@@ -34,9 +34,8 @@ test('exports one planned novel episode into existing Cine Make draft artifacts'
     })
 
     assert.equal(result.episodeInputPath, path.join(outDir, 'episode-input.md'))
-    assert.equal(result.deliverablePath, path.join(outDir, 'deliverable.md'))
-    assert.equal(result.storyboardImagesReadmePath, path.join(outDir, 'storyboard-images', 'README.md'))
-    assert.equal(result.feedCardsPath, path.join(outDir, 'jimeng-feed-cards.json'))
+    assert.equal(result.feedPath, path.join(outDir, 'seedance-all-reference-feed.md'))
+    assert.equal(result.readmePath, path.join(outDir, 'README.md'))
     assert.equal(result.episodePackage.episode.episodeId, 'episode-0001')
 
     const episodeInput = await readFile(result.episodeInputPath, 'utf8')
@@ -55,28 +54,20 @@ test('exports one planned novel episode into existing Cine Make draft artifacts'
     assert.match(episodeInput, /## Shot Table/)
     assert.match(episodeInput, /## Continuity Check/)
 
-    const deliverable = await readFile(result.deliverablePath, 'utf8')
-    assert.match(deliverable, /Cine Make/)
-    assert.match(deliverable, /即梦|Jimeng/i)
+    const feed = await readFile(result.feedPath, 'utf8')
+    assert.match(feed, /Seedance 全能参考投喂包/)
+    assert.match(feed, /## GPT-image-2 参考图生成提示词/)
+    assert.match(feed, /## 每5条复制制作块/)
+    assert.match(feed, /林夏发现旧影院与失踪剪辑师有关/)
 
-    assert.equal(existsSync(result.storyboardImagesReadmePath), true)
+    const readme = await readFile(result.readmePath, 'utf8')
+    assert.match(readme, /seedance-all-reference-feed\.md/)
+    assert.equal(existsSync(path.join(outDir, 'deliverable.md')), false)
+    assert.equal(existsSync(path.join(outDir, 'storyboard-images')), false)
+    assert.equal(existsSync(path.join(outDir, 'jimeng-feed-cards.json')), false)
     assert.equal(existsSync(path.join(outDir, 'series-bible.md')), false)
     assert.equal(existsSync(path.join(outDir, 'characters.json')), false)
     assert.equal(existsSync(path.join(outDir, 'bible')), false)
-
-    const feedCards = JSON.parse(await readFile(result.feedCardsPath, 'utf8'))
-    assert.ok(feedCards.length > 0)
-    for (const card of feedCards) {
-      assert.equal(card.renderer, 'jimeng')
-      assert.equal(card.maxUploadImages, 9)
-      assert.equal(new Set(card.materials.map((material) => material.ref)).size, card.materials.length)
-      assert.ok(card.materials.some((material) => material.type === 'video'))
-      assert.ok(card.materials.some((material) => material.type === 'audio'))
-      assert.ok(card.materials.filter((material) => material.type === 'image').length <= 9)
-      assert.match(card.prompt, /@Image1/)
-      assert.match(card.prompt, /@Video1/)
-      assert.match(card.prompt, /@Audio1/)
-    }
   } finally {
     await rm(workspace, { recursive: true, force: true })
   }
@@ -132,8 +123,13 @@ test('novel episode CLI requires run and writes default episode output path', as
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Cine Make exported novel episode:/)
     assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'episode-input.md'))))
-    assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'deliverable.md'))))
-    assert.equal(existsSync(path.join(defaultOut, 'storyboard-images', 'README.md')), true)
+    assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'seedance-all-reference-feed.md'))))
+    assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'README.md'))))
+    assert.equal(existsSync(path.join(defaultOut, 'seedance-all-reference-feed.md')), true)
+    assert.equal(existsSync(path.join(defaultOut, 'README.md')), true)
+    assert.equal(existsSync(path.join(defaultOut, 'deliverable.md')), false)
+    assert.equal(existsSync(path.join(defaultOut, 'storyboard-images')), false)
+    assert.equal(existsSync(path.join(defaultOut, 'jimeng-feed-cards.json')), false)
   } finally {
     await rm(workspace, { recursive: true, force: true })
   }
