@@ -28,7 +28,7 @@ test('default CLI writes a ChatGPT-only Seedance feed and no Canvas artifacts', 
     assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
     assert.equal(existsSync(join(out, 'projects.json')), false)
     assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
-    assert.equal(existsSync(join(out, 'README.md')), true)
+    assert.equal(existsSync(join(out, 'README.md')), false)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
     assert.match(result.stdout, /ChatGPT-only Seedance feed ready/u)

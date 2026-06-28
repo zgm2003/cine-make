@@ -52,6 +52,14 @@ export function douyinXianjieTitle(sourceText = '') {
   return '抖音仙界开局'
 }
 
+export function douyinXianjieFeedFileName(sourceText = '') {
+  const chapter = douyinXianjieChapter(sourceText)
+  if (chapter === 1) return 'seedance-all-reference-feed-01.md'
+  if (chapter === 2) return 'seedance-all-reference-feed-02.md'
+  if (chapter === 3) return 'seedance-all-reference-feed-03.md'
+  return 'seedance-all-reference-feed.md'
+}
+
 function finishPrompt(prompt) {
   return String(prompt ?? '').trim().replace(/[。！!]*$/u, '') + '。4K画质！'
 }

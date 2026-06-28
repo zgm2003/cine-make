@@ -16,7 +16,6 @@ Cine Make **不渲染 MP4**。它只写 GPT-image-2 参考图提示词和可直�
 
 ```text
 seedance-all-reference-feed.md
-README.md
 ```
 
 请在具体剧本项目目录里运行 Cine Make。省略 `--out` 时，产物会写入该项目的 `生产资产/<timestamp>/`；工具仓库本身不应该承载项目产物。默认 CLI 和 `seedance-pack` 等价：
@@ -155,7 +154,7 @@ cine-make novel episode --run runs/my-novel --episode 1
 
 Novel Studio MVP 不自动生成图片。视觉 bible 批准后，再显式使用 `$imagegen`。
 
-小说项目命令只负责章节规划和单集整理。新的用户交付仍然是 ChatGPT 可校对的 `seedance-all-reference-feed.md`；不要再为新交付创建 Canvas 包或即梦素材预算包。
+小说项目命令只负责章节规划和单集整理。新的用户交付仍然是 ChatGPT 可校对的 `seedance-all-reference-feed.md` 投喂文件；不要再为新交付创建包内 README、Canvas 包或即梦素材预算包。
 
 ## 投喂视频工具
 

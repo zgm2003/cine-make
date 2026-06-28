@@ -6,7 +6,7 @@ These rules are reusable Seedance production constraints. They are not tied to o
 
 - For novel projects, read only the chapter or episode range needed for the current run. Do not paste or ingest a whole large novel into prompt context.
 - If a project has a UTF-8 working copy, use that copy for `cine-make novel ingest`; avoid original text files that decode incorrectly in Node.js.
-- Keep output text-only unless the user explicitly asks otherwise: `seedance-all-reference-feed.md` plus `README.md`. Do not claim MP4, images, videos, or Canvas packages were generated.
+- Keep output text-only unless the user explicitly asks otherwise: only the `seedance-all-reference-feed.md` feed file. Do not claim MP4, images, videos, package README files, or Canvas packages were generated.
 
 ## Reference reuse
 

@@ -57,6 +57,7 @@ test('抖音仙界第1章 feed stays in chapter 1 and does not preload later cha
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
   assert.equal(pack.title, '抖音仙界第1章｜神级文娱系统')
+  assert.equal(pack.feedFileName, 'seedance-all-reference-feed-01.md')
   assert.equal(pack.videoLines.length, 25)
   assert.deepEqual(pack.assets.filter((asset) => asset.kind === 'image').map((asset) => asset.title), [
     '鬼王宗宗门大殿',
@@ -83,6 +84,7 @@ test('抖音仙界第2章 feed covers phone validation and recruiting without ch
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
   assert.equal(pack.title, '抖音仙界第2章｜抖音，招募女主播')
+  assert.equal(pack.feedFileName, 'seedance-all-reference-feed-02.md')
   assert.equal(pack.videoLines.length, 25)
   assert.deepEqual(pack.assets.filter((asset) => asset.kind === 'image').map((asset) => asset.title), [
     '鬼王宗宗门大殿',
@@ -114,6 +116,7 @@ test('抖音仙界第3章 feed starts at training and ends on costume design hoo
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
   assert.equal(pack.title, '抖音仙界第3章｜旗袍，JK')
+  assert.equal(pack.feedFileName, 'seedance-all-reference-feed-03.md')
   assert.equal(pack.videoLines.length, 25)
   assert.deepEqual(pack.assets.filter((asset) => asset.kind === 'image').map((asset) => asset.title), [
     '姹女教宗门大殿',

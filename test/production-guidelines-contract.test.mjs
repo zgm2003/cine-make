@@ -75,4 +75,5 @@ test('dedicated Douyin Xianjie female prompts use the same safeguards', () => {
   assert.match(baiQingxuan.prompt, /高级好看、性感但克制/u)
   assert.match(baiQingxuan.prompt, /内衬、里裙、安全短裤或不透明下摆/u)
   assert.match(baiQingxuan.prompt, /禁止高开衩、整条腿暴露、同时露出双腿、低机位扫腿、腿部特写、胸臀腿特写、透明无遮挡/u)
+  assert.doesNotMatch(baiQingxuan.prompt, /旗袍|JK|高跟鞋/u)
 })

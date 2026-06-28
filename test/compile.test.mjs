@@ -23,7 +23,7 @@ test('cli writes the default ChatGPT-only Seedance package', async () => {
     assert.equal(existsSync(join(out, 'canvas-manifest.json')), false)
     assert.equal(existsSync(join(out, 'projects.json')), false)
     assert.equal(existsSync(join(out, 'prompt-pack.md')), false)
-    assert.ok(existsSync(join(out, 'README.md')))
+    assert.equal(existsSync(join(out, 'README.md')), false)
     assert.equal(existsSync(join(out, 'deliverable.md')), false)
     assert.equal(existsSync(join(out, 'storyboard-images')), false)
     assert.equal(existsSync(join(out, 'input-contract.json')), false)
@@ -52,6 +52,7 @@ test('cli default output stays in the calling project production assets director
     const runDirs = await readdir(join(projectDir, '生产资产'))
     assert.equal(runDirs.length, 1)
     assert.ok(existsSync(join(projectDir, '生产资产', runDirs[0], 'seedance-all-reference-feed.md')))
+    assert.equal(existsSync(join(projectDir, '生产资产', runDirs[0], 'README.md')), false)
     assert.match(result.stdout, new RegExp(projectDir.replace(/[\\^$.*+?()[\]{}|]/g, '\\$&')))
   } finally {
     await rm(projectDir, { recursive: true, force: true })

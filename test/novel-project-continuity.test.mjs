@@ -414,7 +414,7 @@ test('novel episode CLI updates continuity after exporting artifacts and prints 
     assert.match(result.stdout, new RegExp(escapeRegExp(logPath)))
     assert.match(result.stdout, new RegExp(escapeRegExp(hooksPath)))
     assert.equal(existsSync(path.join(defaultOut, 'seedance-all-reference-feed.md')), true)
-    assert.equal(existsSync(path.join(defaultOut, 'README.md')), true)
+    assert.equal(existsSync(path.join(defaultOut, 'README.md')), false)
     assert.equal(existsSync(path.join(defaultOut, 'deliverable.md')), false)
     assert.equal(existsSync(path.join(defaultOut, 'storyboard-images')), false)
     assert.match(await readFile(logPath, 'utf8'), /## Episode 0001 - 第1集 - 第一章 旧影院/)

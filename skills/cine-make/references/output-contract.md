@@ -3,7 +3,6 @@
 Normal short-script / excerpt user-facing output:
 
 - `seedance-all-reference-feed.md`
-- `README.md`
 
 When `--out` is omitted, default short-script and excerpt packages must be written under the calling story project's `生产资产/<timestamp>/` directory. Keep the tool repository free of project delivery outputs unless the user explicitly passes an output path there.
 
@@ -26,7 +25,7 @@ Removed user modes and commands:
 
 Main commands:
 
-- default CLI and `seedance-pack`: create the ChatGPT-only Seedance feed plus README.
+- default CLI and `seedance-pack`: create only the ChatGPT-only Seedance feed.
 - `reference-feed`: create only `seedance-all-reference-feed.md`.
 
 No artifact may claim final MP4 generation.

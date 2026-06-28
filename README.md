@@ -18,7 +18,6 @@ For normal short-script and excerpt runs, the user-facing package exposes only:
 
 ```text
 seedance-all-reference-feed.md
-README.md
 ```
 
 Run Cine Make from the story project directory. When `--out` is omitted, the package is written to that project's `生产资产/<timestamp>/`; the tool repository should not own project outputs. The default CLI and `seedance-pack` produce the same package:
@@ -157,7 +156,7 @@ cine-make novel episode --run runs/my-novel --episode 1
 
 Novel Studio MVP does not generate images automatically. Run explicit `$imagegen` only after the visual bible is approved.
 
-Novel project commands are planning and episode-preparation steps. The user-facing handoff remains the ChatGPT-ready `seedance-all-reference-feed.md`; do not create Canvas packages or platform-specific upload-budget packages for new delivery.
+Novel project commands are planning and episode-preparation steps. The user-facing handoff remains the ChatGPT-ready `seedance-all-reference-feed.md` feed file; do not create package README files, Canvas packages, or platform-specific upload-budget packages for new delivery.
 
 ## Feeding AI video tools
 

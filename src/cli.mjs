@@ -334,7 +334,6 @@ async function exportNovelProjectEpisode(argv) {
   console.log('Cine Make exported novel episode:')
   console.log(`- episode input: ${result.episodeInputPath}`)
   console.log(`- feed: ${result.feedPath}`)
-  console.log(`- README: ${result.readmePath}`)
   console.log(`- continuity log: ${continuity.logPath}`)
   console.log(`- unresolved hooks: ${continuity.hooksPath}`)
 }
@@ -359,7 +358,7 @@ async function exportSeedanceReferenceFeed(argv) {
   })
 
   await mkdir(outDir, { recursive: true })
-  const feedPath = join(outDir, 'seedance-all-reference-feed.md')
+  const feedPath = join(outDir, pack.feedFileName)
   await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(pack)}\n`, 'utf8')
 
   console.log('Seedance all-reference feed ready:')
@@ -388,30 +387,11 @@ async function exportChatGptSeedancePack(argv) {
   })
 
   await mkdir(outDir, { recursive: true })
-  const feedPath = join(outDir, 'seedance-all-reference-feed.md')
+  const feedPath = join(outDir, pack.feedFileName)
   await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(pack)}\n`, 'utf8')
-  const readmePath = join(outDir, 'README.md')
-  await writeFile(readmePath, [
-    `# ${pack.title}`,
-    '',
-    '本包是 ChatGPT-only / Seedance 全能参考投喂包。',
-    '',
-    '## 文件',
-    '',
-    '- seedance-all-reference-feed.md',
-    '',
-    '## 使用',
-    '',
-    '1. 用 `GPT-image-2 参考图生成提示词` 生成或确认参考图。',
-    '2. 按 `每5条复制制作块` 逐组复制；每组里的 `上传参考图：资产名 = 图片N` 就是绑定说明。',
-    '3. 把整组复制到外部视频工具。',
-    '',
-    '不生成 Canvas 包、不生成图片、不生成视频。'
-  ].join('\n') + '\n', 'utf8')
 
   console.log('ChatGPT-only Seedance feed ready:')
   console.log(`- feed: ${feedPath}`)
-  console.log(`- README: ${readmePath}`)
   console.log('- canvas: disabled')
   console.log('- images/videos: none; use ChatGPT/GPT-image-2 prompts, then paste Seedance feed text into the video tool')
 }

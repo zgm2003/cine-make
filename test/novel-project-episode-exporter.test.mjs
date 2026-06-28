@@ -35,7 +35,7 @@ test('exports one planned novel episode into the ChatGPT-only Seedance feed pack
 
     assert.equal(result.episodeInputPath, path.join(outDir, 'episode-input.md'))
     assert.equal(result.feedPath, path.join(outDir, 'seedance-all-reference-feed.md'))
-    assert.equal(result.readmePath, path.join(outDir, 'README.md'))
+    assert.equal(result.readmePath, undefined)
     assert.equal(result.episodePackage.episode.episodeId, 'episode-0001')
 
     const episodeInput = await readFile(result.episodeInputPath, 'utf8')
@@ -61,8 +61,7 @@ test('exports one planned novel episode into the ChatGPT-only Seedance feed pack
     assert.match(feed, /## 每5条复制制作块/)
     assert.match(feed, /林夏发现旧影院与失踪剪辑师有关/)
 
-    const readme = await readFile(result.readmePath, 'utf8')
-    assert.match(readme, /seedance-all-reference-feed\.md/)
+    assert.equal(existsSync(path.join(outDir, 'README.md')), false)
     assert.equal(existsSync(path.join(outDir, 'deliverable.md')), false)
     assert.equal(existsSync(path.join(outDir, 'storyboard-images')), false)
     assert.equal(existsSync(path.join(outDir, 'jimeng-feed-cards.json')), false)
@@ -125,9 +124,9 @@ test('novel episode CLI requires run and writes default episode output path', as
     assert.match(result.stdout, /Cine Make exported novel episode:/)
     assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'episode-input.md'))))
     assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'seedance-all-reference-feed.md'))))
-    assert.match(result.stdout, new RegExp(escapeRegExp(path.join(defaultOut, 'README.md'))))
+    assert.doesNotMatch(result.stdout, /README\.md/u)
     assert.equal(existsSync(path.join(defaultOut, 'seedance-all-reference-feed.md')), true)
-    assert.equal(existsSync(path.join(defaultOut, 'README.md')), true)
+    assert.equal(existsSync(path.join(defaultOut, 'README.md')), false)
     assert.equal(existsSync(path.join(defaultOut, 'deliverable.md')), false)
     assert.equal(existsSync(path.join(defaultOut, 'storyboard-images')), false)
     assert.equal(existsSync(path.join(defaultOut, 'jimeng-feed-cards.json')), false)

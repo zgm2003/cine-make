@@ -54,17 +54,14 @@ export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, ep
 
   await mkdir(episodeOutDir, { recursive: true })
   const episodeInputPath = join(episodeOutDir, 'episode-input.md')
-  const feedPath = join(episodeOutDir, 'seedance-all-reference-feed.md')
-  const readmePath = join(episodeOutDir, 'README.md')
+  const feedPath = join(episodeOutDir, feedPack.feedFileName)
 
   await writeFile(episodeInputPath, `${episodeInput}\n`, 'utf8')
   await writeFile(feedPath, `${composeSeedanceAllReferenceFeedMarkdown(feedPack)}\n`, 'utf8')
-  await writeFile(readmePath, `${composeSeedanceReadme(feedPack)}\n`, 'utf8')
 
   return {
     episodeInputPath,
     feedPath,
-    readmePath,
     episodePackage: {
       episode,
       summaries,
@@ -243,27 +240,6 @@ function composeEpisodeSourceText({ episode, summaries, characters, continuity, 
     `当前未解悬念：${continuity.unresolvedHooks.map((hook) => hook.note || hook.question || hook.id).filter(Boolean).join('；') || episode.endingHook || 'none'}`,
     `连续性指令：${continuity.notes || '保持人物外观、地点状态和悬念信息一致；本任务不写回连续性文件。'}`,
     `结尾钩子：${episode.endingHook}`
-  ].join('\n')
-}
-
-function composeSeedanceReadme(feedPack) {
-  return [
-    `# ${feedPack.title}`,
-    '',
-    '本包是 ChatGPT-only / Seedance 全能参考投喂包。',
-    '',
-    '## 文件',
-    '',
-    '- seedance-all-reference-feed.md',
-    '- episode-input.md',
-    '',
-    '## 使用',
-    '',
-    '1. 用 `seedance-all-reference-feed.md` 里的 `GPT-image-2 参考图生成提示词` 生成或确认参考图。',
-    '2. 按 `每5条复制制作块` 逐组复制；每组里的 `上传参考图：资产名 = 图片N` 是绑定说明。',
-    '3. 把整组复制到外部视频工具。',
-    '',
-    '不生成 Canvas 包、不生成图片、不生成视频。'
   ].join('\n')
 }
 

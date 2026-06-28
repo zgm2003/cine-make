@@ -9,6 +9,7 @@ import {
 import {
   assertDouyinXianjieSingleChapterSource,
   douyinXianjieAssetDefinitions,
+  douyinXianjieFeedFileName,
   douyinXianjieStyle,
   douyinXianjieTitle,
   douyinXianjieVideoLines,
@@ -550,6 +551,9 @@ export function buildSeedanceReferenceFeedPackage({
   return {
     kind: 'seedance_all_reference_feed',
     title: titleFromSource(cleanSourceText),
+    feedFileName: isDouyinXianjieOpeningSource(cleanSourceText)
+      ? douyinXianjieFeedFileName(cleanSourceText)
+      : 'seedance-all-reference-feed.md',
     sourceText: cleanSourceText,
     style: normalizedStyle,
     aspectRatio,
