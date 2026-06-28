@@ -56,6 +56,7 @@ test('exports one planned novel episode into the ChatGPT-only Seedance feed pack
 
     const feed = await readFile(result.feedPath, 'utf8')
     assert.match(feed, /Seedance 全能参考投喂包/)
+    assert.match(feed, /画幅：16:9/)
     assert.match(feed, /## GPT-image-2 参考图生成提示词/)
     assert.match(feed, /## 每5条复制制作块/)
     assert.match(feed, /林夏发现旧影院与失踪剪辑师有关/)

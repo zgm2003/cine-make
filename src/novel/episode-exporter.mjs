@@ -5,6 +5,7 @@ import { composeSeedanceAllReferenceFeedMarkdown } from '../seedance-reference-f
 import { planNovelEpisodes } from './episode-planner.mjs'
 
 const FALLBACK_STYLE = '超写实真人电影质感，85mm镜头，4K，高细节服装与道具，克制表演，强角色一致性'
+const FALLBACK_ASPECT_RATIO = '16:9'
 
 export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, episodeMinutes }) {
   if (!runDir) throw new Error('exportNovelEpisode requires runDir')
@@ -26,6 +27,7 @@ export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, ep
   const characters = await readSelectedCharacters({ runDir: projectDir, episode })
   const continuity = await readContinuity({ runDir: projectDir, episode })
   const style = project.defaultStyle || FALLBACK_STYLE
+  const aspectRatio = project.defaultAspectRatio || project.aspectRatio || FALLBACK_ASPECT_RATIO
   const episodeInput = composeEpisodeInput({
     episode,
     summaries,
@@ -44,7 +46,7 @@ export async function exportNovelEpisode({ runDir, episodeNumber = 1, outDir, ep
   const feedPack = buildSeedanceReferenceFeedPackage({
     sourceText,
     style,
-    aspectRatio: '9:16',
+    aspectRatio,
     expandScript: true,
     targetSeconds: 15,
     preserveDialogueExact: false

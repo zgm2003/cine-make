@@ -63,7 +63,8 @@ node <cine-make-root>/src/cli.mjs reference-feed --aspect 16:9 --style "<style>"
 ```
 
 5. For whole novels or large `.txt` files, use project mode: read `references/novel-project-mode.md` first. Never paste the whole source into context.
-6. For stronger director prompting only when needed, read `references/director-prompts.md`. Keep the active skill lightweight.
+6. For Seedance feed quality rules that should carry across episodes, read `references/production-guidelines.md`. Apply its female character prompt safeguards, reference reuse rules, scene-location matching, dialogue shot rules, copy block order, and breathing/density rules.
+7. For stronger director prompting only when needed, read `references/director-prompts.md`. Keep the active skill lightweight.
 
 ## Completion Evidence
 

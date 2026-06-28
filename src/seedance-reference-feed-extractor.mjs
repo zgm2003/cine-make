@@ -13,6 +13,7 @@ import {
   douyinXianjieVideoLines,
   isDouyinXianjieOpeningSource
 } from './douyin-xianjie-profile.mjs'
+import { appendFemaleXianxiaSafeguard } from './production-guidelines.mjs'
 import { analyzeSeedanceSpeechBudget } from './seedance-speech-budget.mjs'
 
 const DEFAULT_ASPECT = '16:9'
@@ -167,13 +168,14 @@ function finishImagePrompt(prompt) {
   return String(prompt ?? '').trim().replace(/[。！!]*$/u, '') + '。4K画质！'
 }
 
-function characterTriViewTemplate({ name, details, style, aspectRatio }) {
+function characterTriViewTemplate({ name, details, style, aspectRatio, sourceText }) {
+  const safeDetails = appendFemaleXianxiaSafeguard(details, { name, sourceText, style })
   return finishImagePrompt([
     `GPT-image-2，${aspectRatio}，${style}。`,
     `【三视图生成模板】设计人物三视图：${name}，正面全身照、侧面全身照、背面全身照，最左侧单独的上半身+头部细节展示，背景为白色，整体构图工整专业。三视图为一张图。`,
     `画面最左侧：${name}的上半身+头部细节特写，脸部、发型、五官、皮肤/胡须/发丝/材质细节清晰。`,
     `画面主体区域：同一角色依次展示正面全身照、侧面全身照、背面全身照，完整显示从头到脚，不裁切脚部。`,
-    `角色设定：${details}`,
+    `角色设定：${safeDetails}`,
     '人物脸部必须有柔和电影面光或火光补光，不能黑脸，眼睛必须有清晰高光。',
     '四个展示区必须属于同一个角色，同一张脸、同一发型、同一体型、同一服装、同一配饰。',
     '白色或极浅灰纯净背景，专业影视角色设定稿排版；不要剧情动作，不要复杂场景，不要多人，不要换装，不要海报构图，不要文字水印。'
@@ -284,7 +286,8 @@ function buildAssets({ sourceText, style, aspectRatio }) {
       name: character,
       details: inferCharacterDetails(sourceText),
       style,
-      aspectRatio
+      aspectRatio,
+      sourceText
     })
   })
 
