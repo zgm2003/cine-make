@@ -86,6 +86,17 @@ function characterPrompt({ base, name, details }) {
   ].join(''))
 }
 
+function reusedCharacterPrompt({ base, name, previousAssetTitle, currentBindingLabel, details }) {
+  const safeDetails = appendFemaleXianxiaSafeguard(details, { name, sourceText: details, style: base })
+  return finishPrompt([
+    `${base}【沿用第 1 章生成图，不重新生成】${name}人物连续性参考。`,
+    `上传第 1 章已生成的「${previousAssetTitle}」作为本章${currentBindingLabel}，用于锁定同一角色身份。`,
+    `必须保持同一张脸、同一发型、同一体型、眉心黑莲印记、同一黑纱长裙造型和同一危险雍容气质；本章只改变动作、表情、站位和姹女教山门/宗门大殿环境。`,
+    `角色设定校验：${safeDetails}`,
+    '不要重新生成新三视图，不要换脸，不要换发型，不要换体型，不要改变眉心黑莲，不要改成新服装，不要多人，不要文字水印。'
+  ].join(''))
+}
+
 function groupReferencePrompt({ base, title, details }) {
   const safeDetails = appendFemaleXianxiaSafeguard(details, { name: title, sourceText: details, style: base })
   return finishPrompt([
@@ -253,6 +264,19 @@ function allAssetDefinitions({ style, aspectRatio }) {
 export function douyinXianjieAssetDefinitions({ sourceText, style, aspectRatio }) {
   const chapter = douyinXianjieChapter(sourceText)
   const definitions = allAssetDefinitions({ style, aspectRatio })
+  if (chapter && chapter >= 2) {
+    const baiQingxuan = definitions['character-baiqingxuan']
+    definitions['character-baiqingxuan'] = {
+      ...baiQingxuan,
+      prompt: reusedCharacterPrompt({
+        base: `GPT-image-2，${aspectRatio}，${douyinXianjieStyle(style)}。`,
+        name: '白清玄',
+        previousAssetTitle: '白清玄黑纱造型',
+        currentBindingLabel: chapter === 2 ? '图片6' : chapter === 3 ? '图片3' : '白清玄人物参考图',
+        details: '白清玄，姹女教教主，一代阴后，黑色纱衣长裙，眉心黑莲印记，妖艳但不低俗，眼神娇媚好奇，动作轻盈，本阶段沿用第 1 章黑纱初登场造型。'
+      })
+    }
+  }
   const idsByChapter = {
     1: ['environment-guiwang-hall', 'character-linye', 'prop-system-interface', 'prop-tianji-phone'],
     2: [

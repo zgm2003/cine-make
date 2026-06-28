@@ -29,7 +29,17 @@ test('cine-make skill ships reusable Seedance production guidelines', async () =
   assert.match(combined, /谁说话就以谁为单人主镜头/u)
   assert.match(combined, /场景资产必须贴合逐条视频文本的真实空间/u)
   assert.match(combined, /上传并参考上一集\/第 1 集生成图/u)
+  assert.match(combined, /same named character or core prop/u)
+  assert.match(combined, /沿用第 1 章生成图，不重新生成/u)
+  assert.match(combined, /Do not create a fresh GPT-image-2 tri-view/u)
   assert.match(combined, /不要把每集硬压成固定 40 条/u)
+  assert.match(combined, /转向上首王座\/主位\/讲台\/柜台/u)
+  assert.match(combined, /众人身体和视线都朝王座方向/u)
+  assert.match(combined, /背对王座沿中轴走向敞开的殿门/u)
+  assert.match(combined, /掌心朝上/u)
+  assert.match(combined, /五指自然弯曲不反折/u)
+  assert.match(combined, /正面屏幕朝镜头/u)
+  assert.match(combined, /不要背面摄像头/u)
 })
 
 test('female xianxia reference prompts add mature restrained styling safeguards', () => {

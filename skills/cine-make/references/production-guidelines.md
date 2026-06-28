@@ -11,6 +11,7 @@ These rules are reusable Seedance production constraints. They are not tied to o
 ## Reference reuse
 
 - Reuse locked character, core prop, and recurring location references across later episodes. Do not regenerate confirmed assets just because a new episode starts.
+- When the same named character or core prop appears again in a later chapter, bind the current `图片N` slot to the existing generated image and label the prompt `沿用第 1 章生成图，不重新生成`. Do not create a fresh GPT-image-2 tri-view for the same identity unless the user explicitly asks for a redesign.
 - When a later episode needs a costume, state, or scene variant, tell the user to upload and reference the previous episode / episode 1 generated image. Preserve the same face, hairstyle, identity marks, body type, and core temperament; change only the needed costume, action, or scene state.
 - Keep feed reference slots bound as `图片1`, `图片2`, `图片3`, etc. Assets marked as reuse should upload the old image; only assets marked for GPT-image-2 should be newly generated.
 - In every copy block, upload bindings must explain what the asset is borrowed for: `资产名 = 图片N（人物参考/场景参考/道具参考/界面参考/群像参考）`. Use specific labels such as `异兽参考` or `坐骑妖兽参考` for creature mounts.
@@ -29,6 +30,10 @@ These rules are reusable Seedance production constraints. They are not tied to o
 - Each video line starts with `时间 + 内/外 + 具体地点`, for example `日 内 鬼王宗宗门大殿`, `夜 外 鬼王宗大殿外`, or `日 内 姹女教宗门大殿`.
 - For dialogue shots, 谁说话就以谁为单人主镜头. Describe the speaker's mouth shape, eyes, hand movement, pause, status pressure, and current environment light.
 - Avoid dialogue staging that video tools misread: `A 前景 B 后景`, `说话者和受声者反应清楚`, `双主体同框反应`, and `前后景关系`. If a reaction matters, write the listener reaction as the next separate line.
+- For throne rooms, council halls, classrooms, shops, and any clear center-axis space, define the target direction explicitly. Side-seat speakers must `转向上首王座/主位/讲台/柜台`, `略微仰视` the authority figure, and avoid bare seat coordinates such as `左侧第二席` unless the gaze target is also stated.
+- In group reaction shots, align bodies and eye lines to one story target: `众人身体和视线都朝王座方向`, `面朝主位拱手`, or `看向柜台掌柜`. Do not rely on `两侧席位`, `众人虚化`, or `彼此低笑` alone when the viewer must understand who they are watching.
+- For exits from center-axis spaces, state the path and destination: `背对王座沿中轴走向敞开的殿门`, `从座位前方退到中轴两侧`, or `沿柜台前通道离开`. Do not let characters wander behind seats or move toward the wrong side of the room.
+- For hand and prop close-ups, use one simple natural hand pose and lock orientation. Write `掌心朝上`, `五指自然弯曲不反折`, `手腕自然不扭转`, and for phones or books specify `正面屏幕朝镜头` / `背面朝镜头` / `保持竖直不翻面`. If the screen matters, explicitly forbid the opposite side such as `不要背面摄像头`.
 
 ## Copy block rules
 
