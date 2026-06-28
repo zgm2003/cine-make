@@ -60,6 +60,18 @@ export function douyinXianjieFeedFileName(sourceText = '') {
   return 'seedance-all-reference-feed.md'
 }
 
+export function douyinXianjieVoiceAssetMap() {
+  return {
+    林夜: '林夜.mp3',
+    白清玄: '白清玄.mp3',
+    骨灵教老者: '骨灵教枯瘦老者.mp3',
+    骨灵教枯瘦老者: '骨灵教枯瘦老者.mp3',
+    血刀门壮汉: '血刀门光头壮汉.mp3',
+    血刀门光头壮汉: '血刀门光头壮汉.mp3',
+    鬼财神: '鬼财神.mp3'
+  }
+}
+
 function finishPrompt(prompt) {
   return String(prompt ?? '').trim().replace(/[。！!]*$/u, '') + '。4K画质！'
 }

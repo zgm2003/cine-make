@@ -13,6 +13,7 @@ import {
   douyinXianjieStyle,
   douyinXianjieTitle,
   douyinXianjieVideoLines,
+  douyinXianjieVoiceAssetMap,
   isDouyinXianjieOpeningSource
 } from './douyin-xianjie-profile.mjs'
 import { appendFemaleXianxiaSafeguard } from './production-guidelines.mjs'
@@ -560,6 +561,7 @@ export function buildSeedanceReferenceFeedPackage({
     targetSeconds: normalizedTargetSeconds,
     expandScript: Boolean(expandScript),
     assets,
+    voiceAssetMap: isDouyinXianjieOpeningSource(cleanSourceText) ? douyinXianjieVoiceAssetMap() : undefined,
     globalNegative: globalNegative({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio }),
     videoLines,
     speechBudget,

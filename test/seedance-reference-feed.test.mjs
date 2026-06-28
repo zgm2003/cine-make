@@ -165,6 +165,58 @@ test('renders five-line copy blocks with references, voice, and unified requirem
   assert.match(markdown, /统一要求：【不要字幕、不要配乐，只保留环境音、系统提示音、动作音效和必要对白】3D国漫，国风仙侠，轻喜剧反差，16:9。/u)
 })
 
+test('keeps generic voice instruction and appends only available voice asset mappings', () => {
+  const pack = {
+    title: '音色契约',
+    aspectRatio: '16:9',
+    style: '3D国漫',
+    warnings: [],
+    assets: [],
+    voiceAssetMap: {
+      林夜: '林夜.mp3',
+      白清玄: '白清玄.mp3'
+    },
+    videoLines: [
+      '日 内 鬼王宗宗门大殿 林夜坐在石椅上，冷淡扫视众人。',
+      '日 内 鬼王宗宗门大殿 林夜说话者单人主镜头，台词摘句：林夜：不是没网，是没人发。',
+      '日 内 姹女教山门 白清玄说话者单人主镜头，台词摘句：白清玄：宗主哥哥，是专程来找奴家的吗？',
+      '日 内 姹女教山门 音效：衣袖轻响，女修低声惊呼。',
+      '日 内 姹女教山门 女修说话者单人主镜头，台词摘句：女修：画面还会动！'
+    ]
+  }
+  const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+
+  assert.match(markdown, /音色：按本组必要对白匹配角色年龄、身份和情绪/u)
+  assert.match(markdown, /音色资产：林夜音色=林夜\.mp3；白清玄音色=白清玄\.mp3。/u)
+  assert.doesNotMatch(markdown, /青年男声|成年女性|女修音色=/u)
+  assert.doesNotMatch(markdown, /音效音色=/u)
+})
+
+test('normalizes parenthetical OS labels without inventing missing voice assets', () => {
+  const pack = {
+    title: '音色归一契约',
+    aspectRatio: '16:9',
+    style: '3D国漫',
+    warnings: [],
+    assets: [],
+    voiceAssetMap: {
+      林夜: '林夜.mp3'
+    },
+    videoLines: [
+      '日 内 鬼王宗宗门大殿 林夜侧脸特写，台词摘句：林夜（内心OS）：正魔大战，第一个死的就是我。',
+      '日 内 鬼王宗宗门大殿 魔门众人站起，台词摘句：魔门众人：宗主神功将成！',
+      '日 内 鬼王宗宗门大殿 林夜压住扶手，无对白',
+      '日 内 鬼王宗宗门大殿 音效：殿门沉响。',
+      '日 内 鬼王宗宗门大殿 环境音：大殿低鸣。'
+    ]
+  }
+  const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+
+  assert.match(markdown, /音色资产：林夜音色=林夜\.mp3。/u)
+  assert.doesNotMatch(markdown, /林夜（内心OS）音色=/u)
+  assert.doesNotMatch(markdown, /魔门众人音色=|按角色年龄、身份和本组情绪匹配/u)
+})
+
 test('dialogue video lines use speaker-only shots instead of foreground/background spatial staging', () => {
   const novel = [
     '鬼王宗宗门大殿，骨灵教枯瘦老者缓缓起身。',
