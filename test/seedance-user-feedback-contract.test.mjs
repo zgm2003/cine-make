@@ -50,7 +50,8 @@ test('copy-ready Seedance lines use the reference single-line format with day in
   })
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
-  assert.match(markdown, /单行格式固定：`序号 时间 内\/外 具体地点 角色 动作画面 主体\/景别\/机位\/构图\/光影 运镜 台词\/音效`/)
+  assert.match(markdown, /## 每5条复制制作块/u)
+  assert.doesNotMatch(markdown, /单行格式固定：|## 镜头语言规则/u)
   assert.match(markdown, /^1 日 外 院子地窖口 刘飞 /mu)
   assert.match(markdown, /^2 日 外 院子地窖口 刘飞 /mu)
   assert.match(markdown, /^3 日 外 院子地窖口 刘飞 /mu)

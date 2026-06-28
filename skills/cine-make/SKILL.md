@@ -24,6 +24,8 @@ Normal short-script and excerpt runs output:
 - `seedance-all-reference-feed.md`
 - `README.md` for default / `seedance-pack`
 
+The user-facing `seedance-all-reference-feed.md` should expose only two operating sections: `GPT-image-2 参考图生成提示词` and `每5条复制制作块`. Keep original-fidelity rules, shot-language rules, negative constraints, and camera-tag guidance as internal constraints or documentation instead of front-loading them in the feed.
+
 Do not create `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, generated images, generated videos, segment start/end frames, S01/S02 keyframes, or continuation text on the main path. Do not pass `--emit-internal` in normal user runs.
 
 The copy-ready Seedance block must use this order:

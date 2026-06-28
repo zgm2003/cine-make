@@ -403,9 +403,9 @@ async function exportChatGptSeedancePack(argv) {
     '',
     '## 使用',
     '',
-    '1. 把 `seedance-all-reference-feed.md` 粘给 ChatGPT，先按“原著守则”和“镜头语言规则”校对。',
-    '2. 用 GPT-image-2 生成或确认参考图。',
-    '3. 把逐条视频文本复制到外部视频工具。',
+    '1. 用 `GPT-image-2 参考图生成提示词` 生成或确认参考图。',
+    '2. 按 `每5条复制制作块` 逐组复制；每组里的 `上传参考图：资产名 = 图片N` 就是绑定说明。',
+    '3. 把整组复制到外部视频工具。',
     '',
     '不生成 Canvas 包、不生成图片、不生成视频。'
   ].join('\n') + '\n', 'utf8')

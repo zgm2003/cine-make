@@ -5,7 +5,7 @@ Normal short-script / excerpt user-facing output:
 - `seedance-all-reference-feed.md`
 - `README.md`
 
-The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint: it must include GPT-image-2 reference prompts, reference asset binding, global negative constraints, original-fidelity rules, shot-language rules, the Xiaoyunque camera tag library, copy-ready single-line video text, and a bottom note the user can paste into ChatGPT or the video tool.
+The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint and should expose only the two sections users operate: GPT-image-2 reference prompts and `每5条复制制作块`. Reference binding belongs inside the GPT-image headings (`图片N = 资产名`) and each 5-line block's `上传参考图：资产名 = 图片N` line. Global negative constraints, original-fidelity rules, shot-language rules, and camera tag libraries are internal generation constraints or documentation, not front-loaded user-facing feed sections.
 
 Normal runs must not expose `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.
 
@@ -46,7 +46,7 @@ Seedance feed:
 - do not force a whole long quote into one video line when it would break pacing or generation reliability;
 - copy-ready blocks use `上传参考图：资产名 = 图片1；资产名 = 图片2`, not `图片1｜资产名`;
 - split longer videos into multiple 15-second groups for later external editing/stitching;
-- include the Xiaoyunque camera tag library before video text, and use exact supported tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field;
+- use exact supported camera tags such as `固定镜头`, `镜头前推`, `跟随拍摄`, `甩摇`, `焦点转移`, `希区柯克`, `高空航拍`, and `拉开离场` in the movement field; keep the tag library in docs/internal guidance rather than the main user feed;
 - each group must state reference assets, subject lock, camera language, dialogue/sound, and negative constraints;
 - final video synthesis and stitching happen outside Cine Make.
 

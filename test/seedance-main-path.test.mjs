@@ -35,7 +35,9 @@ test('default CLI writes a ChatGPT-only Seedance feed and no Canvas artifacts', 
     assert.doesNotMatch(result.stdout, /canvas-project|Canvas pack/u)
 
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
-    assert.match(feed, /逐条视频文本/u)
+    assert.match(feed, /GPT-image-2 参考图生成提示词/u)
+    assert.match(feed, /## 每5条复制制作块/u)
+    assert.doesNotMatch(feed, /## 参考资产绑定|## 全局负面约束|## 原著守则|## 镜头语言规则|## 小云雀运镜标签库|## 逐条视频文本|## 底部备注栏可复制/u)
   } finally {
     await rm(out, { recursive: true, force: true })
   }

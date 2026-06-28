@@ -21,10 +21,8 @@ AI 视频生成不是从“写一句提示词”开始的。
 
 ```text
 故事素材
--> 原著守则校对
 -> GPT-image-2 参考资产提示词
--> 逐条镜头语言视频文本
--> ChatGPT 复核
+-> 每5条复制制作块
 -> 外部视频工具生成视频
 ```
 
@@ -37,16 +35,12 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-其中 `seedance-all-reference-feed.md` 是主交付物，里面会按可复制的顺序组织：
+其中 `seedance-all-reference-feed.md` 是主交付物，里面会按用户实际操作保留两块：
 
 1. GPT-image-2 参考资产提示词；
-2. 参考资产绑定表；
-3. 全局负面约束；
-4. 原著守则；
-5. 镜头语言规则；
-6. 小云雀运镜标签库；
-7. 逐条视频文本；
-8. 可复制给 ChatGPT 的底部说明。
+2. 每5条复制制作块。
+
+参考资产绑定直接写在 GPT-image 标题和每组 `上传参考图：资产名 = 图片N` 里。全局负面约束、原著守则、镜头语言规则和小云雀标签库保留为内部生成约束或文档说明，不再压在主 feed 前面。
 
 ---
 
@@ -107,12 +101,7 @@ Cine Make 不再保留草稿模式 / 出图模式作为用户入口。
 它会准备：
 
 - GPT-image-2 人物 / 场景 / 高价值道具参考提示词；
-- 参考资产绑定关系；
-- 原著守则；
-- 镜头语言规则；
-- 小云雀运镜标签，例如 `镜头前推`、`跟随拍摄`、`甩摇`、`焦点转移`、`高空航拍`；
-- 逐条视频文本；
-- 给 ChatGPT 复核用的底部说明。
+- 每5条复制制作块，块内包含本组逐条视频文本、上传参考图、音色和统一要求。
 
 图片生成不是默认动作。只有用户明确要静态图时，才显式使用 Codex `$imagegen`。
 
@@ -198,9 +187,9 @@ README.md
 
 Novel Studio 会继续保留章节拆分、摘要、bible、视觉 bible 和单集计划这类中间产物；真正给用户复制的主交付物仍是 `seedance-all-reference-feed.md`。
 
-用户实际操作时，先把 `seedance-all-reference-feed.md` 粘给 ChatGPT 按原著守则和镜头语言规则复核，再把逐条视频文本投喂外部视频工具。
+用户实际操作时，先用 `GPT-image-2 参考图生成提示词` 做参考图，再按 `每5条复制制作块` 逐组投喂外部视频工具。
 
-Canvas 输出已关闭：Cine Make 不再生成 `canvas-project.zip`、`canvas-manifest.json`、`projects.json` 或 `prompt-pack.md`。后续统一用 ChatGPT 校对 `seedance-all-reference-feed.md`，再把逐条视频文本投喂外部视频工具。
+Canvas 输出已关闭：Cine Make 不再生成 `canvas-project.zip`、`canvas-manifest.json`、`projects.json` 或 `prompt-pack.md`。后续统一用参考图提示词和每5条复制块完成外部视频工具生产。
 
 ---
 
@@ -245,7 +234,7 @@ npm test
 - 默认 CLI / `seedance-pack` 只输出 `seedance-all-reference-feed.md + README.md`；
 - `--mode draft`、`--mode visual`、旧 Canvas 命令都会快速失败；
 - 普通运行不再生成 `deliverable.md`、`storyboard-images/`、`canvas-project.zip`、`canvas-manifest.json`、`projects.json`、`prompt-pack.md`；
-- feed 内置原著守则、镜头语言规则和 GPT-image-2 三视图参考提示词；
+- feed 面向用户只暴露 GPT-image-2 三视图参考提示词和每5条复制制作块；
 - skill frontmatter；
 - npm package 内容。
 

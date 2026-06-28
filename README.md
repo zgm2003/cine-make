@@ -4,7 +4,7 @@
 
 Cine Make is a local AI short-drama pre-production compiler for Codex-style agents. It turns novels, rough scripts, ad briefs, and story fragments into a ChatGPT-ready Seedance all-reference feed.
 
-Cine Make does **not** render MP4 videos. It writes text prompts, reference-asset plans, original-fidelity rules, shot-language rules, and continuity notes. Final video synthesis belongs to the external video tool.
+Cine Make does **not** render MP4 videos. It writes GPT-image-2 reference prompts and copy-ready 5-line video blocks; original-fidelity and shot-language rules remain internal generation constraints. Final video synthesis belongs to the external video tool.
 
 ## Current version
 
@@ -36,12 +36,7 @@ Removed user entries: `--mode draft`, `--mode visual`, `--draft`, and `--visual`
 `seedance-all-reference-feed.md` contains only:
 
 1. `GPT-image-2 reference prompts`
-2. `reference asset bindings`
-3. `global negative constraints`
-4. original-fidelity and shot-language rules
-5. Xiaoyunque camera tag library
-6. copy-ready single-line video texts
-7. copyable bottom notes
+2. `5-line copy-ready production blocks`
 
 The mandatory video-text shape is:
 
@@ -123,7 +118,7 @@ $cine-make 给我 3D国漫，国风仙侠，偏水墨+古风写实结合，每5�
 ```
 
 
-Users do not need to specify a video platform. Cine Make's normal handoff is a ChatGPT-ready Seedance feed with original-fidelity and shot-language rules.
+Users do not need to specify a video platform. Cine Make's normal handoff is a ChatGPT-ready Seedance feed whose user-facing surface is only reference-image prompts and 5-line production blocks.
 
 ## Install
 
@@ -169,8 +164,8 @@ Novel project commands are planning and episode-preparation steps. The user-faci
 For normal runs, use `seedance-all-reference-feed.md` directly:
 
 1. Generate or confirm the GPT-image-2 reference assets listed in the feed.
-2. Bind assets according to the reference asset table.
-3. Copy the single-line video texts in 5-line / 15-second groups.
+2. Copy one `每5条复制制作块` at a time; its `上传参考图：资产名 = 图片N` line is the binding instruction for that group.
+3. Paste the copied block into the external video tool.
 4. Generate clips in the external video tool.
 5. Stitch multiple clips externally.
 

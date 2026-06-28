@@ -42,19 +42,21 @@ test('renders clean Seedance all-reference feed without continuation or storyboa
     expandScript: false
   })
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+  const sections = markdown.match(/^## .+$/gmu) ?? []
 
   assert.match(markdown, /^# Seedance 全能参考投喂包/u)
+  assert.deepEqual(sections, [
+    '## GPT-image-2 参考图生成提示词',
+    '## 每5条复制制作块'
+  ])
   assert.match(markdown, /## GPT-image-2 参考图生成提示词/u)
-  assert.match(markdown, /## 参考资产绑定/u)
-  assert.match(markdown, /## 小云雀运镜标签库/u)
-  assert.match(markdown, /镜头前推｜强调情绪靠近/u)
-  assert.match(markdown, /希区柯克｜现实崩塌瞬间/u)
-  assert.match(markdown, /穿越机运镜｜高速掠过空间/u)
-  assert.match(markdown, /## 逐条视频文本/u)
+  assert.match(markdown, /## 每5条复制制作块/u)
+  assert.doesNotMatch(markdown, /## 参考资产绑定|## 全局负面约束|## 原著守则|## 镜头语言规则|## 小云雀运镜标签库|## 逐条视频文本|## 底部备注栏可复制/u)
   assert.match(markdown, /16:9/u)
-  assert.match(markdown, /雪山之巅=图片1/u)
-  assert.match(markdown, /老年道清=图片2/u)
-  assert.match(markdown, /麒麟幼兽=图片3/u)
+  assert.match(markdown, /### 图片1 = 雪山之巅/u)
+  assert.match(markdown, /### 图片2 = 老年道清三视图/u)
+  assert.match(markdown, /### 图片3 = 麒麟幼兽三视图/u)
+  assert.match(markdown, /上传参考图：雪山之巅 = 图片1；老年道清三视图 = 图片2；麒麟幼兽三视图 = 图片3/u)
   assert.match(markdown, /^1 日 外 雪山之巅 老年道清 .*镜头前推/mu)
   assert.doesNotMatch(markdown, forbiddenMeta)
 })
@@ -71,7 +73,7 @@ test('default story templates use time and interior-exterior fields, not legacy 
   assert.doesNotMatch(pack.videoLines.join('\n'), /雪山之巅（日外）/u)
 })
 
-test('preserves original novel dialogue exactly and exposes fidelity rules', () => {
+test('preserves original novel dialogue exactly without exposing internal fidelity sections', () => {
   const novel = [
     '第3章 涅槃归来',
     '就在江凡以为一切都结束时，一声神威浩荡的怒吼震荡而出：',
@@ -88,9 +90,7 @@ test('preserves original novel dialogue exactly and exposes fidelity rules', () 
   })
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
-  assert.match(markdown, /## 原著守则/u)
-  assert.match(markdown, /## 镜头语言规则/u)
-  assert.match(markdown, /## 小云雀运镜标签库/u)
+  assert.doesNotMatch(markdown, /## 原著守则|## 镜头语言规则|## 小云雀运镜标签库/u)
   assert.match(markdown, /「尔敢夺我太虚古族神树，不管你是谁，不管你在哪，我们都会找到你！会找到你！！！」/u)
   assert.match(markdown, /「当个凡人过一辈子，有什么不好呢？何必追求自己得不到的东西？」/u)
   assert.doesNotMatch(markdown, /旁白音色：“不管你是谁，不管你在哪，我们都会找到你！”/u)
@@ -116,8 +116,8 @@ test('keeps video dialogue breathable by excerpting overlong source quotes', () 
   assert.doesNotMatch(pack.videoLines.join('\n'), new RegExp(longQuote, 'u'))
   assert.match(pack.videoLines.join('\n'), /台词摘句：.*他有骨气就自己弄去/u)
   assert.match(pack.videoLines.join('\n'), /靠一个女人偷偷给他/u)
-  assert.match(markdown, /视频呼吸/u)
-  assert.match(markdown, /长台词/u)
+  assert.match(markdown, /台词摘句：.*他有骨气就自己弄去/u)
+  assert.doesNotMatch(markdown, /## 原著守则|长台词允许|视频呼吸/u)
 })
 
 test('renders five-line copy blocks with references, voice, and unified requirements', () => {

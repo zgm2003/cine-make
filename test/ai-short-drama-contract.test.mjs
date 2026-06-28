@@ -36,8 +36,9 @@ test('short-drama CLI main path is ChatGPT-only Seedance feed', async () => {
 
     const feed = await readFile(join(out, 'seedance-all-reference-feed.md'), 'utf8')
     assert.match(feed, /GPT-image-2 参考图生成提示词/u)
-    assert.match(feed, /参考资产绑定/u)
-    assert.match(feed, /逐条视频文本/u)
+    assert.match(feed, /## 每5条复制制作块/u)
+    assert.match(feed, /上传参考图：/u)
+    assert.doesNotMatch(feed, /## 参考资产绑定|## 全局负面约束|## 原著守则|## 镜头语言规则|## 小云雀运镜标签库|## 逐条视频文本|## 底部备注栏可复制/u)
     assert.doesNotMatch(feed, /storyboard-images|首帧|尾帧|S01/u)
   } finally {
     await rm(out, { recursive: true, force: true })

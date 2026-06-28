@@ -83,16 +83,12 @@ novel canvas
 
 ## 3. Feed 内容顺序
 
-`seedance-all-reference-feed.md` 必须按可操作顺序组织：
+`seedance-all-reference-feed.md` 必须按用户实际操作顺序组织，主文件只暴露两块：
 
 1. GPT-image-2 参考资产提示词；
-2. 参考资产绑定表；
-3. 全局负面约束；
-4. 原著守则；
-5. 镜头语言规则；
-6. 小云雀运镜标签库；
-7. 逐条视频文本；
-8. 可复制给 ChatGPT / 外部视频工具的底部说明。
+2. 每5条复制制作块。
+
+参考资产绑定不再单独成章，而是落在 GPT-image 标题里的 `图片N = 资产名`，以及每组复制块里的 `上传参考图：资产名 = 图片N`。全局负面约束、原著守则、镜头语言规则和小云雀标签库是内部生成约束或文档说明，不前置到主 feed。
 
 逐条视频文本固定格式：
 
@@ -167,7 +163,7 @@ git diff --check
 
 - 默认 CLI / `seedance-pack` 只生成 `seedance-all-reference-feed.md` 和 `README.md`；
 - Canvas 命令快速失败，错误包含 `Canvas package output is disabled`；
-- feed 包含 `## 原著守则` 和 `## 镜头语言规则`；
-- feed 包含 `## 小云雀运镜标签库`，并且运镜字段优先使用小云雀原始标签；
+- feed 只包含 `## GPT-image-2 参考图生成提示词` 和 `## 每5条复制制作块`；
+- 运镜字段优先使用小云雀原始标签，但标签库保留在文档/内部约束中，不进入主 feed；
 - 短关键台词保真；长台词不会硬塞进单条视频文本，摘句后不改变人物动机、因果和章末钩子；
 - 普通运行不产生 Canvas 包或旧 draft/visual 产物。
