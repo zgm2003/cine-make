@@ -28,6 +28,7 @@ test('15-second Seedance feed warns when exact OS makes pacing tight but preserv
 
   assert.equal(pack.videoLines.length, 5)
   assert.match(markdown, /15秒容量提醒：原文OS\/对白必须一字不改时，本段语速偏紧/)
+  assert.match(markdown, /15秒语音超载：第1组第1-5条含\d+个中文发声字，超过43字失败线/)
   assert.match(markdown, /保留原文OS\/对白不改字，画面动作做合并压缩/)
 
   for (const exact of [

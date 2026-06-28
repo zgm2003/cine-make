@@ -6,10 +6,13 @@ import {
   tijiaGuomanTitle,
   tijiaGuomanVideoLines
 } from './tijia-guoman-profile.mjs'
+import { analyzeSeedanceSpeechBudget } from './seedance-speech-budget.mjs'
 
 const DEFAULT_ASPECT = '16:9'
 const FORBIDDEN_VIDEO_META = /续接|承接|下一段|下一场|后续|首帧|尾帧|首尾|segment|storyboard-images|S\d{2}|keyframe|控制帧|分镜图/u
-const BREATHABLE_DIALOGUE_CHAR_LIMIT = 38
+const BREATHABLE_DIALOGUE_CHAR_LIMIT = 24
+const SPEECH_FIELD_FOR_REWRITE = /(台词摘句|台词|旁白|系统提示|内心OS|OS|os|[\p{Script=Han}]{2,6}(?:（[^）]{0,24}）)?)([：:])([^；;【\n]+)/gu
+const NON_SPEECH_REWRITE_LABEL = /音效|环境音|声音|上传|参考|要求|主体|景别|机位|构图|光影|运镜|镜头|动作|画面/u
 const VIDEO_GROUP_SECONDS = 15
 const DIALOGUE_PRIORITY_PATTERNS = [
   /骨气/u,
@@ -74,6 +77,10 @@ function cleanDialogueExcerpt(text) {
     .trim()
 }
 
+function countDialogueCharacters(text) {
+  return [...String(text ?? '').matchAll(/\p{Script=Han}/gu)].length
+}
+
 function dialogueClauseScore(clause) {
   const text = clause.text
   const priority = DIALOGUE_PRIORITY_PATTERNS.reduce((score, pattern) => score + (pattern.test(text) ? 5 : 0), 0)
@@ -82,7 +89,7 @@ function dialogueClauseScore(clause) {
   return priority + directAddress + force
 }
 
-function selectBreathableDialogueExcerpt(inner) {
+function selectBreathableDialogueExcerpt(inner, limit = BREATHABLE_DIALOGUE_CHAR_LIMIT) {
   const clauses = splitDialogueClauses(inner)
   const scored = clauses
     .map((clause) => ({ ...clause, score: dialogueClauseScore(clause) }))
@@ -93,25 +100,25 @@ function selectBreathableDialogueExcerpt(inner) {
   for (const clause of scored) {
     const cleaned = cleanDialogueExcerpt(clause.text)
     if (!cleaned) continue
-    const nextLength = length + cleaned.length + (selected.length ? 1 : 0)
-    if (nextLength > BREATHABLE_DIALOGUE_CHAR_LIMIT) continue
+    const nextLength = length + countDialogueCharacters(cleaned)
+    if (nextLength > limit) continue
     selected.push({ index: clause.index, text: cleaned })
     length = nextLength
-    if (length >= BREATHABLE_DIALOGUE_CHAR_LIMIT * 0.65) break
+    if (length >= limit * 0.65) break
   }
 
   const ordered = selected.sort((a, b) => a.index - b.index)
   if (ordered.length) return ordered.map((clause) => clause.text).join('，')
 
-  return cleanDialogueExcerpt(clauses[0]?.text ?? inner).slice(0, BREATHABLE_DIALOGUE_CHAR_LIMIT)
+  return [...cleanDialogueExcerpt(clauses[0]?.text ?? inner)].slice(0, limit).join('')
 }
 
-function dialogueForVideo(quote) {
+function dialogueForVideo(quote, limit = BREATHABLE_DIALOGUE_CHAR_LIMIT) {
   const inner = unwrapOriginalQuote(quote)
   if (!inner) return { text: '', excerpted: false }
-  if (inner.length <= BREATHABLE_DIALOGUE_CHAR_LIMIT) return { text: wrapOriginalQuote(inner), excerpted: false }
+  if (countDialogueCharacters(inner) <= limit) return { text: wrapOriginalQuote(inner), excerpted: false }
   return {
-    text: wrapOriginalQuote(selectBreathableDialogueExcerpt(inner)),
+    text: wrapOriginalQuote(selectBreathableDialogueExcerpt(inner, limit)),
     excerpted: true
   }
 }
@@ -372,6 +379,72 @@ function sourceSegmentsPreservingOriginalDialogue(sourceText) {
   return segments
 }
 
+function escapeLiteralPattern(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function canRewriteSpeechLabel(label) {
+  const normalized = String(label ?? '').trim()
+  if (!normalized || NON_SPEECH_REWRITE_LABEL.test(normalized)) return false
+  return /台词|旁白|系统提示|内心OS|OS|os/u.test(normalized) || /^[\p{Script=Han}]{2,6}(?:（[^）]{0,24}）)?$/u.test(normalized)
+}
+
+function looksLikeShotDescription(value) {
+  const text = String(value ?? '').trim()
+  return /^主体/u.test(text) || /\/(?:中景|近景|特写|全景|远景|平视|低机位|高机位)/u.test(text) || /(?:固定镜头|镜头前推|跟随拍摄|环境音)[：:]/u.test(text)
+}
+
+function shortenSpeechForBudget(rawSpeech, charLimit) {
+  const source = String(rawSpeech ?? '').trim()
+  const inner = unwrapOriginalQuote(source)
+  if (!inner || countDialogueCharacters(inner) <= charLimit) return source
+
+  const shortened = selectBreathableDialogueExcerpt(inner, charLimit)
+  return /^[「“]/u.test(source) ? wrapOriginalQuote(shortened) : shortened
+}
+
+function rewriteLineSpeechForBudget(line, charLimit) {
+  let rewritten = String(line ?? '')
+  const matches = [...rewritten.matchAll(SPEECH_FIELD_FOR_REWRITE)]
+
+  for (const match of matches) {
+    const [field, label, separator, rawSpeech] = match
+    if (!canRewriteSpeechLabel(label)) continue
+    if (looksLikeShotDescription(rawSpeech)) continue
+    if (/无对白|不要新增旁白/u.test(rawSpeech)) continue
+
+    const shortened = shortenSpeechForBudget(rawSpeech, charLimit)
+    if (shortened === rawSpeech.trim()) continue
+
+    const nextLabel = label === '台词' ? '台词摘句' : label
+    rewritten = rewritten.replace(field, `${nextLabel}${separator}${shortened}`)
+    rewritten = rewritten.replace(new RegExp(escapeLiteralPattern(rawSpeech.trim()), 'gu'), shortened)
+  }
+
+  return rewritten
+}
+
+function tightenVideoLinesForSpeechBudget(videoLines, { targetSeconds, preserveDialogueExact }) {
+  if (preserveDialogueExact || targetSeconds !== VIDEO_GROUP_SECONDS) return videoLines
+
+  const tightened = [...videoLines]
+  for (let start = 0; start < tightened.length; start += 5) {
+    const group = tightened.slice(start, start + 5)
+    const budget = analyzeSeedanceSpeechBudget(group).groups[0]
+    if (!budget || (budget.spokenCharCount <= 36 && budget.spokenLineCount <= 3)) continue
+
+    const speechLines = budget.lines.filter((line) => line.spokenCharCount > 0)
+    const perLineLimit = Math.max(8, Math.min(18, Math.floor(36 / Math.max(1, speechLines.length))))
+
+    for (const speechLine of speechLines) {
+      const index = start + speechLine.lineNumber - 1
+      tightened[index] = rewriteLineSpeechForBudget(tightened[index], perLineLimit)
+    }
+  }
+
+  return tightened
+}
+
 function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDialogueExact }) {
   const lines = isTijiaGuomanSource(sourceText)
     ? tijiaGuomanVideoLines()
@@ -382,12 +455,13 @@ function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDial
     : genericVideoLines(sourceText)
   const limit = targetSeconds === VIDEO_GROUP_SECONDS ? 5 : 14
   const selected = expandScript ? lines : lines.slice(0, Math.min(lines.length, limit))
-  return selected.map((line) => {
+  const checked = selected.map((line) => {
     if (FORBIDDEN_VIDEO_META.test(line)) {
       throw new Error(`Seedance video line contains forbidden meta language: ${line}`)
     }
     return line
   })
+  return tightenVideoLinesForSpeechBudget(checked, { targetSeconds, preserveDialogueExact })
 }
 
 function titleFromSource(sourceText) {
@@ -430,6 +504,16 @@ export function buildSeedanceReferenceFeedPackage({
   const normalizedStyle = isTijiaGuomanSource(cleanSourceText) ? tijiaGuomanStyle(style) : compact(style)
   const assets = buildAssets({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio })
   const normalizedTargetSeconds = Number.isFinite(Number(targetSeconds)) ? Number(targetSeconds) : undefined
+  const videoLines = buildVideoLines({
+    sourceText: cleanSourceText,
+    expandScript,
+    targetSeconds: normalizedTargetSeconds,
+    preserveDialogueExact
+  })
+  const speechBudget = analyzeSeedanceSpeechBudget(videoLines)
+  const exactDialogueWarnings = normalizedTargetSeconds === VIDEO_GROUP_SECONDS && preserveDialogueExact && /（os）|OS|os|：/u.test(cleanSourceText)
+    ? ['15秒容量提醒：原文OS/对白必须一字不改时，本段语速偏紧；保留原文OS/对白不改字，画面动作做合并压缩。']
+    : []
   return {
     kind: 'seedance_all_reference_feed',
     title: titleFromSource(cleanSourceText),
@@ -440,15 +524,9 @@ export function buildSeedanceReferenceFeedPackage({
     expandScript: Boolean(expandScript),
     assets,
     globalNegative: globalNegative({ sourceText: cleanSourceText, style: normalizedStyle, aspectRatio }),
-    videoLines: buildVideoLines({
-      sourceText: cleanSourceText,
-      expandScript,
-      targetSeconds: normalizedTargetSeconds,
-      preserveDialogueExact
-    }),
-    warnings: normalizedTargetSeconds === VIDEO_GROUP_SECONDS && preserveDialogueExact && /（os）|OS|os|：/u.test(cleanSourceText)
-      ? ['15秒容量提醒：原文OS/对白必须一字不改时，本段语速偏紧；保留原文OS/对白不改字，画面动作做合并压缩。']
-      : [],
+    videoLines,
+    speechBudget,
+    warnings: [...exactDialogueWarnings, ...speechBudget.warnings],
     bottomNote: bottomNote(assets),
     bottomConstraint: undefined
   }

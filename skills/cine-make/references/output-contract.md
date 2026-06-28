@@ -41,8 +41,9 @@ Seedance feed:
 
 - use single-line video text: `序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效`;
 - every 5 video text lines equals 15 seconds unless the user explicitly overrides;
+- spoken budget is strict per 5-line / 15-second group: OS, 系统提示, 旁白, and role dialogue all count; 20-32 Chinese spoken chars is ideal, 33-36 acceptable, 37-42 crowded, and 43+ fail;
 - if a 15-second request cannot naturally contain the source beats and exact OS/dialogue, flag the capacity issue before generating and offer split, dialogue compression, or exact-dialogue-with-merged-visuals tradeoffs;
-- each 15-second group should usually keep only 2-3 short dialogue lines and use action, reaction, pause, expression, and sound for the rest;
+- each 15-second group should usually keep at most 2 main spoken lines; a special case may use 3 short spoken lines only when the total spoken budget stays comfortable; use action, reaction, pause, expression, and sound for the rest;
 - do not force a whole long quote into one video line when it would break pacing or generation reliability;
 - copy-ready blocks use `上传参考图：资产名 = 图片1；资产名 = 图片2`, not `图片1｜资产名`;
 - split longer videos into multiple 15-second groups for later external editing/stitching;

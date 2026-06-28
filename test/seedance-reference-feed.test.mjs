@@ -73,7 +73,7 @@ test('default story templates use time and interior-exterior fields, not legacy 
   assert.doesNotMatch(pack.videoLines.join('\n'), /雪山之巅（日外）/u)
 })
 
-test('preserves original novel dialogue exactly without exposing internal fidelity sections', () => {
+test('adapts overlong novel dialogue for breathable video lines without exposing internal fidelity sections', () => {
   const novel = [
     '第3章 涅槃归来',
     '就在江凡以为一切都结束时，一声神威浩荡的怒吼震荡而出：',
@@ -91,8 +91,10 @@ test('preserves original novel dialogue exactly without exposing internal fideli
   const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
 
   assert.doesNotMatch(markdown, /## 原著守则|## 镜头语言规则|## 小云雀运镜标签库/u)
-  assert.match(markdown, /「尔敢夺我太虚古族神树，不管你是谁，不管你在哪，我们都会找到你！会找到你！！！」/u)
-  assert.match(markdown, /「当个凡人过一辈子，有什么不好呢？何必追求自己得不到的东西？」/u)
+  assert.match(markdown, /台词摘句：「尔敢夺我太虚古族神树，我们都会找到你，会找到你」/u)
+  assert.match(markdown, /台词摘句：「有什么不好呢，何必追求自己得不到的东西」/u)
+  assert.doesNotMatch(markdown, /「尔敢夺我太虚古族神树，不管你是谁，不管你在哪，我们都会找到你！会找到你！！！」/u)
+  assert.doesNotMatch(markdown, /「当个凡人过一辈子，有什么不好呢？何必追求自己得不到的东西？」/u)
   assert.doesNotMatch(markdown, /旁白音色：“不管你是谁，不管你在哪，我们都会找到你！”/u)
 })
 
@@ -118,6 +120,32 @@ test('keeps video dialogue breathable by excerpting overlong source quotes', () 
   assert.match(pack.videoLines.join('\n'), /靠一个女人偷偷给他/u)
   assert.match(markdown, /台词摘句：.*他有骨气就自己弄去/u)
   assert.doesNotMatch(markdown, /## 原著守则|长台词允许|视频呼吸/u)
+})
+
+test('keeps 15-second five-line copy groups under the speech failure budget when dialogue can be adapted', () => {
+  const novel = [
+    '许府后院，众人围住江凡。',
+    '王映凤冷笑道：',
+    '「练气液是我们许家的，他有骨气就自己弄去，靠一个女人偷偷给他，别说我们许府的人看不起，就是路边的乞丐都吐口痰。」',
+    '陆争也上前一步，压低声音道：',
+    '「你若真还有半点骨气，就别再拿许家的东西装可怜，今日之后你和许悠然再无关系。」'
+  ].join('\n')
+
+  const pack = buildSeedanceReferenceFeedPackage({
+    sourceText: novel,
+    style: '3D国漫，国风仙侠，偏水墨+古风写实结合',
+    aspectRatio: '16:9',
+    targetSeconds: 15,
+    expandScript: false
+  })
+  const markdown = composeSeedanceAllReferenceFeedMarkdown(pack)
+
+  assert.ok(pack.speechBudget)
+  assert.equal(pack.speechBudget.groups[0].spokenLineCount, 2)
+  assert.ok(pack.speechBudget.groups[0].spokenCharCount <= 42)
+  assert.notEqual(pack.speechBudget.groups[0].level, 'fail')
+  assert.doesNotMatch(pack.warnings.join('\n'), /15秒语音超载/u)
+  assert.match(markdown, /台词摘句/u)
 })
 
 test('renders five-line copy blocks with references, voice, and unified requirements', () => {

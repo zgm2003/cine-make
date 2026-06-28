@@ -44,12 +44,12 @@ The mandatory video-text shape is:
 序号 时间 内/外 具体地点 角色 动作画面 主体/景别/机位/构图/光影 运镜 台词/音效
 ```
 
-Every 5 video text lines equals 15 seconds unless the user explicitly overrides. If the requested runtime cannot naturally contain the source beats and exact OS/dialogue, flag the capacity problem before generating and either split the material or preserve the exact dialogue with tighter visual compression. The feed must not mention start frames, end frames, S01, segment continuation, or storyboard image folders.
+Every 5 video text lines equals 15 seconds unless the user explicitly overrides. Spoken budget is strict per 5-line group: OS, system prompts, narration, and role dialogue all count; 20-32 Chinese spoken chars is ideal, 33-36 acceptable, 37-42 crowded, and 43+ fail. If the requested runtime cannot naturally contain the source beats and exact OS/dialogue, flag the capacity problem before generating and either split the material or preserve the exact dialogue with tighter visual compression. The feed must not mention start frames, end frames, S01, segment continuation, or storyboard image folders.
 
 ## Original-fidelity and shot-language rules
 
 - The highest-fidelity items are character motivation, event order, cause-effect logic, key reveals, ending hooks, and decisive conflict lines.
-- Directly quoted source dialogue should be copied exactly when it is short and load-bearing. Long dialogue may use light adaptation: excerpt the strongest original clause or slightly smooth wording so each 15-second group remains breathable.
+- Directly quoted source dialogue should be copied exactly when it is short and load-bearing. Long dialogue may use light adaptation: excerpt the strongest original clause or slightly smooth wording so each 15-second group remains breathable, usually with at most 2 main spoken lines.
 - Names, factions, skills, cultivation realms, locations, props, and cause-effect logic come from the source text; do not invent missing lore.
 - Narrative prose may be translated into visible action, but event order, character motivation, reveal order, and chapter-ending hooks must stay intact.
 - Each 5-line / 15-second group usually keeps only 2-3 short dialogue lines; the rest should be carried by action, reaction, pause, expression, and sound.

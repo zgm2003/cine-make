@@ -12,9 +12,10 @@ Cine Make is a lightweight Codex skill for preparing `seedance-all-reference-fee
 
 ## Hard Gates
 
-- 15秒容量闸门：before generating, estimate whether the requested runtime can naturally contain the source beats and OS/dialogue. If it 不能自然容纳, 先提醒 the user and state the tradeoff: split into more segments, remove/compress dialogue, or keep OS/对白一字不改 with faster pacing and merged visuals.
+- 15秒容量闸门：before generating, estimate whether the requested runtime can naturally contain the source beats and OS/dialogue. For each 5-line / 15-second group, count OS, 系统提示, 旁白, and character dialogue as spoken Chinese text: 20-32 chars is ideal, 33-36 is acceptable, 37-42 is crowded, and 43+ is fail. If it 不能自然容纳, 先提醒 the user and state the tradeoff: split into more segments, remove/compress dialogue, or keep OS/对白一字不改 with faster pacing and merged visuals.
 - If the user says OS/对白一字不改, do not rewrite those words. Compress only visible action and shot count.
 - For one 15-second segment, default to 5 single-line video texts. Do not force 8-9 storyboard panels just because “分镜” was mentioned.
+- Default to at most 2 main spoken lines per 15-second group; a special case may use 3 short lines only when the total spoken budget stays comfortable. Do not hard-pack 55-75 Chinese spoken chars into one 15-second group.
 - If the user already has character or scene references, bind them as references; do not regenerate them unless asked.
 
 ## Output Contract
