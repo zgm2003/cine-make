@@ -19,7 +19,7 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-请在具体剧本项目目录里运行 Cine Make。省略 `--out` 时，产物会写入该项目的 `runs/<timestamp>/`；工具仓库本身不应该承载项目产物。默认 CLI 和 `seedance-pack` 等价：
+请在具体剧本项目目录里运行 Cine Make。省略 `--out` 时，产物会写入该项目的 `生产资产/<timestamp>/`；工具仓库本身不应该承载项目产物。默认 CLI 和 `seedance-pack` 等价：
 
 ```bash
 cd path/to/story-project

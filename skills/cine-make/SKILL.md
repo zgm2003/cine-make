@@ -20,6 +20,8 @@ Cine Make is a lightweight Codex skill for preparing `seedance-all-reference-fee
 
 ## Output Contract
 
+When `--out` is omitted, normal short-script and excerpt runs write into the calling story project under `生产资产/<timestamp>/`. Use explicit `--out` only when the user asks for a named package directory.
+
 Normal short-script and excerpt runs output:
 
 - `seedance-all-reference-feed.md`

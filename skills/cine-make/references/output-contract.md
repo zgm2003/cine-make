@@ -5,6 +5,8 @@ Normal short-script / excerpt user-facing output:
 - `seedance-all-reference-feed.md`
 - `README.md`
 
+When `--out` is omitted, default short-script and excerpt packages must be written under the calling story project's `生产资产/<timestamp>/` directory. Keep the tool repository free of project delivery outputs unless the user explicitly passes an output path there.
+
 The user should not need to read internal debug artifacts. `seedance-all-reference-feed.md` is the product entrypoint and should expose only the two sections users operate: GPT-image-2 reference prompts and `每5条复制制作块`. Reference binding belongs inside the GPT-image headings (`图片N = 资产名`) and each 5-line block's `上传参考图：资产名 = 图片N` line. Global negative constraints, original-fidelity rules, shot-language rules, and camera tag libraries are internal generation constraints or documentation, not front-loaded user-facing feed sections.
 
 Normal runs must not expose `canvas-project.zip`, `canvas-manifest.json`, `projects.json`, `prompt-pack.md`, `deliverable.md`, `storyboard-images/`, `continuity-bible.json`, `episodes/`, task trees, or agent handoff files at the run root. Legacy writer artifacts may exist only when an internal/debug workflow explicitly creates them.

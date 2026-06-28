@@ -66,7 +66,7 @@ const CANVAS_DISABLED_MESSAGE = 'Canvas package output is disabled; Cine Make no
 
 function defaultOutDir(cwd = process.cwd()) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').replace('T', '_').replace('Z', '')
-  return resolve(cwd, 'runs', stamp)
+  return resolve(cwd, '生产资产', stamp)
 }
 
 async function readAgentPlan(runDir) {

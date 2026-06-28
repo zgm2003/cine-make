@@ -21,7 +21,7 @@ seedance-all-reference-feed.md
 README.md
 ```
 
-Run Cine Make from the story project directory. When `--out` is omitted, the package is written to that project's `runs/<timestamp>/`; the tool repository should not own project outputs. The default CLI and `seedance-pack` produce the same package:
+Run Cine Make from the story project directory. When `--out` is omitted, the package is written to that project's `生产资产/<timestamp>/`; the tool repository should not own project outputs. The default CLI and `seedance-pack` produce the same package:
 
 ```bash
 cd path/to/story-project

@@ -7,6 +7,7 @@ import {
   tijiaGuomanVideoLines
 } from './tijia-guoman-profile.mjs'
 import {
+  assertDouyinXianjieSingleChapterSource,
   douyinXianjieAssetDefinitions,
   douyinXianjieStyle,
   douyinXianjieTitle,
@@ -471,7 +472,7 @@ function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDial
   const lines = isTijiaGuomanSource(sourceText)
     ? tijiaGuomanVideoLines()
     : isDouyinXianjieOpeningSource(sourceText)
-    ? douyinXianjieVideoLines()
+    ? douyinXianjieVideoLines(sourceText)
     : isLiuFeiCellarSource(sourceText) && targetSeconds === VIDEO_GROUP_SECONDS && preserveDialogueExact
     ? liuFeiCellarVideoLines()
     : hasAny(sourceText, [/雪山/u, /麒麟/u, /老道|道清|老道人/u])
@@ -492,7 +493,7 @@ function buildVideoLines({ sourceText, expandScript, targetSeconds, preserveDial
 
 function titleFromSource(sourceText) {
   if (isTijiaGuomanSource(sourceText)) return tijiaGuomanTitle()
-  if (isDouyinXianjieOpeningSource(sourceText)) return douyinXianjieTitle()
+  if (isDouyinXianjieOpeningSource(sourceText)) return douyinXianjieTitle(sourceText)
   if (isLiuFeiCellarSource(sourceText)) return '院子地窖口 15s'
   if (/雪山|麒麟|老道|道清/u.test(sourceText)) return '雪山之巅护麟'
   return sceneName(sourceText).replace(/\s*\/.*$/u, '')
@@ -527,6 +528,7 @@ export function buildSeedanceReferenceFeedPackage({
 }) {
   const cleanSourceText = stripSourcePrefix(sourceText)
   if (!cleanSourceText) throw new Error('Seedance reference feed requires source story material')
+  assertDouyinXianjieSingleChapterSource(cleanSourceText)
   if (!compact(style)) throw new Error('Seedance reference feed requires a visual style')
   const normalizedStyle = isTijiaGuomanSource(cleanSourceText)
     ? tijiaGuomanStyle(style)
